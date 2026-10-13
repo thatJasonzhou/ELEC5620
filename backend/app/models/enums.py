@@ -1,0 +1,42 @@
+from enum import StrEnum
+
+
+class AgentName(StrEnum):
+    EVENT_PLANNER = "EventPlannerAgent"
+    VENDOR_PROCUREMENT_MANAGER = "VendorProcurementManagerAgent"
+    FINANCIAL_MANAGER = "FinancialManagerAgent"
+    EVENT_OPERATIONS_MANAGER = "EventOperationsManagerAgent"
+
+
+class EventStatus(StrEnum):
+    DRAFT = "DRAFT"
+    REQUIREMENTS_DEFINED = "REQUIREMENTS_DEFINED"
+    PROPOSAL_GENERATED = "PROPOSAL_GENERATED"
+    PROPOSAL_APPROVED = "PROPOSAL_APPROVED"
+    BOOKING_CONFIRMED = "BOOKING_CONFIRMED"
+    PREPARING = "PREPARING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    CLOSED = "CLOSED"
+    CANCELLED = "CANCELLED"
+
+
+class PaymentStatus(StrEnum):
+    PENDING = "PENDING"
+    PARTIALLY_PAID = "PARTIALLY_PAID"
+    PAID = "PAID"
+    FAILED = "FAILED"
+
+
+class VendorBookingStatus(StrEnum):
+    REQUESTED = "REQUESTED"
+    CONFIRMED = "CONFIRMED"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+
+
+class ImplementationStatus(StrEnum):
+    PLANNED = "PLANNED"
+    SCAFFOLDED = "SCAFFOLDED"
+    IMPLEMENTED = "IMPLEMENTED"
+
