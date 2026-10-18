@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Test / tooling
+.pytest_cache/
+
+# Environment
+.env
+.venv/
+venv/
+
+# Local scratch (Stage 1 extracted materials, not part of the project)
+stage1_report.txt
+stage1_class_diagram_p27.png

@@ -1,0 +1,102 @@
+{
+  "vendors": [
+    {
+      "vendor_id": "V-CAT-001",
+      "name": "Golden Whisker Catering",
+      "service_offerings": [
+        {
+          "offering_id": "V-CAT-001-O1",
+          "service_type": "catering",
+          "service_location": "Melbourne",
+          "guest_capacity": 300,
+          "rating": 4.8,
+          "total_price_cents": 1850000,
+          "availability": [
+            {"date": "2026-12-05", "available": true},
+            {"date": "2026-12-06", "available": true},
+            {"date": "2026-12-07", "available": true}
+          ]
+        },
+        {
+          "offering_id": "V-CAT-001-O2",
+          "service_type": "catering",
+          "service_location": "Geelong",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 980000,
+          "availability": [
+            {"date": "2026-12-05", "available": true},
+            {"date": "2026-12-06", "available": false},
+            {"date": "2026-12-07", "available": true}
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-CAT-002",
+      "name": "Bayside Bite Co",
+      "service_offerings": [
+        {
+          "offering_id": "V-CAT-002-O1",
+          "service_type": "catering",
+          "service_location": "Melbourne",
+          "guest_capacity": 120,
+          "rating": 4.2,
+          "total_price_cents": 620000,
+          "availability": [
+            {"date": "2026-12-05", "available": true},
+            {"date": "2026-12-07", "available": true}
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-PHOTO-001",
+      "name": "Shutter & Frame Photography",
+      "service_offerings": [
+        {
+          "offering_id": "V-PHOTO-001-O1",
+          "service_type": "photography",
+          "service_location": "Melbourne",
+          "guest_capacity": 500,
+          "rating": 4.9,
+          "total_price_cents": 2400000,
+          "availability": [
+            {"date": "2026-12-05", "available": true},
+            {"date": "2026-12-06", "available": true},
+            {"date": "2026-12-07", "available": true}
+          ]
+        },
+        {
+          "offering_id": "V-PHOTO-001-O2",
+          "service_type": "photography",
+          "service_location": "Geelong",
+          "guest_capacity": 250,
+          "rating": 4.6,
+          "total_price_cents": 1500000,
+          "availability": [
+            {"date": "2026-12-05", "available": true}
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-PHOTO-002",
+      "name": "Lumen Lens Studio",
+      "service_offerings": [
+        {
+          "offering_id": "V-PHOTO-002-O1",
+          "service_type": "photography",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 3.9,
+          "total_price_cents": 890000,
+          "availability": [
+            {"date": "2026-12-06", "available": true},
+            {"date": "2026-12-07", "available": false}
+          ]
+        }
+      ]
+    }
+  ]
+}
