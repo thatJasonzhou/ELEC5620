@@ -95,6 +95,61 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 - 查无可用供应商时返回 `blocked`，不能返回空报价列表并声称推荐成功。上面的空列表仅示意结构。
 - Agent 的推荐理由与动作结果保留在结果和日志中；LLM 输出须经字段与业务校验后，再由 Service 保存。
 
+### 5.1 Procurement 推荐接口（KAN-16 已实现，推荐阶段）
+
+上表中 `procurement.recommend_vendors` 一行描述的是**报价阶段**；当前已实现的是**推荐阶段**，入口为
+`VendorProcurementManagerAgent.handle(request)`（agent 标识 `procurement`，实现见
+`src/agents/vendor_procurement_manager.py`）。第 4 节的 `VendorQuotation` 与上表 `quotations` 结构**原样保留**，
+供报价阶段使用；本阶段**不产生** `quotation_id` / `quoted_total_cents`，也不涉及预订与支付。
+
+**输入字段**（request 为 dict）：
+
+| 字段 | 必填 | 类型与约束 | 说明 |
+|---|---|---|---|
+| `event_id` | 是 | 非空字符串 | 活动 ID |
+| `service_type` | 是 | 非空字符串 | 第一轮：`venue` / `catering` / `photography` |
+| `event_date` | 是 | `YYYY-MM-DD` 字符串 | 映射为 Service 的 `date` 参数 |
+| `guest_count` | 是 | 整数，≥0（bool 不接受） | 预计人数 |
+| `location` | 是 | 非空字符串 | 活动城市 |
+| `customer_preferences` | 否 | 字符串 | 软性偏好，仅供 LLM 参考，不参与代码筛选 |
+| `min_rating` | 否 | 数字，0–5（bool、字符串不接受） | 代码侧评分下限筛选 |
+
+**status 规则**：输入缺失/非法 → `needs_input`（不调用 LLM；`event_id` 缺失时信封 `event_id` 为 `null`）；
+无可用候选（筛选无结果，或 `min_rating` 过滤后为空）→ `blocked`（不调用 LLM）；LLM 调用失败或模型输出校验失败 → `error`；
+成功 → `success`，`data` 含 `recommendations`（1–3 条）。
+
+**`data.recommendations` 单项结构**（价格、评分、容量等事实一律从目录回填，不采用模型自述；
+`basis_codes` 已经代码核验，可能为空列表）：
+
+```json
+{
+  "rank": 1,
+  "vendor_id": "V-CAT-002",
+  "offering_id": "V-CAT-002-O1",
+  "vendor_name": "Bayside Bite Co",
+  "service_type": "catering",
+  "service_location": "Melbourne",
+  "guest_capacity": 120,
+  "rating": 4.2,
+  "total_price_cents": 620000,
+  "event_date": "2026-12-05",
+  "basis_codes": ["lowest_price"],
+  "recommendation_reason": "Cheapest catering that fits the venue."
+}
+```
+
+**允许的 basis codes**（闭集，代码侧 `ALLOWED_BASIS_CODES`；每个 code 必须对**当前有效候选集合**复核成立，否则整次结果按 `error` 处理）：
+
+| code | 含义 |
+|---|---|
+| `lowest_price` | 该候选 `total_price_cents` 为当前候选集合中的最低值 |
+| `highest_rating` | 该候选 `rating` 为当前候选集合中的最高值 |
+| `highest_capacity` | 该候选 `guest_capacity` 为当前候选集合中的最大值 |
+
+同一 `(vendor_id, offering_id)` 不得重复推荐；`recommendation_reason` 为自由文本，属于 AI 偏好解释，即使
+basis codes 核验通过也不视为完全事实核验。示例：`py -3 -m examples.vendor_recommendation_example`（默认
+MockLLMClient，输出显式标注 MOCK）。
+
 ## 6. 公共定义放在哪里
 
 建议统一放在 `src/shared/schemas.py`，供各模块导入使用；具体目录若已有约定，沿用现有目录。共享数据由 SQLite 保存，模块经对应 Service 读取和更新。
