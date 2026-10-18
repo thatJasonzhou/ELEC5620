@@ -196,3 +196,273 @@ class TestSchemaLoading:
         assert all(
             isinstance(slot, VendorAvailability) for slot in offering.availability
         )
+
+
+class TestFilterInputValidation:
+    def _kwargs(
+        self,
+        **overrides: Any,
+    ) -> dict[str, Any]:
+        kwargs = {
+            "service_type": "catering",
+            "date": "2026-12-05",
+            "guest_count": 100,
+            "location": "Melbourne",
+        }
+        kwargs.update(overrides)
+        return kwargs
+
+    def test_guest_count_rejects_bool(self, service: VendorProcurementService):
+        with pytest.raises(ValueError, match="guest_count"):
+            service.filter_vendors(**self._kwargs(guest_count=True))
+
+    @pytest.mark.parametrize(
+        "guest_count", ["100", 100.0, None, [100]]
+    )
+    def test_guest_count_rejects_non_int(
+        self, service: VendorProcurementService, guest_count: Any
+    ):
+        with pytest.raises(ValueError, match="guest_count"):
+            service.filter_vendors(**self._kwargs(guest_count=guest_count))
+
+    def test_guest_count_rejects_negative(
+        self, service: VendorProcurementService
+    ):
+        with pytest.raises(ValueError, match="guest_count"):
+            service.filter_vendors(**self._kwargs(guest_count=-1))
+
+    @pytest.mark.parametrize(
+        "date",
+        [
+            "2026/12/05",   # wrong separator
+            "2026-1-5",     # not zero padded
+            "2026-13-05",   # invalid month
+            "2026-02-30",   # not a real calendar date
+            "26-12-05",     # not YYYY
+            "2026-12-05T00:00:00",  # datetime, not date
+            20261205,
+            None,
+            True,
+        ],
+    )
+    def test_date_rejects_invalid(
+        self, service: VendorProcurementService, date: Any
+    ):
+        with pytest.raises(ValueError, match="date"):
+            service.filter_vendors(**self._kwargs(date=date))
+
+    @pytest.mark.parametrize("service_type", ["", "   ", 42, None, 1.5, True])
+    def test_service_type_rejects_empty_or_non_str(
+        self, service: VendorProcurementService, service_type: Any
+    ):
+        with pytest.raises(ValueError, match="service_type"):
+            service.filter_vendors(**self._kwargs(service_type=service_type))
+
+    @pytest.mark.parametrize("location", ["", "   ", 0, None, ["Melbourne"]])
+    def test_location_rejects_empty_or_non_str(
+        self, service: VendorProcurementService, location: Any
+    ):
+        with pytest.raises(ValueError, match="location"):
+            service.filter_vendors(**self._kwargs(location=location))
+
+
+class TestCatalogLoadingValidation:
+    @staticmethod
+    def _write_catalog(tmp_path: Path, payload: Any) -> Path:
+        file = tmp_path / "catalog.json"
+        file.write_text(json.dumps(payload), encoding="utf-8")
+        return file
+
+    @staticmethod
+    def _valid_vendor() -> dict[str, Any]:
+        return {
+            "vendor_id": "V-1",
+            "name": "Valid Vendor",
+            "service_offerings": [
+                {
+                    "offering_id": "V-1-O1",
+                    "service_type": "catering",
+                    "service_location": "Melbourne",
+                    "guest_capacity": 100,
+                    "rating": 4.0,
+                    "total_price_cents": 100000,
+                    "availability": [{"date": "2026-12-05"}],
+                }
+            ],
+        }
+
+    def test_missing_vendors_key_raises(self, tmp_path: Path):
+        file = self._write_catalog(tmp_path, {"catalog": []})
+        with pytest.raises(ValueError, match="'vendors'"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_vendors_not_a_list_raises(self, tmp_path: Path):
+        file = self._write_catalog(tmp_path, {"vendors": "oops"})
+        with pytest.raises(ValueError, match="list of vendors"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_catalog_not_an_object_raises(self, tmp_path: Path):
+        file = self._write_catalog(tmp_path, ["not", "an", "object"])
+        with pytest.raises(ValueError, match="JSON object"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_invalid_json_raises(self, tmp_path: Path):
+        file = tmp_path / "catalog.json"
+        file.write_text("{ not json", encoding="utf-8")
+        with pytest.raises(ValueError, match="invalid JSON"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_string_available_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["availability"] = [
+            {"date": "2026-12-05", "available": "yes"}
+        ]
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="available must be a boolean"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_int_available_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["availability"] = [
+            {"date": "2026-12-05", "available": 1}
+        ]
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="available must be a boolean"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_float_price_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["total_price_cents"] = 100000.0
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="total_price_cents"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_negative_price_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["total_price_cents"] = -5
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="total_price_cents"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_bool_capacity_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["guest_capacity"] = True
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="guest_capacity"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_float_capacity_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["guest_capacity"] = 100.5
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="guest_capacity"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_invalid_availability_date_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["availability"] = [
+            {"date": "2026-02-30"}
+        ]
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="availability.date"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_missing_vendor_id_rejected(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        del vendor["vendor_id"]
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match="vendor_id"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_error_message_includes_file_path(self, tmp_path: Path):
+        vendor = self._valid_vendor()
+        vendor["service_offerings"][0]["total_price_cents"] = 1.5
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        with pytest.raises(ValueError, match=r"catalog\.json"):
+            VendorProcurementService.from_json_file(file)
+
+    def test_valid_catalog_still_loads(self, tmp_path: Path):
+        """Legitimate data (including omitted optional fields) keeps working."""
+        vendor = self._valid_vendor()
+        # Omit 'available' (defaults to True) and add an explicitly
+        # unavailable slot with a real boolean value.
+        vendor["service_offerings"][0]["availability"] = [
+            {"date": "2026-12-05"},
+            {"date": "2026-12-06", "available": False},
+        ]
+        file = self._write_catalog(tmp_path, {"vendors": [vendor]})
+        svc = VendorProcurementService.from_json_file(file)
+        assert len(svc.catalog) == 1
+        results = svc.filter_vendors(
+            service_type="catering",
+            date="2026-12-05",
+            guest_count=50,
+            location="Melbourne",
+        )
+        assert [r["offering_id"] for r in results] == ["V-1-O1"]
+
+
+class TestTieBreakOrdering:
+    def test_same_price_and_rating_orders_by_ids(self, tmp_path: Path):
+        catalog = {
+            "vendors": [
+                {
+                    "vendor_id": "V-B",
+                    "name": "B Vendor",
+                    "service_offerings": [
+                        {
+                            "offering_id": "V-B-O1",
+                            "service_type": "catering",
+                            "service_location": "Melbourne",
+                            "guest_capacity": 200,
+                            "rating": 4.5,
+                            "total_price_cents": 100000,
+                            "availability": [{"date": "2026-12-05"}],
+                        }
+                    ],
+                },
+                {
+                    "vendor_id": "V-A",
+                    "name": "A Vendor",
+                    "service_offerings": [
+                        {
+                            "offering_id": "V-A-O2",
+                            "service_type": "catering",
+                            "service_location": "Melbourne",
+                            "guest_capacity": 200,
+                            "rating": 4.5,
+                            "total_price_cents": 100000,
+                            "availability": [{"date": "2026-12-05"}],
+                        },
+                        {
+                            "offering_id": "V-A-O1",
+                            "service_type": "catering",
+                            "service_location": "Melbourne",
+                            "guest_capacity": 200,
+                            "rating": 4.5,
+                            "total_price_cents": 100000,
+                            "availability": [{"date": "2026-12-05"}],
+                        },
+                    ],
+                },
+            ]
+        }
+        file = tmp_path / "catalog.json"
+        file.write_text(json.dumps(catalog), encoding="utf-8")
+
+        svc = VendorProcurementService.from_json_file(file)
+        results = svc.filter_vendors(
+            service_type="catering",
+            date="2026-12-05",
+            guest_count=50,
+            location="Melbourne",
+        )
+        # All three have identical price and rating, so order is by
+        # (vendor_id, offering_id): V-A-O1, V-A-O2, V-B-O1.
+        assert [
+            (r["vendor_id"], r["offering_id"]) for r in results
+        ] == [
+            ("V-A", "V-A-O1"),
+            ("V-A", "V-A-O2"),
+            ("V-B", "V-B-O1"),
+        ]

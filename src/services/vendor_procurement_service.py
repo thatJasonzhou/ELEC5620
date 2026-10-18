@@ -10,7 +10,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from src.shared.schemas import Vendor, VendorServiceOffering
+from src.shared.schemas import (
+    Vendor,
+    VendorServiceOffering,
+    require_int,
+    require_non_empty_str,
+    require_valid_date,
+)
 
 
 class VendorProcurementService:
@@ -21,8 +27,42 @@ class VendorProcurementService:
 
     @classmethod
     def from_json_file(cls, path: str | Path) -> "VendorProcurementService":
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-        vendors = [Vendor.from_dict(v) for v in data.get("vendors", [])]
+        """Load and strictly validate a vendor catalog JSON file.
+
+        Raises ValueError with the offending path when the file is not a
+        JSON object, the ``vendors`` key is missing, or any vendor,
+        offering or availability slot has an invalid type or value.
+        An empty or malformed catalog is never silently treated as valid.
+        """
+        catalog_path = Path(path)
+        try:
+            data = json.loads(catalog_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"invalid JSON in vendor catalog {catalog_path}: {exc}"
+            ) from exc
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"vendor catalog {catalog_path} must be a JSON object, "
+                f"got {type(data).__name__}"
+            )
+        if "vendors" not in data:
+            raise ValueError(
+                f"vendor catalog {catalog_path} must contain a 'vendors' "
+                "list of vendors"
+            )
+        raw_vendors = data["vendors"]
+        if not isinstance(raw_vendors, list):
+            raise ValueError(
+                f"'vendors' in {catalog_path} must be a list of vendors, "
+                f"got {type(raw_vendors).__name__}"
+            )
+        try:
+            vendors = [Vendor.from_dict(v) for v in raw_vendors]
+        except ValueError as exc:
+            raise ValueError(
+                f"invalid vendor catalog {catalog_path}: {exc}"
+            ) from exc
         return cls(vendors)
 
     @property
@@ -46,25 +86,33 @@ class VendorProcurementService:
         - offering.service_location == location (case-insensitive)
 
         Ordering: (total_price_cents, rating desc, vendor_id, offering_id).
-        """
-        if guest_count < 0:
-            raise ValueError("guest_count must be >= 0")
 
-        wanted_type = service_type.strip().lower()
-        wanted_location = location.strip().lower()
+        Raises ValueError when any argument has a wrong type or value:
+        ``service_type``/``location`` must be non-empty strings, ``date``
+        a real YYYY-MM-DD calendar date, ``guest_count`` a non-negative
+        int (bools and floats rejected).
+        """
+        wanted_type = require_non_empty_str(
+            service_type, "service_type"
+        ).strip().lower()
+        wanted_location = require_non_empty_str(
+            location, "location"
+        ).strip().lower()
+        event_date = require_valid_date(date, "date")
+        guests = require_int(guest_count, "guest_count", minimum=0)
         matches: list[tuple[int, float, str, str, dict[str, Any]]] = []
 
         for vendor in self._catalog:
             for offering in vendor.service_offerings:
                 if offering.service_type.lower() != wanted_type:
                     continue
-                if not offering.is_available_on(date):
+                if not offering.is_available_on(event_date):
                     continue
-                if offering.guest_capacity < guest_count:
+                if offering.guest_capacity < guests:
                     continue
                 if offering.service_location.lower() != wanted_location:
                     continue
-                result = self._to_result(vendor, offering, date)
+                result = self._to_result(vendor, offering, event_date)
                 key = (
                     offering.total_price_cents,
                     -offering.rating,
