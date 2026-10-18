@@ -10,7 +10,7 @@
 
 ### 已确认
 
-1. Supervisor-Worker 架构：Supervisor 负责工作流控制与任务调度，不直接执行业务计算。
+1. Supervisor-Worker 架构：Supervisor 不直接执行业务计算。
 2. 四个业务 Agent（Worker）：Event Planner、Vendor Procurement Manager、Financial Manager、Event Operations。
 3. 保留 Stage 1 已确定的类继承、依赖与组合关系，实现时不擅自调整。
 4. LLM 统一经 Campus Qwen API Proxy 调用；API Key 管理见第 9 节。
@@ -29,7 +29,7 @@
 
 | Agent | Use Case 分工 |
 |---|---|
-| Supervisor | 工作流控制、任务调度、结果校验、跨 Agent 异常升级、流程中止 / 重试决策 |
+| Supervisor |
 | Event Planner | UC1、UC2、UC5、UC6；主导 UC10 |
 | Vendor Procurement Manager | UC3、UC7；参与供应商相关变更与异常处理 |
 | Financial Manager | UC4、UC8、UC13 |
