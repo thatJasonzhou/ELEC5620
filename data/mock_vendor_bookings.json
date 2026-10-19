@@ -1,0 +1,14 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "MOCK-BOOK-CONFIRM-001",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-05",
+      "guest_count": 120,
+      "status": "confirmed",
+      "reason": "MOCK: supplier explicitly confirms this final booking request.",
+      "supplier_confirmation_id": "MOCK-SUPPLIER-CONF-001"
+    }
+  ]
+}

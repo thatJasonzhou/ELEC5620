@@ -189,3 +189,23 @@ class Vendor:
                 VendorServiceOffering.from_dict(offer) for offer in raw_offerings
             ],
         )
+
+
+@dataclass
+class VendorBooking:
+    """Minimal confirmed mock booking handoff (KAN-20), not a full Stage 1 model."""
+
+    event_id: str
+    proposal_id: str
+    booking_id: str
+    quotation_id: str
+    vendor_id: str
+    status: str
+    offering_id: str
+    service_type: str
+    event_date: str
+    guest_count: int
+    quoted_total_cents: int
+    supplier_confirmation_id: str
+    source_quotation_fingerprint: str
+    mock: bool = True
