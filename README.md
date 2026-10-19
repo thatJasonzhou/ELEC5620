@@ -76,6 +76,46 @@ py -3 -m examples.vendor_recommendation_example --live
 py -3 -m pytest tests/unit/ -v
 ```
 
+### 供应商推荐演示页面（KAN-17）
+
+英文 Streamlit 演示页 `ui/vendor_procurement_ui.py`，复用 KAN-15 的
+`VendorProcurementService` 与 KAN-16 的 `VendorProcurementManagerAgent`，
+**默认 Mock 模式**（不发起真实 LLM 调用、无网络依赖），也支持显式切换到
+**Live 模式**（调用学校 Campus Qwen 代理），用于快速演示筛选与推荐流程：
+
+```powershell
+py -3 -m streamlit run ui/vendor_procurement_ui.py
+```
+
+页面行为：
+
+- 表单输入活动日期、城市、人数、服务类型、（可选）最低评分与客户偏好；
+  页面会提示目录中可用的示例日期 / 城市 / 服务类型（从目录动态读取）；
+- 表单上方有 **Mock / Live 模式切换**（单选按钮，**默认 Mock**）：
+  - 切换模式本身只重新渲染页面，**不构造客户端、不调用 LLM 或网络**；
+  - **只有提交表单时才调用 API**（Mock 走确定性构造器，Live 走
+    `CampusQwenClient`）；
+  - Live 模式配置**仅从环境变量读取**（`ELEC5620_LLM_API_KEY` /
+    `ELEC5620_LLM_BASE_URL` / `ELEC5620_LLM_MODEL`，同 KAN-16：
+    `BASE_URL` 须为完整的 `.../v1/chat/completions` 端点，客户端不做
+    拼接），API Key 只提示变量名、永不回显；Live 配置缺失或初始化
+    失败时显示明确的 error 提示，**不静默回退到 Mock**；
+- 提交后先显示确定性筛选出的候选供应商表（LLM 之前，代码筛选）；
+- Mock 推荐由**模拟 LLM**（`MockLLMClient` + 确定性构造器，纯函数实现
+  在 `ui/vendor_ui_helpers.py`）基于当前候选集生成（最高评分 → 最低价
+  → 最高容量，去重后 1–3 条），页面显著标注 MOCK MODE；推荐 ID 与事实
+  均来自当前候选集，无硬编码供应商 ID；
+- 无候选 / 输入错误等状态均有明确提示；每次新提交都会替换上一次结果，
+  失败运行不会残留上一次的正常结果；
+- 不含预订、付款或持久化。
+
+离线 UI 测试（`streamlit.testing.v1.AppTest`，无需浏览器、无网络；
+覆盖正常路径、无候选、结果替换与 Mock/Live 模式切换）：
+
+```powershell
+py -3 -m pytest tests/unit/test_vendor_ui.py -v
+```
+
 ## 目录结构
 
 | 路径 | 说明 |
@@ -91,3 +131,6 @@ py -3 -m pytest tests/unit/ -v
 | `tests/unit/test_llm_mock.py` | LLM 层与 MockLLMClient 行为测试 |
 | `tests/unit/test_campus_qwen_client.py` | 真实客户端的离线测试（mock `urlopen`，无网络）：endpoint/timeout 校验、鉴权、重试与脱敏错误 |
 | `tests/unit/test_vendor_procurement_agent.py` | 推荐 Agent 的输入校验、事实回填与 basis codes 复核测试 |
+| `ui/vendor_procurement_ui.py` | KAN-17 供应商推荐 Streamlit 演示页（默认 Mock，可切换 Live；仅提交表单时调用 API，Live 配置从环境变量读取） |
+| `ui/vendor_ui_helpers.py` | 演示页的 Streamlit 无关辅助模块（确定性 Mock 推荐构造器 `mock_response_from_prompt`），可被单元测试直接导入 |
+| `tests/unit/test_vendor_ui.py` | 演示页离线 UI 测试（AppTest：正常 / 无候选 / 结果替换 / Mock 无硬编码 ID / Mock-Live 模式切换不触发调用） |
