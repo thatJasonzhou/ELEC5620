@@ -4,4 +4,6 @@ from src.services.vendor_quotation_service import MockVendorQuotationService
 
 from src.services.vendor_booking_service import MockVendorBookingService, VendorBookingService
 
-__all__ = ["VendorProcurementService", "MockVendorQuotationService", "MockVendorBookingService", "VendorBookingService"]
+from src.services.procurement_record_service import ProcurementRecordService
+
+__all__ = ["VendorProcurementService", "MockVendorQuotationService", "MockVendorBookingService", "VendorBookingService", "ProcurementRecordService"]

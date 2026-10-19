@@ -130,7 +130,7 @@ become `data.quotations`. `data.supplier_replies` preserves declined,
 pending and unconfigured replies. Missing presets never imply acceptance.
 The quotation price comes from the supplier response, not the catalogue
 estimate or an LLM. This entry point makes no LLM/network calls and does
-not create bookings, collect payments or persist records.
+not create bookings or collect payments. Optional quotation persistence is described under KAN-21.
 
 ```powershell
 py -3 -m examples.vendor_quotation_example
@@ -156,15 +156,61 @@ downstream execution and retains any previously confirmed bookings and the
 paid deposit record for review. No automatic charge, refund or cancellation
 is performed. All external replies and example approval/payment are MOCK.
 
-The booking store is **in memory per Service instance**. Identical retries reuse
-confirmed records in that instance; a process restart loses this protection.
-Shared SQLite persistence, concurrent requests and real payment integration
-remain future integration work. The existing Streamlit page is unchanged.
+Without `record_service`, the booking store remains **in memory per Service instance**.
+KAN-21 adds opt-in SQLite persistence below. Concurrent supplier requests and real
+payment integration remain future work. The existing Streamlit page is unchanged.
 
 ```powershell
 py -3 -m examples.vendor_booking_example
 py -3 -m pytest tests/unit/test_vendor_bookings.py -q
 ```
+
+
+### Procurement SQLite persistence (KAN-21)
+
+`ProcurementRecordService` saves immutable accepted quotation snapshots and
+confirmed mock bookings in SQLite (standard library; no new dependency).
+Use one database path for both dependencies:
+
+```python
+records = ProcurementRecordService.from_env()
+bookings = VendorBookingService(supplier_service, record_service=records)
+agent = VendorProcurementManagerAgent(llm, vendors, quotation_service, bookings,
+                                     record_service=records)
+```
+
+Set `ELEC5620_DB_PATH` to a file path, or use the repository-root default
+`runtime/procurement.sqlite3`. Relative overrides resolve from the working
+directory. Runtime databases and journal files are ignored by Git. Instantiating
+this dependency explicitly enables persistence; existing examples/UI stay in
+memory. Initialization errors raise `ProcurementStorageError` for the application
+entry point to handle. No silent fallback to an empty in-memory database occurs.
+
+Financial can call `records.get_quotations(event_id, proposal_id)`; Operations can
+call `bookings.get_bookings(event_id, proposal_id)`. These return saved records,
+not an assertion that customer approval, budget or payment has been verified.
+All existing booking gates still apply. Recreate Services with the same database
+to reload bookings and avoid re-sending already confirmed supplier requests.
+An existing identity with different contents raises a conflict; use reviewed new
+proposal/quotation identities rather than overwrite history. A quotation batch
+is saved atomically. Rejected/pending replies never become saved quotations or
+confirmed bookings.
+
+This persists Procurement records only: Planning, Financial, approval/payment
+records and whole-workflow progress are not persisted by this change. Callers
+must serialize booking attempts. An external confirmation followed by a failed
+database save is returned as `error`, with confirmation and paid record retained
+in the result for manual review. A crash in that interval can still lose restart
+protection; this is not a distributed exactly-once booking guarantee.
+
+```powershell
+py -3 -m examples.procurement_persistence_example
+py -3 -m pytest tests/unit/test_procurement_persistence.py -q
+```
+
+The offline example uses a temporary SQLite file, recreates its Services, and
+checks that the booking ID survives with zero supplier calls after reload. It
+deletes its temporary database on exit; no live API or payment is used.
 
 ## 目录结构
 
@@ -192,3 +238,6 @@ py -3 -m pytest tests/unit/test_vendor_bookings.py -q
 | `data/mock_vendor_bookings.json` | Explicit final supplier booking preset |
 | `examples/vendor_booking_example.py` | Offline quotation-to-booking example with mock approval/payment |
 | `tests/unit/test_vendor_bookings.py` | Booking gates, final replies, partial results and retry tests |
+| `src/services/procurement_record_service.py` | KAN-21 opt-in SQLite Procurement records |
+| `examples/procurement_persistence_example.py` | Offline save/reload/repeat demonstration |
+| `tests/unit/test_procurement_persistence.py` | Durable records, isolation, conflicts and failure tests |

@@ -186,7 +186,7 @@ MockLLMClient，输出显式标注 MOCK）。
 本轮模拟回复由预设场景决定，不随机、不访问供应商客户端或网络。
 缺少预设使用专门的 `NoQuotationScenarioError`（继承 `ValueError`）表示；
 其他 `ValueError` 不得误判成“供应商尚未回复”。
-本入口不进行付款、预订、档期锁定或持久化；正式预订仍需后续业务步骤。
+本入口不进行付款、预订或档期锁定；可选报价持久化见 §5.4，正式预订仍需后续业务步骤。
 
 离线示例：`py -3 -m examples.vendor_quotation_agent_example`。
 
@@ -231,9 +231,35 @@ MockLLMClient，输出显式标注 MOCK）。
 相同 Service 实例内重复提交已确认报价复用预订，不再次联系对应供应商；
 已有预订的报价内容变化时要求人工处理，不能重新预订覆盖旧记录。
 
-**范围限制**：当前预订记录仅在内存保存，重启后丢失记录及重复保护；
-后续共享 SQLite 集成仍需完成。不包含跨进程/并发保护、真实付款、退款或档期锁定。
+**范围限制**：未注入存储 Service 时仍在内存保存，重启后丢失记录及重复保护；
+可选 SQLite 持久化见 §5.4。不包含跨进程/并发保护、真实付款、退款或档期锁定。
 离线示例：`py -3 -m examples.vendor_booking_example`；审批、预算及付款均明确为模拟输入。
+
+### 5.4 Procurement 可选 SQLite 持久化（KAN-21）
+
+`ProcurementRecordService` 负责采购记录的 SQLite 读写；Agent 不包含 SQL。
+通过 `record_service=records` 分别注入采购 Agent（保存校验后的有效报价）和
+`VendorBookingService`（保存及重新读取已确认预订），两者使用同一数据库文件。
+默认不注入，现有内存示例与页面保持兼容。
+
+- `ProcurementRecordService.from_env()` 读取 `ELEC5620_DB_PATH`；未配置时使用仓库根目录
+  `runtime/procurement.sqlite3`。数据库及临时 journal 不入库，供应商目录仍为 JSON。
+- `records.get_quotations(event_id, proposal_id)` 返回该活动/方案已保存的有效报价；
+  `booking_service.get_bookings(event_id, proposal_id)` 返回已确认预订，供后续模块读取。
+  读取结果不证明审批、预算、支付已通过；执行计划仍须满足 §2/§5.3 的完整前提。
+- 保存报价使用原交接字段；预订使用 §5.3 的 VendorBooking 字段。金额仍为整数澳元分，
+  所有模拟标记保留。没有回复、pending 或 rejected 不会保存成有效报价/已确认预订。
+- 相同记录重复保存复用；相同活动/方案/报价 ID 对应不同内容时拒绝覆盖。
+  报价变更需新方案/报价身份并重新审核，不能改写旧记录；整批报价保存失败时全部回滚。
+- 以同一路径重新创建 Service 后仍能读取记录；相同已确认报价通过原门槛后复用预订，
+  不重复请求供应商。报价内容与既有预订不同仍阻止推进。
+- 初始化或存储失败明确报错，不静默切换到空内存。供应商已确认但保存失败时返回 `error`，
+  输出保留该确认及原支付记录，需在重启前保留结果并人工核对。数据库事务无法与外部回复原子提交。
+
+本轮仅持久化采购报价和已确认预订，不替其他成员保存方案、预算、审批、付款或整条流程状态。
+不支持并发预订协调；调用者应串行提交。进程在供应商确认后、保存前崩溃仍可能失去重复保护，
+不宣称实现真实交易或跨系统“恰好一次”。离线示例使用临时数据库：
+`py -3 -m examples.procurement_persistence_example`。
 
 ## 6. 公共定义放在哪里
 
