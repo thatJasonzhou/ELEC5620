@@ -26,7 +26,8 @@ Scope notes:
   shared-data-and-interfaces.md; request_quotations implements mock enquiries separately.
 - Prices come from the fictional catalog and are whole-event estimates.
   They are never treated as confirmed quotations.
-- No booking, no payment, no persistence, no other Agents.
+- Separate confirm_bookings delegates simulated booking to a Service.
+- No payment processing, database persistence, or other Agents.
 """
 from __future__ import annotations
 
@@ -37,6 +38,7 @@ from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
 from src.services.vendor_procurement_service import VendorProcurementService
 from src.services.vendor_quotation_service import MockVendorQuotationService, NoQuotationScenarioError
+from src.services.vendor_booking_service import VendorBookingService
 from src.shared.schemas import (
     require_int,
     require_non_empty_str,
@@ -105,6 +107,7 @@ class VendorProcurementManagerAgent(AIAgent):
         llm: LLMClient,
         vendor_service: VendorProcurementService,
         quotation_service: MockVendorQuotationService | None = None,
+        booking_service: VendorBookingService | None = None,
     ) -> None:
         super().__init__(llm)
         if not isinstance(vendor_service, VendorProcurementService):
@@ -115,6 +118,9 @@ class VendorProcurementManagerAgent(AIAgent):
         if quotation_service is not None and not isinstance(quotation_service, MockVendorQuotationService):
             raise TypeError("quotation_service must be a MockVendorQuotationService instance")
         self._quotation_service = quotation_service
+        if booking_service is not None and not isinstance(booking_service, VendorBookingService):
+            raise TypeError("booking_service must be a VendorBookingService instance")
+        self._booking_service = booking_service
 
     # ------------------------------------------------------------------
     # Entry point
@@ -306,6 +312,18 @@ class VendorProcurementManagerAgent(AIAgent):
                 "scenario_id": scenario_id, "status": status, "available": expected_available,
                 "quoted_total_cents": cents, "reason": reason}
 
+
+    def confirm_bookings(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Delegate booking gates and domain records to the booking Service."""
+        if not isinstance(request, dict):
+            return self.envelope(None, "error", "request must be a dict")
+        event_id = request.get("event_id")
+        if not isinstance(event_id, str) or not event_id.strip():
+            event_id = None
+        if self._booking_service is None:
+            return self.envelope(event_id, "error", "No booking_service is configured.")
+        result = self._booking_service.confirm_bookings(request)
+        return self.envelope(result["event_id"], result["status"], result["message"], result["data"])
 
     # ------------------------------------------------------------------
     # Input validation

@@ -138,6 +138,34 @@ py -3 -m examples.vendor_quotation_agent_example
 py -3 -m pytest tests/unit/test_vendor_quotation_agent.py tests/unit/test_vendor_quotations.py -q
 ```
 
+### Simulated booking confirmation (KAN-20)
+
+`VendorProcurementManagerAgent.confirm_bookings(request)` delegates to an
+optional fourth constructor dependency, `booking_service=VendorBookingService(...)`.
+Existing two/three-argument construction and recommendation/quotation entries
+remain compatible. Before a supplier call, provide the current selected mock
+quotations, matching approval, Financial budget/deposit requirement, and paid
+mock customer-deposit records. Each handoff record must carry the current
+`quotation_fingerprint`, calculated with the helper in `vendor_booking_service`.
+Financial supplies positive `deposit_due_cents`; Procurement does not calculate
+a deposit rate or process payments. See root contract section 5.3 for fields.
+
+Only a validated final supplier `confirmed` reply creates a `VendorBooking`
+with `status=Confirmed`. A refusal, pending/unconfigured reply or error blocks
+downstream execution and retains any previously confirmed bookings and the
+paid deposit record for review. No automatic charge, refund or cancellation
+is performed. All external replies and example approval/payment are MOCK.
+
+The booking store is **in memory per Service instance**. Identical retries reuse
+confirmed records in that instance; a process restart loses this protection.
+Shared SQLite persistence, concurrent requests and real payment integration
+remain future integration work. The existing Streamlit page is unchanged.
+
+```powershell
+py -3 -m examples.vendor_booking_example
+py -3 -m pytest tests/unit/test_vendor_bookings.py -q
+```
+
 ## 目录结构
 
 | 路径 | 说明 |
@@ -160,3 +188,7 @@ py -3 -m pytest tests/unit/test_vendor_quotation_agent.py tests/unit/test_vendor
 | `data/mock_vendor_quotations.json` | Explicit mock acceptance / rejection / pending presets |
 | `examples/vendor_quotation_agent_example.py` | Offline Agent quotation handoff example |
 | `tests/unit/test_vendor_quotation_agent.py` | Quotation gates, reply validation and compatibility tests |
+| `src/services/vendor_booking_service.py` | KAN-20 mock final replies, gates and memory-only bookings |
+| `data/mock_vendor_bookings.json` | Explicit final supplier booking preset |
+| `examples/vendor_booking_example.py` | Offline quotation-to-booking example with mock approval/payment |
+| `tests/unit/test_vendor_bookings.py` | Booking gates, final replies, partial results and retry tests |

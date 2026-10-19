@@ -190,6 +190,51 @@ MockLLMClient，输出显式标注 MOCK）。
 
 离线示例：`py -3 -m examples.vendor_quotation_agent_example`。
 
+### 5.3 Procurement 模拟正式预订入口（KAN-20）
+
+`VendorProcurementManagerAgent.confirm_bookings(request)` 调用独立
+`VendorBookingService`；构造 Agent 的可选第四参数为 `booking_service`。
+原推荐与询价入口保持不变。`VendorBooking` 在 shared/schemas.py 中是本轮最小模型，
+只按 §4/本节交接，不宣称复现完整 Stage 1 类定义。
+
+**输入**：非空 `event_id`、`proposal_id`；非空 `quotations` 列表（从 §5.2 选定的有效报价）；
+`approval`、`budget`、`deposit` 三条交接记录。每条记录必须具有同一活动和方案的 ID。
+
+- `approval`：`approved`（真正的 bool）、`approved_quotation_ids`（恰好包含此次选定报价，不能重复）。
+- `budget`：`within_budget`（真正的 bool）、正整数分 `deposit_due_cents`。
+  后者由 Financial 根据统一配置提供，本模块不重算费率、不代替财务业务判断。
+- `deposit`：`payment_id`、整数分 `amount_cents`、`status`（`pending`/`paid`/`failed`）、`mock=true`。
+  必须为 `paid` 且实付不少于应付订金才允许发起预订。这是客户付给公司的订金，
+  不代表公司已付款给供应商。
+- **本轮新增联调字段**：三条记录都带 `quotation_fingerprint`，由
+  `src.services.vendor_booking_service.quotation_fingerprint(quotations)` 计算。
+  它关联选定报价的 ID、活动/方案、供应商/服务项、日期、人数、金额；顺序不影响结果。
+  报价变更后，旧预算、批准和付款记录不能直接复用，需重新审核。
+  Financial 和统一前端后续接入时需对齐这些字段；采购 Agent 不生成批准或已支付状态。
+
+审批、预算、付款记录是受信任模块之间的结构化交接；本原型校验其内容和关联，
+尚未通过数据库或支付网关验证记录真实性，不能用于真实交易。
+
+校验门槛全部满足后才请求最终模拟供应商回复。回复为 `confirmed`、`rejected`、`pending`，
+或本地记录 `unconfigured`（没有配置回复）；目录可用、询价 accepted 都不等于最终确认。
+只有 `confirmed` 且回复身份/金额/确认编号有效才创建 `VendorBooking`，状态固定 `Confirmed`。
+除 §4 字段外，预订含 `proposal_id`、`offering_id`、`service_type`、`event_date`、`guest_count`、
+`quoted_total_cents`、`supplier_confirmation_id`、单条报价的 `source_quotation_fingerprint`、`mock=true`。
+
+返回沿用统一 envelope，`data` 含 `bookings`、`supplier_replies`、原样保留的 `customer_payment`
+及 `requires_attention`：缺失/非法输入为 `needs_input`；预算未通过、未批准、未付足订金、
+关联过期或供应商未确认返回 `blocked`；非法回复或接口失败返回 `error`；全部选定预订
+均已确认才返回 `success`。非 success 时不得生成 Operations 执行计划。
+
+如果部分供应商已确认、另一家拒绝或出错，保留已确认记录并阻止整体推进；
+已付订金保留为 paid，标记待处理，不自动退款、再次扣款或伪造取消。
+相同 Service 实例内重复提交已确认报价复用预订，不再次联系对应供应商；
+已有预订的报价内容变化时要求人工处理，不能重新预订覆盖旧记录。
+
+**范围限制**：当前预订记录仅在内存保存，重启后丢失记录及重复保护；
+后续共享 SQLite 集成仍需完成。不包含跨进程/并发保护、真实付款、退款或档期锁定。
+离线示例：`py -3 -m examples.vendor_booking_example`；审批、预算及付款均明确为模拟输入。
+
 ## 6. 公共定义放在哪里
 
 建议统一放在 `src/shared/schemas.py`，供各模块导入使用；具体目录若已有约定，沿用现有目录。共享数据由 SQLite 保存，模块经对应 Service 读取和更新。
