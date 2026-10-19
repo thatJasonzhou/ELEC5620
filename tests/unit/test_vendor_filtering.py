@@ -27,7 +27,7 @@ class TestFilterHappyPath:
             location="Melbourne",
         )
         # V-CAT-002-O1 (120 cap, 620000) and V-CAT-001-O1 (300 cap, 1850000);
-        # V-CAT-001-O2 is Geelong. Sorted by price ascending.
+        # V-CAT-001-O2 is Sydney. Sorted by price ascending.
         assert [r["vendor_id"] for r in results] == ["V-CAT-002", "V-CAT-001"]
         assert results[0]["offering_id"] == "V-CAT-002-O1"
         assert results[0]["total_price_cents"] == 620000
@@ -94,7 +94,7 @@ class TestFilterCriteria:
             service_type="catering",
             date="2026-12-05",
             guest_count=100,
-            location="Geelong",
+            location="Sydney",
         )
         assert [r["offering_id"] for r in results] == ["V-CAT-001-O2"]
 
@@ -112,7 +112,8 @@ class TestFilterCriteria:
             service_type="catering",
             date="2026-12-05",
             guest_count=100,
-            location="Sydney",
+            # Brisbane is not in the catalog (cities: Melbourne, Sydney).
+            location="Brisbane",
         )
         assert results == []
 

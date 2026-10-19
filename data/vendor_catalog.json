@@ -20,7 +20,7 @@
         {
           "offering_id": "V-CAT-001-O2",
           "service_type": "catering",
-          "service_location": "Geelong",
+          "service_location": "Sydney",
           "guest_capacity": 150,
           "rating": 4.5,
           "total_price_cents": 980000,
@@ -70,7 +70,7 @@
         {
           "offering_id": "V-PHOTO-001-O2",
           "service_type": "photography",
-          "service_location": "Geelong",
+          "service_location": "Sydney",
           "guest_capacity": 250,
           "rating": 4.6,
           "total_price_cents": 1500000,
