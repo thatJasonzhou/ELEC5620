@@ -1,6 +1,6 @@
-"""Deterministic mock booking and gated, in-memory procurement Service.
+"""Deterministic mock booking with optional durable Procurement records.
 
-No payment, refund, network call or database write is performed here.
+No payment, refund or network call is performed here. SQLite is opt-in.
 Caller-supplied approval/budget/payment records are trusted internal handoff
 data for this prototype, not evidence authenticated against a payment gateway.
 """
@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.services.procurement_record_service import ProcurementRecordService, ProcurementStorageError
 from src.shared.schemas import VendorBooking, require_int, require_non_empty_str, require_valid_date
 
 
@@ -103,17 +104,37 @@ class MockVendorBookingService:
 
 
 class VendorBookingService:
-    """Validate handoff gates and retain confirmed bookings within this instance."""
+    """Validate handoff gates; optionally reload/save confirmed bookings in SQLite."""
 
-    def __init__(self, supplier_service: MockVendorBookingService) -> None:
+    def __init__(self, supplier_service: MockVendorBookingService, *,
+                 record_service: ProcurementRecordService | None = None) -> None:
         if not isinstance(supplier_service, MockVendorBookingService):
             raise TypeError("supplier_service must be a MockVendorBookingService")
         self.supplier_service = supplier_service
+        if record_service is not None and not isinstance(record_service, ProcurementRecordService):
+            raise TypeError("record_service must be a ProcurementRecordService instance")
+        self._record_service = record_service
         self._bookings: dict[tuple[str, str, str], VendorBooking] = {}
+
+    def _refresh_bookings(self):
+        if self._record_service is not None:
+            for raw in self._record_service.all_bookings():
+                booking = VendorBooking(**raw)
+                key = (booking.event_id, booking.proposal_id, booking.quotation_id)
+                if key in self._bookings and self._bookings[key] != booking:
+                    raise ProcurementStorageError("Stored booking conflicts with a retained confirmation.")
+                self._bookings[key] = booking
 
     @property
     def bookings(self):
+        self._refresh_bookings()
         return [asdict(b) for b in self._bookings.values()]
+
+    def get_bookings(self, event_id: str, proposal_id: str):
+        """Operations handoff read, without sending any supplier request."""
+        _text(event_id, "event_id")
+        _text(proposal_id, "proposal_id")
+        return [b for b in self.bookings if b["event_id"] == event_id and b["proposal_id"] == proposal_id]
 
     def confirm_bookings(self, request: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(request, dict):
@@ -168,6 +189,15 @@ class VendorBookingService:
             return outcome("blocked", "Customer has not approved exactly the selected quotations.")
         if deposit["status"] != "paid" or paid < due:
             return outcome("blocked", "Required simulated deposit has not been paid in full.")
+        try:
+            self._refresh_bookings()
+            if self._record_service is not None:
+                # Retry a failed local save before any new supplier call. Never
+                # discard a confirmation that was retained in this process.
+                for saved in self._bookings.values():
+                    self._record_service.save_booking(asdict(saved))
+        except ProcurementStorageError:
+            return outcome("error", "Cannot load/save confirmed bookings; stop for storage review.")
         for quote in quotes:
             existing = self._bookings.get((event_id, proposal_id, quote["quotation_id"]))
             if existing and existing.source_quotation_fingerprint != quotation_fingerprint([quote]):
@@ -206,6 +236,11 @@ class VendorBookingService:
                 supplier_confirmation_id=reply["supplier_confirmation_id"],
                 source_quotation_fingerprint=quotation_fingerprint([quote]), mock=True,
             )
+            if self._record_service is not None:
+                try:
+                    self._record_service.save_booking(asdict(self._bookings[key]))
+                except ProcurementStorageError:
+                    return outcome("error", "Supplier confirmed but local save failed. Retain this result for manual review before restarting.")
         return outcome("success", "All selected MOCK bookings confirmed. No payment or refund was performed.")
 
     @staticmethod

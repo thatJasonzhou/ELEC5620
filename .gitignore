@@ -13,3 +13,12 @@ venv/
 # Local scratch (Stage 1 extracted materials, not part of the project)
 stage1_report.txt
 stage1_class_diagram_p27.png
+
+# Local SQLite runtime records (including journal sidecars)
+runtime/
+*.sqlite3
+*.sqlite3-*
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*

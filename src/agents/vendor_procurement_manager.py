@@ -27,7 +27,7 @@ Scope notes:
 - Prices come from the fictional catalog and are whole-event estimates.
   They are never treated as confirmed quotations.
 - Separate confirm_bookings delegates simulated booking to a Service.
-- No payment processing, database persistence, or other Agents.
+- Optional persistence is delegated to Services; no direct SQL or payment processing.
 """
 from __future__ import annotations
 
@@ -39,6 +39,7 @@ from src.llm import LLMClient, LLMError
 from src.services.vendor_procurement_service import VendorProcurementService
 from src.services.vendor_quotation_service import MockVendorQuotationService, NoQuotationScenarioError
 from src.services.vendor_booking_service import VendorBookingService
+from src.services.procurement_record_service import ProcurementRecordService, ProcurementStorageError
 from src.shared.schemas import (
     require_int,
     require_non_empty_str,
@@ -108,6 +109,8 @@ class VendorProcurementManagerAgent(AIAgent):
         vendor_service: VendorProcurementService,
         quotation_service: MockVendorQuotationService | None = None,
         booking_service: VendorBookingService | None = None,
+        *,
+        record_service: ProcurementRecordService | None = None,
     ) -> None:
         super().__init__(llm)
         if not isinstance(vendor_service, VendorProcurementService):
@@ -121,6 +124,9 @@ class VendorProcurementManagerAgent(AIAgent):
         if booking_service is not None and not isinstance(booking_service, VendorBookingService):
             raise TypeError("booking_service must be a VendorBookingService instance")
         self._booking_service = booking_service
+        if record_service is not None and not isinstance(record_service, ProcurementRecordService):
+            raise TypeError("record_service must be a ProcurementRecordService instance")
+        self._record_service = record_service
 
     # ------------------------------------------------------------------
     # Entry point
@@ -282,6 +288,11 @@ class VendorProcurementManagerAgent(AIAgent):
             return self.envelope(event_id, "blocked", "No confirmed supplier quotations. "
                                  + (reasons or "No candidates match the request."), data)
         quotations.sort(key=lambda q: (q["quoted_total_cents"], q["vendor_id"], q["offering_id"]))
+        if self._record_service is not None:
+            try:
+                self._record_service.save_quotations(quotations)
+            except (ProcurementStorageError, ValueError, TypeError):
+                return self.envelope(event_id, "error", "Cannot save confirmed quotations; review storage or proposal conflicts.")
         return self.envelope(event_id, "success", f"Returned {len(quotations)} confirmed MOCK quotation(s). "
                              "Other replies may remain pending or declined. No booking or payment was made.", data)
 
