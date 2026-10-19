@@ -23,7 +23,7 @@ Scope notes:
 
 - This is a *recommendation* stage. The later quotation stage uses the
   ``data.quotations`` structure defined in
-  shared-data-and-interfaces.md and is NOT implemented here.
+  shared-data-and-interfaces.md; request_quotations implements mock enquiries separately.
 - Prices come from the fictional catalog and are whole-event estimates.
   They are never treated as confirmed quotations.
 - No booking, no payment, no persistence, no other Agents.
@@ -36,6 +36,7 @@ from typing import Any
 from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
 from src.services.vendor_procurement_service import VendorProcurementService
+from src.services.vendor_quotation_service import MockVendorQuotationService, NoQuotationScenarioError
 from src.shared.schemas import (
     require_int,
     require_non_empty_str,
@@ -103,6 +104,7 @@ class VendorProcurementManagerAgent(AIAgent):
         self,
         llm: LLMClient,
         vendor_service: VendorProcurementService,
+        quotation_service: MockVendorQuotationService | None = None,
     ) -> None:
         super().__init__(llm)
         if not isinstance(vendor_service, VendorProcurementService):
@@ -110,6 +112,9 @@ class VendorProcurementManagerAgent(AIAgent):
                 "vendor_service must be a VendorProcurementService instance"
             )
         self._vendor_service = vendor_service
+        if quotation_service is not None and not isinstance(quotation_service, MockVendorQuotationService):
+            raise TypeError("quotation_service must be a MockVendorQuotationService instance")
+        self._quotation_service = quotation_service
 
     # ------------------------------------------------------------------
     # Entry point
@@ -193,6 +198,114 @@ class VendorProcurementManagerAgent(AIAgent):
         return self.envelope(
             event_id, "success", message, {"recommendations": recommendations}
         )
+
+    def request_quotations(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Collect confirmed mock quotes; never book, pay, or call the LLM.
+
+        This separate entry point leaves ``handle`` recommendations unchanged.
+        Financial handoff requires a concrete event and proposal identifier.
+        """
+        if not isinstance(request, dict):
+            return self.envelope(None, "error", "request must be a dict")
+        event_id, params, errors = self._validate_request(request)
+        try:
+            proposal_id = require_non_empty_str(request.get("proposal_id"), "proposal_id")
+        except ValueError as exc:
+            errors.append(("proposal_id", str(exc)))
+            proposal_id = None
+        if errors:
+            return self.envelope(event_id, "needs_input", "Missing or invalid input fields: "
+                                 + "; ".join(f"{name}: {problem}" for name, problem in errors))
+        if self._quotation_service is None:
+            return self.envelope(event_id, "error", "No quotation_service is configured.")
+
+        try:
+            candidates = self._vendor_service.filter_vendors(
+                service_type=params["service_type"], date=params["event_date"],
+                guest_count=params["guest_count"], location=params["location"],
+            )
+            if params["min_rating"] is not None:
+                candidates = [c for c in candidates if c["rating"] >= params["min_rating"]]
+        except (ValueError, TypeError, KeyError, OSError, RuntimeError):
+            return self.envelope(event_id, "error", "Vendor filtering failed during quotation enquiry.")
+
+        quotations: list[dict[str, Any]] = []
+        replies: list[dict[str, Any]] = []
+        seen_ids: set[str] = set()
+        for candidate in candidates:
+            enquiry = {
+                "event_id": event_id, "proposal_id": proposal_id,
+                "vendor_id": candidate["vendor_id"], "offering_id": candidate["offering_id"],
+                "event_date": params["event_date"], "guest_count": params["guest_count"],
+            }
+            try:
+                raw_reply = self._quotation_service.request_quotation(**enquiry)
+            except NoQuotationScenarioError:
+                replies.append({**enquiry, "mock": True, "status": "unconfigured",
+                                "available": None, "quoted_total_cents": None,
+                                "reason": "No mock reply configured; supplier has not confirmed."})
+                continue
+            except (ValueError, TypeError, KeyError, OSError, RuntimeError):
+                return self.envelope(event_id, "error", "Supplier enquiry failed; no quotations released.")
+            try:
+                reply = self._validate_quotation_reply(raw_reply, enquiry)
+                if reply["quotation_id"] in seen_ids:
+                    raise ValueError("duplicate quotation_id")
+                seen_ids.add(reply["quotation_id"])
+            except (ValueError, TypeError, KeyError):
+                return self.envelope(event_id, "error", "Invalid or mismatched supplier reply; no quotations released.")
+            replies.append(reply)
+            if reply["status"] != "accepted":
+                continue
+            cents = reply["quoted_total_cents"]
+            quotations.append({
+                **enquiry, "quotation_id": reply["quotation_id"],
+                "service_type": candidate["service_type"], "quoted_total_cents": cents,
+                "available": True, "mock": True, "scenario_id": reply["scenario_id"],
+                "recommendation_reason": (
+                    f"MOCK supplier confirmed {candidate['service_type']} in "
+                    f"{candidate['service_location']} on {params['event_date']} for "
+                    f"{params['guest_count']} guests at AUD {cents // 100:,}.{cents % 100:02d}. "
+                    "This price comes from the supplier reply, not the catalogue estimate. "
+                    "No comparative ranking is claimed; this is not a booking."
+                ),
+            })
+        data = {"quotations": quotations, "supplier_replies": replies}
+        if not quotations:
+            reasons = "; ".join(f"{r['vendor_id']}/{r['offering_id']}: {r['reason']}" for r in replies)
+            return self.envelope(event_id, "blocked", "No confirmed supplier quotations. "
+                                 + (reasons or "No candidates match the request."), data)
+        quotations.sort(key=lambda q: (q["quoted_total_cents"], q["vendor_id"], q["offering_id"]))
+        return self.envelope(event_id, "success", f"Returned {len(quotations)} confirmed MOCK quotation(s). "
+                             "Other replies may remain pending or declined. No booking or payment was made.", data)
+
+    @staticmethod
+    def _validate_quotation_reply(raw: Any, enquiry: dict[str, Any]) -> dict[str, Any]:
+        """Check supplier facts before allowing any Financial handoff."""
+        if not isinstance(raw, dict) or raw.get("mock") is not True:
+            raise ValueError("expected an explicitly marked mock supplier reply")
+        for field, expected in enquiry.items():
+            actual = raw.get(field)
+            if type(actual) is not type(expected) or actual != expected:
+                raise ValueError(f"supplier reply does not match {field}")
+        status = raw.get("status")
+        if status not in ("accepted", "rejected", "pending"):
+            raise ValueError("unknown supplier reply status")
+        expected_available = {"accepted": True, "rejected": False, "pending": None}[status]
+        if raw.get("available") is not expected_available:
+            raise ValueError("supplier reply availability contradicts status")
+        quotation_id = require_non_empty_str(raw.get("quotation_id"), "quotation_id")
+        scenario_id = require_non_empty_str(raw.get("scenario_id"), "scenario_id")
+        reason = require_non_empty_str(raw.get("reason"), "reason")
+        cents = raw.get("quoted_total_cents")
+        if status == "accepted":
+            cents = require_int(cents, "quoted_total_cents", minimum=0)
+        elif cents is not None:
+            raise ValueError("unconfirmed supplier reply must not carry an accepted price")
+        return {**enquiry, "mock": True, "quotation_id": quotation_id,
+                "scenario_id": scenario_id, "status": status, "available": expected_available,
+                "quoted_total_cents": cents, "reason": reason}
+
 
     # ------------------------------------------------------------------
     # Input validation

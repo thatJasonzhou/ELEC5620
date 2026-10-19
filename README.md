@@ -116,6 +116,28 @@ py -3 -m streamlit run ui/vendor_procurement_ui.py
 py -3 -m pytest tests/unit/test_vendor_ui.py -v
 ```
 
+### Supplier enquiries and quotations (KAN-19)
+
+`VendorProcurementManagerAgent.request_quotations(request)` is a separate,
+offline quotation entry point. Supply a `MockVendorQuotationService` as
+the optional third constructor argument. The existing recommendation
+`handle(request)`, CLI and Streamlit UI continue to work unchanged.
+
+Provide `event_id`, `proposal_id`, `service_type`, `event_date`,
+`guest_count` and `location`; optional rating/preference fields retain
+their input validation. Only confirmed `accepted` mock supplier replies
+become `data.quotations`. `data.supplier_replies` preserves declined,
+pending and unconfigured replies. Missing presets never imply acceptance.
+The quotation price comes from the supplier response, not the catalogue
+estimate or an LLM. This entry point makes no LLM/network calls and does
+not create bookings, collect payments or persist records.
+
+```powershell
+py -3 -m examples.vendor_quotation_example
+py -3 -m examples.vendor_quotation_agent_example
+py -3 -m pytest tests/unit/test_vendor_quotation_agent.py tests/unit/test_vendor_quotations.py -q
+```
+
 ## 目录结构
 
 | 路径 | 说明 |
@@ -134,3 +156,7 @@ py -3 -m pytest tests/unit/test_vendor_ui.py -v
 | `ui/vendor_procurement_ui.py` | KAN-17 供应商推荐 Streamlit 演示页（默认 Mock，可切换 Live；仅提交表单时调用 API，Live 配置从环境变量读取） |
 | `ui/vendor_ui_helpers.py` | 演示页的 Streamlit 无关辅助模块（确定性 Mock 推荐构造器 `mock_response_from_prompt`），可被单元测试直接导入 |
 | `tests/unit/test_vendor_ui.py` | 演示页离线 UI 测试（AppTest：正常 / 无候选 / 结果替换 / Mock 无硬编码 ID / Mock-Live 模式切换不触发调用） |
+| `src/services/vendor_quotation_service.py` | KAN-19 deterministic simulated supplier replies |
+| `data/mock_vendor_quotations.json` | Explicit mock acceptance / rejection / pending presets |
+| `examples/vendor_quotation_agent_example.py` | Offline Agent quotation handoff example |
+| `tests/unit/test_vendor_quotation_agent.py` | Quotation gates, reply validation and compatibility tests |

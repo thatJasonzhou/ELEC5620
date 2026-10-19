@@ -152,6 +152,44 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 basis codes 核验通过也不视为完全事实核验。示例：`py -3 -m examples.vendor_recommendation_example`（默认
 MockLLMClient，输出显式标注 MOCK）。
 
+### 5.2 Procurement 模拟询价入口（KAN-19）
+
+`VendorProcurementManagerAgent.request_quotations(request)` 是独立报价入口；
+原 `handle(request)` 推荐接口及 §5.1 保持不变。构造 Agent 时可选注入
+`quotation_service=MockVendorQuotationService(...)`；未注入而调用报价入口返回 `error`。
+
+输入沿用 §5.1 的活动/服务字段，并要求非空 `proposal_id`，用于关联交给 Financial 的报价。
+`event_id`、`service_type`、`event_date`、`guest_count`、`location` 同样必填。
+`customer_preferences` 和 `min_rating` 保持可选；此报价入口不调用 LLM，
+偏好文本不用于本轮报价排序，`min_rating` 仍是代码侧筛选条件。
+
+先筛选目录候选，再通过 Service 获取模拟供应商回复；只有 `status=accepted`
+且 `available=true`、请求身份与金额等校验通过的回复，才可进入 `data.quotations`。
+报价价格来自回复 `quoted_total_cents`，不能用目录估价或模型输出代替。
+推荐理由在本入口由已校验事实生成，不继承目录价格比较结论。
+
+每项报价含 §4 的 `event_id`、`proposal_id`、`quotation_id`、`vendor_id`、
+`service_type`、`quoted_total_cents`、`available`、`recommendation_reason`，
+并补充 `offering_id`、`event_date`、`guest_count`、`scenario_id`、`mock=true`。
+`quotation_id` 关联具体活动、方案、服务项、日期和人数，重复相同请求保持确定性。
+
+`data.supplier_replies` 保留各候选的回复及原因：`accepted`、`rejected`、`pending`；
+没有配置模拟回复时记录本地状态 `unconfigured`，这不代表供应商已作出回复。
+未确认记录的 `available` 可为 `null`、金额为 `null`，不能作为报价交给 Financial。
+供应商回复的这些状态与 envelope 四种 `status` 不同。
+
+- 缺少或非法输入：`needs_input`；缺失/非法 `event_id` 时返回 `null`。
+- 无候选，或所有回复均拒绝/未确认/无配置：`blocked`，保留原因与空报价列表。
+- Service 失败、非法回复、请求不匹配或重复报价 ID：`error`，不释放部分报价。
+- 至少一个有效报价：`success`，`data.quotations` 仅含有效报价；其他候选仍可能未确认。
+
+本轮模拟回复由预设场景决定，不随机、不访问供应商客户端或网络。
+缺少预设使用专门的 `NoQuotationScenarioError`（继承 `ValueError`）表示；
+其他 `ValueError` 不得误判成“供应商尚未回复”。
+本入口不进行付款、预订、档期锁定或持久化；正式预订仍需后续业务步骤。
+
+离线示例：`py -3 -m examples.vendor_quotation_agent_example`。
+
 ## 6. 公共定义放在哪里
 
 建议统一放在 `src/shared/schemas.py`，供各模块导入使用；具体目录若已有约定，沿用现有目录。共享数据由 SQLite 保存，模块经对应 Service 读取和更新。
