@@ -101,8 +101,8 @@ class PlannerWorkflowService:
             item["offering_id"] for item in session.get("vendor_recommendations", [])
         }
         selected = list(dict.fromkeys(selected_offering_ids))
-        if not selected:
-            raise ValueError("select at least one vendor option")
+        if len(selected) != 1:
+            raise ValueError("select exactly one vendor option")
         unknown = [item for item in selected if item not in available]
         if unknown:
             raise ValueError(f"unknown offering ids: {', '.join(unknown)}")
@@ -111,7 +111,7 @@ class PlannerWorkflowService:
         session["history"].append(
             {
                 "role": "assistant",
-                "content": "The customer confirmed the selected vendor options.",
+                "content": "The customer confirmed the selected vendor option.",
             }
         )
         self._sessions.save(session)
@@ -119,7 +119,7 @@ class PlannerWorkflowService:
             "event_id": event_id,
             "stage": session["stage"],
             "selected_offering_ids": selected,
-            "message": "Vendor choices confirmed. The event can now move to proposal and quotation preparation.",
+            "message": "Vendor choice confirmed. The event can now move to proposal and quotation preparation.",
         }
     def _find_vendors(
         self, event_id: str, requirements: dict[str, Any]

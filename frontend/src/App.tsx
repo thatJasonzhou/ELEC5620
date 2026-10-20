@@ -89,7 +89,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [llmMode, setLlmMode] = useState<"mock" | "live" | null>(null);
-  const [selectedByService, setSelectedByService] = useState<Record<string, string>>({});
+  const [selectedOfferingId, setSelectedOfferingId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
 
@@ -122,6 +122,9 @@ export default function App() {
   }
 
   function applyResponse(response: PlannerResponse) {
+    if (response.vendor_recommendations.length > 0) {
+      setSelectedOfferingId(null);
+    }
     setEventId(response.event_id);
     setRequirements(response.requirements);
     setProgress(response.progress);
@@ -140,14 +143,12 @@ export default function App() {
     ]);
   }
 
-  async function confirmSelections(recommendations: VendorRecommendation[]) {
-    if (!eventId || confirming) return;
-    const serviceTypes = new Set(recommendations.map((item) => item.service_type));
-    if (Object.keys(selectedByService).length < serviceTypes.size) return;
+  async function confirmSelection() {
+    if (!eventId || !selectedOfferingId || confirming) return;
     setConfirming(true);
     setError(null);
     try {
-      const result = await confirmVendorSelection(eventId, Object.values(selectedByService));
+      const result = await confirmVendorSelection(eventId, [selectedOfferingId]);
       setStage(result.stage);
       setMessages((current) => [
         ...current,
@@ -230,9 +231,9 @@ export default function App() {
               <Message
                 key={message.id}
                 message={message}
-                selectedByService={selectedByService}
-                onSelect={(service, offering) => setSelectedByService((current) => ({ ...current, [service]: offering }))}
-                onConfirm={confirmSelections}
+                selectedOfferingId={selectedOfferingId}
+                onSelect={setSelectedOfferingId}
+                onConfirm={confirmSelection}
                 confirming={confirming}
               />
             ))}
@@ -272,13 +273,13 @@ export default function App() {
 
 interface MessageProps {
   message: ChatMessage;
-  selectedByService: Record<string, string>;
-  onSelect: (service: string, offering: string) => void;
-  onConfirm: (recommendations: VendorRecommendation[]) => void;
+  selectedOfferingId: string | null;
+  onSelect: (offering: string) => void;
+  onConfirm: () => void;
   confirming: boolean;
 }
 
-function Message({ message, selectedByService, onSelect, onConfirm, confirming }: MessageProps) {
+function Message({ message, selectedOfferingId, onSelect, onConfirm, confirming }: MessageProps) {
   const grouped = useMemo(() => {
     const groups: Record<string, VendorRecommendation[]> = {};
     for (const item of message.recommendations || []) {
@@ -287,7 +288,7 @@ function Message({ message, selectedByService, onSelect, onConfirm, confirming }
     return groups;
   }, [message.recommendations]);
   const services = Object.keys(grouped);
-  const readyToConfirm = services.length > 0 && services.every((service) => selectedByService[service]);
+  const readyToConfirm = services.length > 0 && selectedOfferingId !== null;
 
   if (message.role === "user") {
     return <div className="message-row user-row"><div className="bubble user-bubble">{message.text}</div></div>;
@@ -318,13 +319,13 @@ function Message({ message, selectedByService, onSelect, onConfirm, confirming }
             <h3>{service} options</h3>
             <div className="vendor-grid">
               {grouped[service].map((vendor) => {
-                const selected = selectedByService[service] === vendor.offering_id;
+                const selected = selectedOfferingId === vendor.offering_id;
                 return (
                   <button
                     type="button"
                     className={`vendor-card ${selected ? "selected" : ""}`}
                     key={vendor.offering_id}
-                    onClick={() => onSelect(service, vendor.offering_id)}
+                    onClick={() => onSelect(vendor.offering_id)}
                     aria-pressed={selected}
                   >
                     <span className="vendor-card-head"><strong>{vendor.vendor_name}</strong>{selected && <Check size={16} />}</span>
@@ -347,9 +348,9 @@ function Message({ message, selectedByService, onSelect, onConfirm, confirming }
             className="confirm-button"
             type="button"
             disabled={!readyToConfirm || confirming}
-            onClick={() => onConfirm(message.recommendations || [])}
+            onClick={onConfirm}
           >
-            {confirming ? "Confirming…" : "Confirm selected vendors"}
+            {confirming ? "Confirming…" : "Confirm selected vendor"}
           </button>
         )}
       </div>

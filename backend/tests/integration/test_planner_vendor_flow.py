@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from src.agents import EventPlannerAgent, VendorProcurementManagerAgent
 from src.llm import DemoLLMClient
 from src.services.event_session_service import EventSessionService
@@ -48,9 +50,15 @@ def test_multiturn_planner_to_vendor_flow() -> None:
         "procurement",
     ]
 
-    selected = [item["offering_id"] for item in complete["vendor_recommendations"]]
+    selected = [complete["vendor_recommendations"][0]["offering_id"]]
     confirmation = workflow.confirm_vendor_selection(first["event_id"], selected)
     assert confirmation["stage"] == "proposal"
+
+    with pytest.raises(ValueError, match="exactly one"):
+        workflow.confirm_vendor_selection(
+            first["event_id"],
+            [item["offering_id"] for item in complete["vendor_recommendations"]],
+        )
 
 
 def test_complete_requirements_can_return_no_vendor_match() -> None:
