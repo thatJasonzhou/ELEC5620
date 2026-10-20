@@ -1,14 +1,17 @@
 .env
 .venv/
+backend/.venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
-backend/app.db
-node_modules/
+backend/runtime/
+backend/*.sqlite3
+frontend/node_modules/
 frontend/dist/
-.DS_Store
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
 .idea/
-.vscode/
 tmp/
 

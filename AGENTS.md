@@ -1,53 +1,31 @@
-# Instructions for coding agents and contributors
+# ELEC5620 Stage 2 Development Rules
 
-Read this file and all directly relevant files in `docs/` before changing code.
+## Current architecture decisions
 
-## Product boundaries
+- Product: One-Person AI Event Management Company prototype.
+- Frontend: React + TypeScript + Vite.
+- Backend: FastAPI + Python.
+- LLM: OpenAI API through `backend/src/llm/`; never call an LLM directly from React.
+- Storage: SQLite where persistence is implemented; vendor catalogue and mock supplier responses use JSON.
+- Business agents: Event Planner, Vendor Procurement Manager, Financial Manager and Event Operations.
+- There is no independent Orchestrator/Supervisor Agent. Cross-agent coordination is implemented by application workflow/services and must not be presented as a fifth agent.
+- Payment and external supplier systems are simulated for Stage 2.
 
-- The product is the One-Person AI Event Management Company Stage 2 prototype.
-- There are exactly four domain agents:
-  - `EventPlannerAgent`
-  - `VendorProcurementManagerAgent`
-  - `FinancialManagerAgent`
-  - `EventOperationsManagerAgent`
-- Do not add an Orchestrator Agent, Supervisor Agent, or Event Closure Agent.
-- `WorkflowService` is deterministic application code, not an AI agent.
-- Vendor booking and all payments are simulated.
-- AI may interpret, propose, compare, or explain. AI must not perform arithmetic, payment updates, database writes, or state transitions directly.
+These decisions supersede older Stage 1 notes that mention Campus Qwen, Streamlit or an independent Supervisor Agent.
 
-## Change rules
+## Implementation rules
 
-- Preserve the shared names and fields in `docs/DATA_MODELS.md`.
-- Preserve public API contracts unless the task explicitly changes them.
-- Use `eventId`/`event_id` as the identifier connecting modules.
-- Do not place secrets in code, tests, screenshots, or commits.
-- Keep changes inside the assigned module. Shared changes require an explanation in the pull request.
-- Add or update tests for every behavior change.
-- Update the relevant documentation when changing a contract.
+1. Business agents inherit `AIAgent` and return structured envelopes.
+2. Agents use service classes for deterministic business rules and persistence.
+3. LLM transport, model configuration, retries and errors stay inside `backend/src/llm/`.
+4. API and agent data uses snake_case JSON, ISO dates (`YYYY-MM-DD`), 24-hour times (`HH:MM`) and integer AUD cents.
+5. Model output must be validated before it updates event state or reaches another agent.
+6. Never invent vendor availability, price, capacity or ratings; vendor facts come from the catalogue.
+7. API keys are loaded only from environment variables and must never be logged or committed.
 
-## Backend conventions
+## Required checks
 
-- Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.
-- Classes: `PascalCase`; functions and variables: `snake_case`.
-- API schemas belong in `app/schemas`; deterministic logic belongs in `app/services`.
-- Agents coordinate services and produce an `AgentActivity`; they do not duplicate service logic.
-- Raise domain exceptions in services and translate them to HTTP errors in routes.
-- Format and lint with Ruff; test with pytest.
-
-## Frontend conventions
-
-- React with TypeScript and functional components.
-- Components and types: `PascalCase`; functions and variables: `camelCase`.
-- HTTP calls belong in `src/services`, not directly inside presentation components.
-- Reuse shared types and status labels.
-- Format with Prettier and lint with ESLint.
-
-## Required completion checks
-
-- Acceptance criteria are implemented.
-- Normal and exception paths are tested.
-- Backend tests pass.
-- Frontend builds successfully.
-- No shared contract was silently renamed.
-- The Jira key appears in the branch or commit message.
+- Backend: `python -m pytest backend/tests -q`
+- Frontend: `npm run build` from `frontend/`
+- Run both checks before merging a feature branch.
 

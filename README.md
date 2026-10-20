@@ -1,37 +1,30 @@
-# One-Person AI Event Management Company
+# EventPilot — AI Event Management Prototype
 
-Stage 2 prototype for ELEC5620. The system supports one business owner with four AI-assisted domain agents across the event lifecycle.
+EventPilot is the ELEC5620 Stage 2 prototype. A customer describes an event in a React chat interface. The Event Planner Agent extracts structured requirements, asks focused follow-up questions, and sends a complete request to the Vendor Procurement Manager Agent. Matching vendor recommendations are then returned to the customer for confirmation.
 
-## Agreed scope
+## Implemented flow
 
-- Four domain agents only: Planner, Vendor Procurement, Financial, and Operations.
-- No independent Orchestrator Agent. A deterministic `WorkflowService` validates state changes.
-- All 15 use cases have a visible entry or status.
-- The main event flow is runnable end to end.
-- Every major module includes at least one exception path.
-- Vendor and payment integrations are simulated.
-- Agent observations, decisions, and actions are visible in the UI.
+1. Customer enters natural-language event requirements.
+2. Event Planner Agent extracts event type, exact date/time, location, guests, budget and services.
+3. Missing or ambiguous information is requested one item at a time.
+4. Code validates the model output and applies booking gates.
+5. Complete requirements are sent to the imported Vendor Procurement backend.
+6. Vendor candidates are filtered from verified catalogue facts and ranked.
+7. The React interface displays vendor options for customer confirmation.
 
-## Technology
+There is no independent Orchestrator Agent. The planning workflow coordinates calls between the existing business agents.
 
-- Frontend: React, TypeScript, Vite
-- Backend: Python, FastAPI, Pydantic, SQLAlchemy
-- Database: SQLite
-- AI integration: shared `AIService`; mock mode by default and OpenAI Responses API when configured
-- Testing: pytest plus frontend type and production-build checks
-- Collaboration: Jira, GitHub branches, pull requests, and GitHub Actions
-
-## Project structure
+## Repository structure
 
 ```text
-frontend/               React prototype
-backend/app/agents/     Four domain agents
-backend/app/api/        REST endpoints
-backend/app/models/     Shared enums and database entities
-backend/app/schemas/    Shared request and response contracts
-backend/app/services/   Deterministic business and integration services
-backend/tests/          Backend tests
-docs/                   Team standards and architecture contracts
+frontend/             React customer chat interface
+backend/src/agents/   Event Planner and Vendor Procurement agents
+backend/src/services/ workflow, session and procurement services
+backend/src/llm/      OpenAI and clearly marked local demo clients
+backend/src/api/      FastAPI application
+backend/data/         fictional vendor catalogue and mock supplier data
+backend/tests/        unit and integration tests
+docs/                 shared contracts and architecture notes
 ```
 
 ## Run locally
@@ -39,15 +32,21 @@ docs/                   Team standards and architecture contracts
 ### Backend
 
 ```powershell
-cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+python -m pip install -r backend\requirements.txt
+python -m uvicorn src.api.app:app --app-dir backend --reload --port 8000
 ```
 
-Backend API: `http://localhost:8000`  
-Interactive API documentation: `http://localhost:8000/docs`
+The backend starts in `mock` mode so the complete UI can be demonstrated without credentials. To use the real Event Planner model:
+
+```powershell
+$env:PLANNER_LLM_MODE = "live"
+$env:OPENAI_API_KEY = "your-key"
+$env:OPENAI_MODEL = "a-model-available-to-your-project"
+```
+
+Never put the key in React or commit it to GitHub.
 
 ### Frontend
 
@@ -57,28 +56,18 @@ npm install
 npm run dev
 ```
 
-Frontend: `http://localhost:5173`
+Open `http://localhost:5173`.
 
-## AI configuration
+## Demo input
 
-The project runs in mock mode without an API key. To use OpenAI, copy `.env.example` to `.env` and set:
+The imported fictional catalogue currently contains Sydney/Melbourne vendors for 5–7 December 2026 and supports catering and photography. A complete matching example is:
 
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=your_key
-OPENAI_MODEL=a_model_available_to_your_account
-```
+> I need a wedding in Sydney on 5 December 2026 from 3 pm to 9 pm for 80 guests. My budget is $30000 and I need catering and photography.
 
-Never put API keys in frontend code or commit them to GitHub.
+## API
 
-## Team workflow
-
-1. Select a Jira Story.
-2. Create a branch such as `feature/FIN-4-budget-quotation`.
-3. Implement only that Story using the shared contracts.
-4. Add tests and run them locally.
-5. Open a pull request and ask the assigned reviewer.
-6. Merge only after review and passing checks.
-
-Read [AGENTS.md](AGENTS.md) and the files in [docs](docs/) before changing shared code.
+- `GET /api/health`
+- `POST /api/planner/message`
+- `GET /api/events/{event_id}`
+- `POST /api/events/{event_id}/vendor-selection`
 

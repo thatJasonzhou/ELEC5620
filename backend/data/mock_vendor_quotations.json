@@ -1,0 +1,32 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "MOCK-Q-ACCEPT-001",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-05",
+      "guest_count": 120,
+      "reply": "accepted",
+      "reason": "MOCK: Golden Whisker Catering confirms capacity for 120 guests on 2026-12-05 in Melbourne.",
+      "quoted_total_cents": 1850000
+    },
+    {
+      "scenario_id": "MOCK-Q-REJECT-001",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-05",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: Shutter & Frame Photography is already booked for another Sydney event on 2026-12-05."
+    },
+    {
+      "scenario_id": "MOCK-Q-PENDING-001",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-05",
+      "guest_count": 120,
+      "reply": "pending",
+      "reason": "MOCK: Bayside Bite Co has not replied to this quotation request yet; the offer is unconfirmed."
+    }
+  ]
+}
