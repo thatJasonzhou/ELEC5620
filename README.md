@@ -257,10 +257,10 @@ UML 映射、关联限制及待确认项见 [架构记录](docs/architecture.md)
 | 路径 | 说明 |
 |---|---|
 | `data/vendor_catalog.json` | 虚构供应商目录（供应商、服务项目、可用性） |
-| `src/shared/schemas.py` | 供应商模型、`VendorBooking` 及 Financial Foundation 核心模型（非完整 Stage 1 实现） |
+| `src/shared/schemas.py` | `Vendor` / `VendorServiceOffering` / `VendorAvailability`（示例数据结构，非完整 Stage 1 类定义） |
 | `src/services/vendor_procurement_service.py` | `VendorProcurementService`：目录加载与确定性筛选 |
 | `src/llm/` | LLM 包装层：`base`（抽象客户端/错误）、`campus_qwen`（真实代理客户端，已验证）、`mock`（测试/演示用脚本化客户端） |
-| `src/agents/` | `AIAgent` 基类、采购 Agent 与 Financial Foundation Agent（统一信封输出） |
+| `src/agents/` | `AIAgent` 基类、`VendorProcurementManagerAgent` 与 `FinancialManagerAgent`（统一信封输出） |
 | `examples/vendor_filtering_example.py` | KAN-15 独立示例输入与运行入口 |
 | `examples/vendor_recommendation_example.py` | KAN-16 推荐示例（默认 MockLLMClient 标注 MOCK；`--live` 发起一次真实调用，标注 LIVE） |
 | `tests/unit/test_vendor_filtering.py` | 筛选、输入校验与目录加载校验测试 |
@@ -283,4 +283,3 @@ UML 映射、关联限制及待确认项见 [架构记录](docs/architecture.md)
 | `tests/unit/test_procurement_persistence.py` | Durable records, isolation, conflicts and failure tests |
 | `src/services/payment_service.py` | Stage 1 PaymentService 抽象接口，无支付实现 |
 | `tests/unit/test_financial_foundation.py` | 财务继承、基础校验、错误信封与未实现行为测试 |
-| `docs/architecture.md` | Financial 类关系、UML 映射与已知实现限制 |
