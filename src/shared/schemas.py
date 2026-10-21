@@ -18,8 +18,9 @@ being silently coerced.
 from __future__ import annotations
 
 import re
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -209,3 +210,178 @@ class VendorBooking:
     supplier_confirmation_id: str
     source_quotation_fingerprint: str
     mock: bool = True
+
+
+@dataclass
+class Budget:
+    """Financial foundation; values must be supplied, never calculated here.
+
+    UML mapping: budgetId:String -> budget_id:str; eventId:int -> event_id:str.
+    Decimal vendorCost, contingencyAmount, taxAmount and customerPrice map to
+    integer AUD vendor_cost_cents, contingency_amount_cents, tax_amount_cents
+    and customer_price_cents respectively. No Decimal conversion is performed.
+    BudgetStatus is temporarily a non-empty string, without a default.
+
+    UML Event (1) -- Budget (0..1), Budget (1) -- EventProposal (1), and
+    Budget (1) aggregating VendorQuotation (1..*) are not enforced here.
+    No association fields or tax/service-fee rules are invented.
+    """
+
+    budget_id: str
+    event_id: str
+    vendor_cost_cents: int
+    contingency_amount_cents: int
+    tax_amount_cents: int
+    customer_price_cents: int
+    status: str
+
+    def __post_init__(self) -> None:
+        for name in ("budget_id", "event_id", "status"):
+            require_non_empty_str(getattr(self, name), name)
+        for name in ("vendor_cost_cents", "contingency_amount_cents",
+                     "tax_amount_cents", "customer_price_cents"):
+            require_int(getattr(self, name), name)
+
+    def add_vendor_quotation(self, quotation: Any) -> None:
+        """VendorQuotation is an external domain class not implemented yet."""
+        raise NotImplementedError("NOT_IMPLEMENTED: Budget.add_vendor_quotation")
+
+    def calculate_total(self) -> int:
+        """UML calculateTotal():Decimal; future boundary result is AUD cents."""
+        raise NotImplementedError("NOT_IMPLEMENTED: Budget.calculate_total")
+
+    def approve(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: Budget.approve")
+
+    def revise(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: Budget.revise")
+
+
+@dataclass(kw_only=True)
+class Payment(ABC):
+    """Abstract financial record, with no payment processing or transitions.
+
+    UML mapping: paymentId:String -> payment_id:str; eventId:int -> event_id:str;
+    amount:Decimal -> amount_cents:int (AUD, no conversion layer).
+    createdAt/paidAt:DateTime -> created_at/paid_at:datetime;
+    transactionReference:String -> transaction_reference:str.
+    PaymentStatus -> status:str, validated only as a non-empty string.
+    None represents facts that have not occurred; no timestamps are generated.
+    Event (1) -- Payment (0..*) is recorded by event_id, not enforced here.
+    """
+
+    payment_id: str
+    event_id: str
+    amount_cents: int
+    created_at: datetime
+    status: str
+    paid_at: datetime | None = None
+    transaction_reference: str | None = None
+
+    def __post_init__(self) -> None:
+        for name in ("payment_id", "event_id", "status"):
+            require_non_empty_str(getattr(self, name), name)
+        require_int(self.amount_cents, "amount_cents")
+        self._validate_datetime(self.created_at, "created_at")
+        if self.paid_at is not None:
+            self._validate_datetime(self.paid_at, "paid_at")
+        if self.transaction_reference is not None:
+            require_non_empty_str(self.transaction_reference, "transaction_reference")
+
+    @staticmethod
+    def _validate_datetime(value: datetime, name: str) -> None:
+        # Shared handoff conventions require datetime values with a UTC offset.
+        if not isinstance(value, datetime) or value.utcoffset() is None:
+            raise ValueError(f"{name} must be a timezone-aware datetime")
+
+    @abstractmethod
+    def initiate(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: Payment.initiate")
+
+    @abstractmethod
+    def confirm(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: Payment.confirm")
+
+    @abstractmethod
+    def fail(self, reason: str) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: Payment.fail")
+
+
+@dataclass(kw_only=True)
+class CustomerPayment(Payment):
+    """Customer payment data, not a simulated or verified transaction.
+
+    UML customerId:int -> customer_id:str; paymentType:CustomerPaymentType
+    -> payment_type:str (non-empty, no enum/default); dueDate:Date -> due_date:date.
+    Customer (1) -- CustomerPayment (0..*) is not enforced by this model.
+    The pending/paid/failed deposit handoff is NOT mapped to UML Confirmed.
+    """
+
+    customer_id: str
+    payment_type: str
+    due_date: date
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        require_non_empty_str(self.customer_id, "customer_id")
+        require_non_empty_str(self.payment_type, "payment_type")
+        if not isinstance(self.due_date, date) or isinstance(self.due_date, datetime):
+            raise ValueError("due_date must be a date, not a datetime")
+        require_valid_date(self.due_date.isoformat(), "due_date")
+
+    def initiate(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: CustomerPayment.initiate")
+
+    def confirm(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: CustomerPayment.confirm")
+
+    def fail(self, reason: str) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: CustomerPayment.fail")
+
+    def record_payment(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: CustomerPayment.record_payment")
+
+    def verify_amount(self) -> bool:
+        raise NotImplementedError("NOT_IMPLEMENTED: CustomerPayment.verify_amount")
+
+
+@dataclass(kw_only=True)
+class VendorPayment(Payment):
+    """Vendor payment data; no invoice validation or settlement is performed.
+
+    UML vendorId:int -> vendor_id:str; vendorBookingId:int -> vendor_booking_id:str;
+    invoiceNumber:String -> invoice_number:str; approvedAt:DateTime
+    -> approved_at:datetime | None. No approval timestamp is generated.
+    Vendor (1) -- VendorPayment (0..*) and VendorBooking (1) -- VendorPayment
+    (0..1) remain UML relationships; uniqueness is not enforced here.
+    """
+
+    vendor_id: str
+    vendor_booking_id: str
+    invoice_number: str
+    approved_at: datetime | None = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        for name in ("vendor_id", "vendor_booking_id", "invoice_number"):
+            require_non_empty_str(getattr(self, name), name)
+        if self.approved_at is not None:
+            self._validate_datetime(self.approved_at, "approved_at")
+
+    def initiate(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: VendorPayment.initiate")
+
+    def confirm(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: VendorPayment.confirm")
+
+    def fail(self, reason: str) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: VendorPayment.fail")
+
+    def validate_invoice(self) -> bool:
+        raise NotImplementedError("NOT_IMPLEMENTED: VendorPayment.validate_invoice")
+
+    def approve_settlement(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: VendorPayment.approve_settlement")
+
+    def mark_paid(self) -> None:
+        raise NotImplementedError("NOT_IMPLEMENTED: VendorPayment.mark_paid")

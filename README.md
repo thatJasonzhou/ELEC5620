@@ -212,6 +212,46 @@ The offline example uses a temporary SQLite file, recreates its Services, and
 checks that the booking ID survives with zero supplier calls after reload. It
 deletes its temporary database on exit; no live API or payment is used.
 
+## Financial Foundation (KAN-23)
+
+本 Story 只提供 `FinancialManagerAgent(AIAgent)` 骨架、`PaymentService`
+抽象接口，以及公共 `Budget`、抽象 `Payment`、`CustomerPayment`、
+`VendorPayment` 最小模型。复用已有 `envelope()`、LLM 接口和公共校验函数。
+不包含预算计算、客户报价、模拟或真实支付、退款、持久化或 Supervisor 集成。
+
+直接从具体模块导入，不需要修改包级导出：
+
+```python
+from src.agents.financial_manager import FinancialManagerAgent
+from src.services.payment_service import PaymentService
+from src.shared.schemas import Budget, Payment, CustomerPayment, VendorPayment
+```
+
+构造 Agent 需要传入现有 `LLMClient` 和实现完整抽象接口的 `PaymentService`
+子类；本 Story 不提供支付实现，Foundation 本身也不调用这些依赖。
+临时入口是 `handle({"event_id": "EV001", "action": "prepare_budget"})`。
+合法 action 还包括 `update_proposal_cost`、`record_customer_payment`、
+`settle_vendor_payment`、`reconcile_payments`。所有业务方法均抛出
+`NotImplementedError`，Agent 转为包含 `NOT_IMPLEMENTED` 的 `error` 信封，
+不返回虚构的成功结果。缺失或非法外层字段返回 `needs_input`，非 dict 返回 `error`。
+完整业务输入验证尚未实现。
+
+ID 使用字符串、金额使用非负整数澳元分；状态和付款类型必须由调用者提供非空字符串，
+不定义默认业务状态或状态转换。模型使用 Python `date` 和带时区的 `datetime`；
+本 Story 不提供 JSON 序列化或 Decimal 转换层。未发生的付款/批准事实可为 `None`。
+UML 映射、关联限制及待确认项见 [架构记录](docs/architecture.md)。
+
+在仓库根目录使用项目虚拟环境运行（无需激活）：
+
+```powershell
+# Financial 基础测试（离线，不依赖 Streamlit）
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/test_financial_foundation.py -q -p no:cacheprovider
+# 完整单元回归；现有 UI 测试要求环境已安装 Streamlit
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/ -q -p no:cacheprovider
+# 环境缺少 Streamlit 时可单独验证非 UI 回归，不能称作完整测试通过
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/ -q -p no:cacheprovider --ignore=tests/unit/test_vendor_ui.py
+```
+
 ## 目录结构
 
 | 路径 | 说明 |
@@ -220,7 +260,7 @@ deletes its temporary database on exit; no live API or payment is used.
 | `src/shared/schemas.py` | `Vendor` / `VendorServiceOffering` / `VendorAvailability`（示例数据结构，非完整 Stage 1 类定义） |
 | `src/services/vendor_procurement_service.py` | `VendorProcurementService`：目录加载与确定性筛选 |
 | `src/llm/` | LLM 包装层：`base`（抽象客户端/错误）、`campus_qwen`（真实代理客户端，已验证）、`mock`（测试/演示用脚本化客户端） |
-| `src/agents/` | `AIAgent` 基类与 `VendorProcurementManagerAgent`（统一信封输出） |
+| `src/agents/` | `AIAgent` 基类、`VendorProcurementManagerAgent` 与 `FinancialManagerAgent`（统一信封输出） |
 | `examples/vendor_filtering_example.py` | KAN-15 独立示例输入与运行入口 |
 | `examples/vendor_recommendation_example.py` | KAN-16 推荐示例（默认 MockLLMClient 标注 MOCK；`--live` 发起一次真实调用，标注 LIVE） |
 | `tests/unit/test_vendor_filtering.py` | 筛选、输入校验与目录加载校验测试 |
@@ -241,3 +281,5 @@ deletes its temporary database on exit; no live API or payment is used.
 | `src/services/procurement_record_service.py` | KAN-21 opt-in SQLite Procurement records |
 | `examples/procurement_persistence_example.py` | Offline save/reload/repeat demonstration |
 | `tests/unit/test_procurement_persistence.py` | Durable records, isolation, conflicts and failure tests |
+| `src/services/payment_service.py` | Stage 1 PaymentService 抽象接口，无支付实现 |
+| `tests/unit/test_financial_foundation.py` | 财务继承、基础校验、错误信封与未实现行为测试 |
