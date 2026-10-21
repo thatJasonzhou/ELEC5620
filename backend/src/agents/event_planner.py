@@ -215,7 +215,9 @@ class EventPlannerAgent(AIAgent):
                 cleaned = [require_non_empty_str(item, "required_services item").strip().lower() for item in value]
                 result[field] = list(dict.fromkeys(cleaned))
             elif field == "customer_preferences":
-                result[field] = require_non_empty_str(value, field).strip()
+                if not isinstance(value, str):
+                    raise ValueError("customer_preferences must be a string")
+                result[field] = value.strip()
         return result
 
     @staticmethod
