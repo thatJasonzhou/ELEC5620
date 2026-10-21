@@ -214,7 +214,7 @@ class VendorBooking:
 
 @dataclass
 class Budget:
-    """Financial foundation; values must be supplied, never calculated here.
+    """Financial record for GST-inclusive budget calculation.
 
     UML mapping: budgetId:String -> budget_id:str; eventId:int -> event_id:str.
     Decimal vendorCost, contingencyAmount, taxAmount and customerPrice map to
@@ -224,7 +224,7 @@ class Budget:
 
     UML Event (1) -- Budget (0..1), Budget (1) -- EventProposal (1), and
     Budget (1) aggregating VendorQuotation (1..*) are not enforced here.
-    No association fields or tax/service-fee rules are invented.
+    Approved V1 adds service_fee_cents; tax_amount_cents remains a zero placeholder.
     """
 
     budget_id: str
@@ -235,20 +235,59 @@ class Budget:
     customer_price_cents: int
     status: str
 
+    # Company service fee, calculated from selected vendor costs.
+    service_fee_cents: int = 0
+
     def __post_init__(self) -> None:
         for name in ("budget_id", "event_id", "status"):
             require_non_empty_str(getattr(self, name), name)
         for name in ("vendor_cost_cents", "contingency_amount_cents",
-                     "tax_amount_cents", "customer_price_cents"):
+                     "tax_amount_cents", "customer_price_cents", "service_fee_cents"):
             require_int(getattr(self, name), name)
 
     def add_vendor_quotation(self, quotation: Any) -> None:
-        """VendorQuotation is an external domain class not implemented yet."""
-        raise NotImplementedError("NOT_IMPLEMENTED: Budget.add_vendor_quotation")
+        """Aggregate validated mock Procurement snapshots for this event."""
+        from copy import deepcopy
+        if not isinstance(quotation, dict):
+            raise ValueError("quotation must be an object")
+        for name in ("quotation_id", "event_id", "proposal_id", "vendor_id", "offering_id", "service_type"):
+            require_non_empty_str(quotation.get(name), name)
+        require_valid_date(quotation.get("event_date"), "event_date")
+        require_int(quotation.get("guest_count"), "guest_count")
+        require_int(quotation.get("quoted_total_cents"), "quoted_total_cents")
+        if quotation.get("available") is not True or quotation.get("mock") is not True:
+            raise ValueError("quotation must be available and explicitly mock")
+        existing = getattr(self, "_selected_quotations", [])
+        quotes = [*existing, deepcopy(quotation)]
+        if len({q["quotation_id"] for q in quotes}) != len(quotes):
+            raise ValueError("duplicate quotation_id")
+        if len({(q["vendor_id"], q["offering_id"], q["event_date"]) for q in quotes}) != len(quotes):
+            raise ValueError("duplicate selected offering")
+        if quotation["event_id"] != self.event_id:
+            raise ValueError("quotation event_id mismatch")
+        if existing and quotation["proposal_id"] != existing[0]["proposal_id"]:
+            raise ValueError("quotation proposal_id mismatch")
+        self._selected_quotations = quotes
+        self.vendor_cost_cents = sum(q["quoted_total_cents"] for q in quotes)
 
     def calculate_total(self) -> int:
-        """UML calculateTotal():Decimal; future boundary result is AUD cents."""
-        raise NotImplementedError("NOT_IMPLEMENTED: Budget.calculate_total")
+        """Compute independent 10% fees using exact ROUND_HALF_UP cents.
+
+        tax_amount_cents=0 is the approved no-separate-tax-detail placeholder.
+        All costs already include GST; nothing is added for tax.
+        """
+        if not getattr(self, "_selected_quotations", None):
+            raise ValueError("Budget requires selected quotations before calculation")
+        vendor = sum(require_int(q["quoted_total_cents"], "quoted_total_cents")
+                     for q in self._selected_quotations)
+        if type(self.tax_amount_cents) is not int or self.tax_amount_cents != 0:
+            raise ValueError("tax_amount_cents must be the approved zero placeholder")
+        fee = (vendor + 5) // 10
+        self.vendor_cost_cents = vendor
+        self.service_fee_cents = fee
+        self.contingency_amount_cents = fee
+        self.customer_price_cents = vendor + fee + fee
+        return self.customer_price_cents
 
     def approve(self) -> None:
         raise NotImplementedError("NOT_IMPLEMENTED: Budget.approve")

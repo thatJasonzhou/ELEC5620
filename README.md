@@ -214,10 +214,11 @@ deletes its temporary database on exit; no live API or payment is used.
 
 ## Financial Foundation (KAN-23)
 
-本 Story 只提供 `FinancialManagerAgent(AIAgent)` 骨架、`PaymentService`
+本 Story 提供 `FinancialManagerAgent(AIAgent)` 骨架、`PaymentService`
 抽象接口，以及公共 `Budget`、抽象 `Payment`、`CustomerPayment`、
 `VendorPayment` 最小模型。复用已有 `envelope()`、LLM 接口和公共校验函数。
-不包含预算计算、客户报价、模拟或真实支付、退款、持久化或 Supervisor 集成。
+KAN-23 本身不包含预算计算、客户报价、模拟或真实支付、退款、持久化或 Supervisor 集成；
+预算计算与检查现由后续 KAN-24 提供，支付、退款、Financial 持久化和 Supervisor 集成仍未实现。
 
 直接从具体模块导入，不需要修改包级导出：
 
@@ -228,18 +229,20 @@ from src.shared.schemas import Budget, Payment, CustomerPayment, VendorPayment
 ```
 
 构造 Agent 需要传入现有 `LLMClient` 和实现完整抽象接口的 `PaymentService`
-子类；本 Story 不提供支付实现，Foundation 本身也不调用这些依赖。
-临时入口是 `handle({"event_id": "EV001", "action": "prepare_budget"})`。
+子类；本 Story 不提供支付实现，当前预算检查也不调用这些依赖。
+Foundation 定义的入口形式是 `handle({"event_id": "EV001", "action": "prepare_budget"})`；
+KAN-24 已实现 `prepare_budget`，实际预算请求还须提供下节列出的完整业务输入。
 合法 action 还包括 `update_proposal_cost`、`record_customer_payment`、
-`settle_vendor_payment`、`reconcile_payments`。所有业务方法均抛出
+`settle_vendor_payment`、`reconcile_payments`。这些业务方法仍抛出
 `NotImplementedError`，Agent 转为包含 `NOT_IMPLEMENTED` 的 `error` 信封，
 不返回虚构的成功结果。缺失或非法外层字段返回 `needs_input`，非 dict 返回 `error`。
-完整业务输入验证尚未实现。
+预算业务输入验证现由 KAN-24 提供；其他业务流程尚未实现。
 
 ID 使用字符串、金额使用非负整数澳元分；状态和付款类型必须由调用者提供非空字符串，
-不定义默认业务状态或状态转换。模型使用 Python `date` 和带时区的 `datetime`；
+Foundation 不定义默认业务状态或状态转换；KAN-24 创建的预算记录使用 `Calculated`，不代表客户批准。
+模型使用 Python `date` 和带时区的 `datetime`；
 本 Story 不提供 JSON 序列化或 Decimal 转换层。未发生的付款/批准事实可为 `None`。
-UML 映射、关联限制及待确认项见 [架构记录](docs/architecture.md)。
+UML 映射、关联限制及已批准的 KAN-24 Budget 调整见 [架构记录](docs/architecture.md)。
 
 在仓库根目录使用项目虚拟环境运行（无需激活）：
 
@@ -248,8 +251,51 @@ UML 映射、关联限制及待确认项见 [架构记录](docs/architecture.md)
 .\.venv\Scripts\python.exe -B -m pytest tests/unit/test_financial_foundation.py -q -p no:cacheprovider
 # 完整单元回归；现有 UI 测试要求环境已安装 Streamlit
 .\.venv\Scripts\python.exe -B -m pytest tests/unit/ -q -p no:cacheprovider
-# 环境缺少 Streamlit 时可单独验证非 UI 回归，不能称作完整测试通过
+# 仅验证非 UI 回归时使用，不能称作完整测试通过
 .\.venv\Scripts\python.exe -B -m pytest tests/unit/ -q -p no:cacheprovider --ignore=tests/unit/test_vendor_ui.py
+```
+
+## Financial Budget Check V1 (KAN-24)
+
+KAN-24 在 KAN-23 Foundation 基础上新增 UC4 预算计算与检查，保留现有 Agent、
+Budget 和统一响应 envelope。
+
+FinancialManagerAgent.handle() accepts action="prepare_budget", event, proposal,
+quotations and selected_quotation_ids. Budget.calculate_total() owns deterministic
+calculation; it never calls an LLM or payment service. No BudgetService is needed.
+The request carries event_id; event supplies event_id, event_date, guest_count and
+budget_limit_cents; proposal supplies event_id, proposal_id and required_services.
+quotations are Procurement snapshots; selected_quotation_ids explicitly selects
+which quotations contribute to the current proposal's budget.
+
+All prices and budget limits are GST-inclusive. Service fee and contingency are
+each 10% of the selected vendor total, independently ROUND_HALF_UP to integer
+AUD cents. Total is the sum of these three amounts; no GST is added separately.
+The approved tax_amount_cents=0 placeholder means no separate tax breakdown.
+
+Results include amount breakdown, budget_valid, within_budget, over_budget_cents,
+selected IDs and quotation_fingerprint. Equality is within budget. Overruns return
+blocked with complete details. Under the approved Scheme B, Procurement requires
+this complete budget result and checks amount types, selected quote cost sum,
+component totals, budget limit/within_budget consistency, identities, current quote
+fingerprint, customer approval and deposit. It does not construct Budget or
+recalculate the service fee or contingency rates.
+A valid calculation alone does not authorize booking.
+
+Supplier replies still use Procurement Mock scenarios. PaymentService remains
+an abstract dependency; payment, invoice, budget persistence and automatic Planner
+revision are not implemented. Full interface: shared-data-and-interfaces.md sections
+5.3 and 5.5.
+
+KAN-24 example and tests (repository root, existing virtual environment):
+
+```powershell
+.\.venv\Scripts\python.exe -B -m examples.budget_check_example
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/test_budget_check.py tests/unit/test_budget_v1.py -q -p no:cacheprovider
+.\.venv\Scripts\python.exe -B -m pytest tests/integration/test_budget_handoff.py -q -p no:cacheprovider
+.\.venv\Scripts\python.exe -B -m pytest tests/e2e/test_budget_check_cli.py -q -p no:cacheprovider
+# Full regression, including UI tests requiring Streamlit
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q -p no:cacheprovider
 ```
 
 ## 目录结构

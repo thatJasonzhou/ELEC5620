@@ -148,6 +148,8 @@ class VendorBookingService:
             fingerprint = quotation_fingerprint(request.get("quotations"))
             quotes = [_quote(q) for q in request["quotations"]]
             approval, budget, deposit = [self._record(request.get(n), n) for n in ("approval", "budget", "deposit")]
+            if budget.get("budget_valid") is not True or budget.get("price_basis") != "GST-inclusive":
+                raise ValueError("valid GST-inclusive budget required")
             if type(approval.get("approved")) is not bool or type(budget.get("within_budget")) is not bool:
                 raise ValueError("approved and within_budget must be booleans")
             approved_ids = approval.get("approved_quotation_ids")
@@ -185,6 +187,31 @@ class VendorBookingService:
                 return outcome("blocked", "Quotation snapshot changed; fresh budget, approval and payment review required.")
         if not budget["within_budget"]:
             return outcome("blocked", "Budget has not passed Financial review.")
+        try:
+            amounts = {name: require_int(budget.get(name), name) for name in (
+                "vendor_total_cents", "service_fee_cents", "contingency_cents",
+                "tax_amount_cents", "estimated_total_cents", "over_budget_cents")}
+            if amounts["vendor_total_cents"] != sum(q["quoted_total_cents"] for q in quotes):
+                raise ValueError("budget vendor total does not match selected quotations")
+            if amounts["tax_amount_cents"] != 0:
+                raise ValueError("GST-inclusive budget must not add separate tax")
+            total = amounts["estimated_total_cents"]
+            if total != sum(amounts[name] for name in (
+                    "vendor_total_cents", "service_fee_cents", "contingency_cents")):
+                raise ValueError("budget total does not match amount breakdown")
+            limit = require_int(budget.get("budget_limit_cents"), "budget_limit_cents")
+            if amounts["over_budget_cents"] != max(0, total-limit):
+                raise ValueError("invalid budget overrun amount")
+            if budget.get("within_budget") is not (total <= limit):
+                raise ValueError("invalid V1 within_budget")
+            ids = budget.get("selected_quotation_ids")
+            if not isinstance(ids, list) or len(ids) != len(quotes) or set(ids) != {q["quotation_id"] for q in quotes}:
+                raise ValueError("V1 selected quotation mismatch")
+            required = budget.get("required_services")
+            if not isinstance(required, list) or not required or set(required) != {q["service_type"] for q in quotes}:
+                raise ValueError("V1 required service mismatch")
+        except (ValueError, TypeError, KeyError) as exc:
+            return outcome("needs_input", str(exc))
         if not approval["approved"] or set(approved_ids) != {q["quotation_id"] for q in quotes}:
             return outcome("blocked", "Customer has not approved exactly the selected quotations.")
         if deposit["status"] != "paid" or paid < due:

@@ -1,11 +1,8 @@
-"""Financial foundation using the existing AIAgent and response envelope.
+"""Financial Manager UC4 GST-inclusive budget checks.
 
-Temporary request contract: {"event_id": str, "action": str}; Supervisor
-integration is pending. No business payload is validated or executed yet.
-Stage 1 methods map to snake_case below. currentEventId:int is represented by
-the request's string event_id, not a mutable current-event field. financeStatus
-has no approved default/state rules and is not fabricated. The shared AIAgent
-still lacks UML state/goal and perceive/reason/act/communicate; it is unchanged.
+Structured requests select quotations for the current proposal. Budget owns
+exact monetary calculation; this Agent validates inputs and returns envelopes.
+Payment workflows remain separate and unimplemented.
 """
 from __future__ import annotations
 
@@ -14,13 +11,15 @@ from typing import Any
 from src.agents.base import AIAgent
 from src.llm import LLMClient
 from src.services.payment_service import PaymentService
+from src.services.vendor_booking_service import quotation_fingerprint
 from src.shared.schemas import (
     Budget, CustomerPayment, VendorBooking, VendorPayment, require_non_empty_str,
+    require_int, require_valid_date,
 )
 
 
 class FinancialManagerAgent(AIAgent):
-    """Financial entry point; every business operation is explicitly unfinished."""
+    """V1 budget checks; payment workflows remain unfinished."""
 
     agent_name = "finance"
     _ACTIONS = (
@@ -47,10 +46,11 @@ class FinancialManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
 
         try:
-            # Validate only the temporary outer contract. Missing business
-            # objects are not constructed or treated as validated input.
+            # Budget V1 is approved; other workflows stay unfinished.
             if action == "prepare_budget":
-                self.prepare_budget(request.get("event"), request.get("quotations"))
+                result = self._check_budget(request)
+                result["data"].setdefault("budget_valid", False)
+                return result
             elif action == "update_proposal_cost":
                 self.update_proposal_cost(request.get("proposal"), request.get("budget"))
             elif action == "record_customer_payment":
@@ -61,12 +61,96 @@ class FinancialManagerAgent(AIAgent):
                 self.reconcile_payments(event_id)
         except NotImplementedError as exc:
             return self.envelope(event_id, "error", str(exc))
-        # Never release a successful workflow result from the foundation.
+        # Other financial workflows are not implemented.
         return self.envelope(event_id, "error", "NOT_IMPLEMENTED: Financial workflow")
 
     def prepare_budget(self, event: Any, quotations: list[Any]) -> Budget:
-        """UML prepareBudget(Event, List<VendorQuotation>):Budget."""
-        raise NotImplementedError("NOT_IMPLEMENTED: FinancialManagerAgent.prepare_budget")
+        """Prepare a Budget from the current event and selected quotations."""
+        if not isinstance(event, dict):
+            raise ValueError("event must be an object")
+        fingerprint = quotation_fingerprint(quotations)
+        budget = Budget(budget_id="B-" + fingerprint,
+            event_id=require_non_empty_str(event.get("event_id"), "event_id"),
+            vendor_cost_cents=0, contingency_amount_cents=0, tax_amount_cents=0,
+            customer_price_cents=0, status="Calculated")
+        for quote in quotations:
+            budget.add_vendor_quotation(quote)
+        budget.calculate_total()
+        return budget
+
+    def _check_budget(self, request: dict[str, Any]) -> dict[str, Any]:
+        event_id = request["event_id"]
+        try:
+            event, proposal = request.get("event"), request.get("proposal")
+            if not isinstance(event, dict) or not isinstance(proposal, dict):
+                raise ValueError("event and proposal must be objects")
+            proposal_id = require_non_empty_str(proposal.get("proposal_id"), "proposal_id")
+            if event.get("event_id") != event_id or proposal.get("event_id") != event_id:
+                raise ValueError("event_id mismatch")
+            limit = require_int(event.get("budget_limit_cents"), "budget_limit_cents")
+            date = require_valid_date(event.get("event_date"), "event_date")
+            guests = require_int(event.get("guest_count"), "guest_count")
+            required = proposal.get("required_services")
+            if not isinstance(required, list) or not required:
+                raise ValueError("required_services must be a non-empty list")
+            for service in required:
+                require_non_empty_str(service, "required_services item")
+            if len(set(required)) != len(required):
+                raise ValueError("duplicate required_services")
+            quotes = request.get("quotations")
+            selected = request.get("selected_quotation_ids")
+            if not isinstance(quotes, list):
+                raise ValueError("quotations must be a list")
+            if not isinstance(selected, list) or not selected:
+                raise ValueError("selected_quotation_ids must be a non-empty list")
+            for identity in selected:
+                require_non_empty_str(identity, "selected_quotation_ids item")
+            if len(set(selected)) != len(selected):
+                raise ValueError("duplicate selected quotation ID")
+        except ValueError as exc:
+            return self.envelope(event_id, "needs_input", str(exc))
+        try:
+            index = {}
+            for quote in quotes:
+                if not isinstance(quote, dict):
+                    raise ValueError("quotation must be an object")
+                identity = require_non_empty_str(quote.get("quotation_id"), "quotation_id")
+                if identity in index:
+                    raise ValueError("duplicate quotation_id")
+                index[identity] = quote
+            if any(identity not in index for identity in selected):
+                return self.envelope(event_id, "blocked", "Selected quotation is missing; request current quotations.")
+            chosen = [index[identity] for identity in selected]
+            fingerprint = quotation_fingerprint(chosen)
+            for quote in chosen:
+                if quote["event_id"] != event_id or quote["proposal_id"] != proposal_id:
+                    raise ValueError("selected quotation event_id/proposal_id mismatch")
+                if quote["event_date"] != date or quote["guest_count"] != guests:
+                    raise ValueError("selected quotation date/guest_count mismatch")
+                if quote["service_type"] not in required:
+                    raise ValueError("selected quotation service is not required")
+            missing = set(required) - {q["service_type"] for q in chosen}
+            if missing:
+                return self.envelope(event_id, "blocked", "Missing required services: " + ", ".join(sorted(missing)))
+            budget = self.prepare_budget(event, chosen)
+        except (ValueError, KeyError, TypeError) as exc:
+            return self.envelope(event_id, "error", str(exc))
+        total = budget.customer_price_cents
+        data = {
+            "event_id": event_id, "proposal_id": proposal_id,
+            "vendor_total_cents": budget.vendor_cost_cents,
+            "service_fee_cents": budget.service_fee_cents,
+            "contingency_cents": budget.contingency_amount_cents,
+            "tax_amount_cents": budget.tax_amount_cents,
+            "estimated_total_cents": total, "budget_limit_cents": limit,
+            "within_budget": total <= limit, "over_budget_cents": max(0, total - limit),
+            "quotation_fingerprint": fingerprint, "selected_quotation_ids": list(selected),
+            "budget_valid": True, "price_basis": "GST-inclusive",
+            "required_services": list(required),
+        }
+        return self.envelope(event_id, "success" if total <= limit else "blocked",
+                             "GST-inclusive budget check. "
+                             + ("Within budget." if total <= limit else "Over budget; Supervisor must coordinate revision."), data)
 
     def update_proposal_cost(self, proposal: Any, budget: Budget) -> None:
         """UML updateProposalCost(EventProposal, Budget):void."""

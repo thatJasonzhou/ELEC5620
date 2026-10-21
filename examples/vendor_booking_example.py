@@ -3,6 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 import json
 
+from examples.budget_check_example import check_budget
 from src.agents.vendor_procurement_manager import VendorProcurementManagerAgent
 from src.llm import MockLLMClient
 from src.services.vendor_procurement_service import VendorProcurementService
@@ -27,9 +28,9 @@ def main():
     linkage = {"event_id": "EV001", "proposal_id": "P1", "quotation_fingerprint": quotation_fingerprint(quotations)}
     item = {"event_id": "EV001", "proposal_id": "P1", "quotations": quotations,
             "approval": {**linkage, "approved": True, "approved_quotation_ids": [q["quotation_id"] for q in quotations]},
-            "budget": {**linkage, "within_budget": True, "deposit_due_cents": 555000},
+            "budget": {**check_budget(quotations, 100000000)["data"], "deposit_due_cents": 555000},
             "deposit": {**linkage, "payment_id": "MOCK-PAY1", "amount_cents": 555000, "status": "paid", "mock": True}}
-    print("MOCK ONLY: approval, Financial review, payment and supplier replies are fixtures.")
+    print("MOCK ONLY: approval, payment and supplier replies are fixtures; Financial calculates the budget.")
     print("Memory-only booking store; restarts lose repeat protection. No charge/refund is made.")
     unpaid = deepcopy(item)
     unpaid["deposit"]["status"] = "pending"
