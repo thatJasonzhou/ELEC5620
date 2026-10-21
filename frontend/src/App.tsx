@@ -8,6 +8,7 @@ import {
   Database,
   LoaderCircle,
   MapPin,
+  Plus,
   Send,
   Sparkles,
   Star,
@@ -161,6 +162,25 @@ export default function App() {
     }
   }
 
+  function startNewEvent() {
+    setEventId(null);
+    setInput("");
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        text: "Hi! Please tell me what kind of event you would like to plan.",
+      },
+    ]);
+    setRequirements({});
+    setProgress(initialProgress);
+    setStage("requirements");
+    setDetailsOpen(false);
+    setError(null);
+    setLlmMode(null);
+    setSelectedOfferingId(null);
+  }
+
   return (
     <main className="app-page">
       <section className="app-shell" aria-label="EventPilot event planning application">
@@ -223,7 +243,20 @@ export default function App() {
           <header className="chat-header">
             <span className="agent-avatar"><Bot size={20} /></span>
             <div><strong>Event Planner Agent</strong><small><span className="online-dot" />Ready to help</small></div>
-            {llmMode && <span className="mode-label">{llmMode === "live" ? "LIVE AI" : "DEMO MODE"}</span>}
+            <div className="header-actions">
+              {llmMode && <span className="mode-label">{llmMode === "live" ? "LIVE AI" : "DEMO MODE"}</span>}
+              <button
+                className="new-event-button"
+                type="button"
+                aria-label="Start a new event"
+                title="New Event"
+                onClick={startNewEvent}
+                disabled={loading || confirming}
+              >
+                <Plus size={14} />
+                <span>New Event</span>
+              </button>
+            </div>
           </header>
 
           <div className="messages" ref={messagesRef} aria-live="polite">
