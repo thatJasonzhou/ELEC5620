@@ -2,6 +2,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from examples.budget_check_example import check_budget
 from src.agents.vendor_procurement_manager import VendorProcurementManagerAgent
 from src.llm import MockLLMClient
 from src.services.procurement_record_service import ProcurementRecordService
@@ -35,7 +36,7 @@ def main():
         link = {"event_id": "EV001", "proposal_id": "P1", "quotation_fingerprint": quotation_fingerprint(quotes)}
         request = {"event_id": "EV001", "proposal_id": "P1", "quotations": quotes,
             "approval": {**link, "approved": True, "approved_quotation_ids": [q["quotation_id"] for q in quotes]},
-            "budget": {**link, "within_budget": True, "deposit_due_cents": 555000},
+            "budget": {**check_budget(quotes, 100000000)["data"], "deposit_due_cents": 555000},
             "deposit": {**link, "payment_id": "MOCK-PAY1", "amount_cents": 555000, "status": "paid", "mock": True}}
         first = agent.confirm_bookings(request)
         assert first["status"] == "success", first["message"]

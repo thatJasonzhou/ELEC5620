@@ -40,12 +40,20 @@ def scenario(q=None, confirmation="CONF1", status="confirmed"):
 
 
 def request(quotes=None):
+    # Static handoff charges; persistence tests do not execute financial policy.
     quotes = quotes if quotes is not None else [quote()]
     link = {"event_id": quotes[0]["event_id"], "proposal_id": quotes[0]["proposal_id"],
             "quotation_fingerprint": quotation_fingerprint(quotes)}
     return {"event_id": link["event_id"], "proposal_id": link["proposal_id"], "quotations": quotes,
             "approval": {**link, "approved": True, "approved_quotation_ids": [q["quotation_id"] for q in quotes]},
-            "budget": {**link, "within_budget": True, "deposit_due_cents": 555000},
+            "budget": {**link, "budget_valid": True, "price_basis": "GST-inclusive",
+                "vendor_total_cents": sum(q["quoted_total_cents"] for q in quotes),
+                "service_fee_cents": 185000, "contingency_cents": 185000, "tax_amount_cents": 0,
+                "estimated_total_cents": sum(q["quoted_total_cents"] for q in quotes) + 370000,
+                "budget_limit_cents": 100000000, "within_budget": True, "over_budget_cents": 0,
+                "selected_quotation_ids": [q["quotation_id"] for q in quotes],
+                "required_services": list(dict.fromkeys(q["service_type"] for q in quotes)),
+                "deposit_due_cents": 555000},
             "deposit": {**link, "payment_id": "MOCK-PAY", "amount_cents": 555000, "status": "paid", "mock": True}}
 
 

@@ -28,17 +28,59 @@ def scenario(q=None, status="confirmed", confirmation="CONF1"):
 
 
 def request(quotations=None):
+    # Fixed handoff charges, independent of Financial policy execution.
     quotations = quotations if quotations is not None else [quote()]
     reference = {"event_id": "EV001", "proposal_id": "P1", "quotation_fingerprint": quotation_fingerprint(quotations)}
     return {"event_id": "EV001", "proposal_id": "P1", "quotations": quotations,
             "approval": {**reference, "approved": True, "approved_quotation_ids": [q["quotation_id"] for q in quotations]},
-            "budget": {**reference, "within_budget": True, "deposit_due_cents": 555000},
+            "budget": {**reference, "budget_valid": True, "price_basis": "GST-inclusive",
+                "vendor_total_cents": sum(q["quoted_total_cents"] for q in quotations),
+                "service_fee_cents": 185000, "contingency_cents": 185000, "tax_amount_cents": 0,
+                "estimated_total_cents": sum(q["quoted_total_cents"] for q in quotations) + 370000,
+                "budget_limit_cents": 100000000, "within_budget": True, "over_budget_cents": 0,
+                "selected_quotation_ids": [q["quotation_id"] for q in quotations],
+                "required_services": list(dict.fromkeys(q["service_type"] for q in quotations)),
+                "deposit_due_cents": 555000},
             "deposit": {**reference, "payment_id": "PAY1", "amount_cents": 555000, "status": "paid", "mock": True}}
 
 
 def service(status="confirmed"):
     supplier = MockVendorBookingService([scenario(status=status)])
     return VendorBookingService(supplier), supplier
+
+
+@pytest.mark.parametrize("field", ["vendor_total_cents", "service_fee_cents", "contingency_cents",
+    "tax_amount_cents", "estimated_total_cents", "over_budget_cents", "budget_limit_cents"])
+@pytest.mark.parametrize("value", [True, 1.5, "100", -1, None])
+def test_budget_amounts_must_be_nonnegative_integer_cents(field, value):
+    item = request()
+    item["budget"][field] = value
+    booking, supplier = service()
+    assert booking.confirm_bookings(item)["status"] == "needs_input"
+    assert not supplier.calls
+
+
+@pytest.mark.parametrize("field,value", [("vendor_total_cents", 1), ("service_fee_cents", 1),
+    ("tax_amount_cents", 1), ("over_budget_cents", 1), ("budget_limit_cents", 1)])
+def test_inconsistent_budget_cannot_authorize_booking(field, value):
+    item = request()
+    item["budget"][field] = value
+    booking, supplier = service()
+    assert booking.confirm_bookings(item)["status"] == "needs_input"
+    assert not supplier.calls
+
+
+def test_procurement_checks_consistency_without_applying_financial_rates(monkeypatch):
+    from src.shared.schemas import Budget
+    def no_calculation(*args):
+        pytest.fail("Procurement must not recalculate Financial rates")
+    monkeypatch.setattr(Budget, "calculate_total", no_calculation)
+    item = request()
+    item["budget"]["service_fee_cents"] += 1
+    item["budget"]["estimated_total_cents"] += 1
+    booking, supplier = service()
+    assert booking.confirm_bookings(item)["status"] == "success"
+    assert len(supplier.calls) == 1
 
 
 def test_confirmation_creates_booking_and_preserves_payment():

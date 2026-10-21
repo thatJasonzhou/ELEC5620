@@ -1,4 +1,4 @@
-"""Offline financial skeleton contracts; no budget or payment implementation."""
+"""Financial model contracts, input validation and unimplemented payment operations."""
 from copy import deepcopy
 from dataclasses import asdict
 from datetime import date, datetime, timezone
@@ -22,7 +22,7 @@ NOW = datetime(2026, 10, 21, 0, 0, tzinfo=timezone.utc)
 
 
 class UnusedPaymentService(PaymentService):
-    """Test-only tripwire: the foundation must not call a payment provider."""
+    """Tripwire dependency: budget checks must not call a payment provider."""
 
     def process_payment(self, payment):
         pytest.fail("Foundation called process_payment")
@@ -102,8 +102,13 @@ def test_legal_actions_return_error_without_side_effects(worker, action):
     result = worker.handle(request)
     assert set(result) == {"event_id", "agent", "timestamp", "status", "message", "data"}
     assert result["event_id"] == "EV1" and result["agent"] == "finance"
-    assert result["status"] == "error" and "NOT_IMPLEMENTED" in result["message"]
-    assert result["data"] == {} and request == before and not worker.llm.calls
+    if action == "prepare_budget":
+        assert result["status"] == "needs_input" and "event and proposal" in result["message"]
+        assert result["data"] == {"budget_valid": False}
+    else:
+        assert result["status"] == "error" and "NOT_IMPLEMENTED" in result["message"]
+        assert result["data"] == {}
+    assert request == before and not worker.llm.calls
     assert datetime.fromisoformat(result["timestamp"]).utcoffset() is not None
 
 
@@ -133,7 +138,7 @@ def test_non_object_request_errors(worker, payload):
     ("reconcile_payments", ("EV1",)),
 ])
 def test_direct_agent_business_methods_are_unimplemented(worker, name, args):
-    with pytest.raises(NotImplementedError, match="NOT_IMPLEMENTED"):
+    with pytest.raises(ValueError if name == "prepare_budget" else NotImplementedError):
         getattr(worker, name)(*args)
 
 
@@ -197,7 +202,7 @@ def test_domain_methods_raise_without_mutating_records(factory, methods):
     record = factory()
     before = asdict(record)
     for name, args in methods:
-        with pytest.raises(NotImplementedError, match="NOT_IMPLEMENTED"):
+        with pytest.raises(ValueError if factory is budget and name in ("add_vendor_quotation", "calculate_total") else NotImplementedError):
             getattr(record, name)(*args)
         assert asdict(record) == before
 

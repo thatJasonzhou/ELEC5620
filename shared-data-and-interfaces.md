@@ -202,7 +202,9 @@ MockLLMClient，输出显式标注 MOCK）。
 
 - `approval`：`approved`（真正的 bool）、`approved_quotation_ids`（恰好包含此次选定报价，不能重复）。
 - `budget`：`within_budget`（真正的 bool）、正整数分 `deposit_due_cents`。
-  后者由 Financial 根据统一配置提供，本模块不重算费率、不代替财务业务判断。
+  还须包含 §5.5 的有效预算结果：`budget_valid=true`、含税口径、金额明细、预算上限、
+  超出差额、选定报价 ID、必需服务及报价指纹。订金要求由独立财务交接提供；UC4 不计算订金。
+  Procurement 只校验交接一致性，不重新计算服务费或预备金费率，不创建 Budget 对象。
 - `deposit`：`payment_id`、整数分 `amount_cents`、`status`（`pending`/`paid`/`failed`）、`mock=true`。
   必须为 `paid` 且实付不少于应付订金才允许发起预订。这是客户付给公司的订金，
   不代表公司已付款给供应商。
@@ -260,6 +262,60 @@ MockLLMClient，输出显式标注 MOCK）。
 不支持并发预订协调；调用者应串行提交。进程在供应商确认后、保存前崩溃仍可能失去重复保护，
 不宣称实现真实交易或跨系统“恰好一次”。离线示例使用临时数据库：
 `py -3 -m examples.procurement_persistence_example`。
+
+### 5.5 Financial Budget Check V1
+
+Entry: FinancialManagerAgent.handle(request), action="prepare_budget".
+There is one budget calculation interface with fixed approved financial rules.
+
+Input:
+
+- event_id: nonempty string.
+- event: event_id, event_date, guest_count, budget_limit_cents.
+- proposal: event_id, proposal_id, nonempty unique required_services.
+- quotations: Procurement section 5.2 quotation snapshots.
+- selected_quotation_ids: explicit nonempty unique selection from quotations.
+
+Only selected quotes count. Distinct offerings may serve one service. Duplicate
+IDs or supplier/offering/date selections are rejected. Event/proposal identity,
+date/headcount, available=true, mock=true and required-service coverage are checked.
+Mock is a supplier-source fact, not a different financial calculation mode.
+All amounts are nonnegative integer AUD cents; bool, float and strings are invalid.
+
+Prices and budget limits include GST. Each of service fee and contingency is 10%
+of vendor_total_cents, independently ROUND_HALF_UP to cents. The three amounts
+sum to estimated_total_cents. No GST is inferred or added. tax_amount_cents=0 is
+the approved no-separate-tax-detail placeholder, not a statement of zero GST.
+Budget.calculate_total() owns calculation with the approved service_fee_cents field.
+
+Output: common envelope; data directly contains all section 4 budget fields plus
+budget_valid, price_basis="GST-inclusive", tax_amount_cents=0, budget_limit_cents,
+over_budget_cents=max(0,total-limit), selected_quotation_ids, required_services and
+quotation_fingerprint. Budget validity means complete validated calculation, not
+customer approval or deposit payment.
+
+At/below limit returns success. Over budget returns blocked with complete amounts,
+budget_valid=true and within_budget=false. Missing/invalid request data returns
+needs_input; missing selected quotes or services returns blocked; invalid, duplicate
+or mismatched quotes return error. Incomplete calculations have budget_valid=false.
+
+Procurement always requires the complete budget result and verifies handoff consistency,
+selection, coverage and current quotation fingerprint. Existing customer approval,
+positive deposit requirement, paid deposit and identity gates remain mandatory.
+The separately supplied deposit_due_cents is still required by section 5.3; UC4
+does not calculate or process deposits. Changed quotes require fresh budget and
+approval/payment review. Callers also recalculate when the limit or requirements
+change. No Supervisor/current-proposal store independently verifies latest inputs;
+these are trusted internal handoffs, not signed external authorization records.
+
+Procurement checks nonnegative integer amounts, selected quote cost sum, the sum of
+the three budget components, the approved zero tax placeholder, overrun and budget
+limit/within_budget consistency. It does not construct Budget or recalculate the
+10% service fee or contingency. Financial owns those policies; budget_valid is
+an internal validity assertion, not proof of origin. Customer approval, paid deposit
+and quotation fingerprint gates remain independent and mandatory.
+
+No payment, invoice, budget persistence or automatic Planner revision is implemented.
 
 ## 6. 公共定义放在哪里
 
