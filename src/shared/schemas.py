@@ -23,6 +23,75 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any
 
+
+# Operations minimal domain model (KAN-28). No duplicate vendor models.
+TASK_STATUSES = ("NOT_STARTED", "IN_PROGRESS", "DELAYED", "COMPLETED")
+
+
+@dataclass
+class OperationalTask:
+    """Stage 1 task; title/scheduled_at are the shared JSON aliases."""
+
+    task_id: str
+    task_name: str
+    planned_start_time: str
+    planned_end_time: str
+    booking_id: str | None = None
+    status: str = "NOT_STARTED"
+    delay_reason: str | None = None
+
+    def update_status(self, status: str, reason: str | None = None) -> None:
+        allowed = {
+            "NOT_STARTED": ("NOT_STARTED", "IN_PROGRESS", "DELAYED"),
+            "IN_PROGRESS": ("IN_PROGRESS", "DELAYED", "COMPLETED"),
+            "DELAYED": ("DELAYED", "IN_PROGRESS", "COMPLETED"),
+            "COMPLETED": ("COMPLETED",),
+        }
+        if status not in allowed[self.status]:
+            raise ValueError("Invalid task transition; completed tasks cannot be reopened.")
+        if status == "DELAYED":
+            require_non_empty_str(reason, "delay reason")
+        self.status = status
+        # Preserve the last reported reason for review after resumption.
+        if status == "DELAYED":
+            self.delay_reason = reason
+
+    def start(self) -> None:
+        self.update_status("IN_PROGRESS")
+
+    def complete(self) -> None:
+        self.update_status("COMPLETED")
+
+    def report_delay(self, reason: str) -> None:
+        self.update_status("DELAYED", reason)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"task_id": self.task_id, "title": self.task_name,
+                "scheduled_at": self.planned_start_time,
+                "planned_end_time": self.planned_end_time,
+                "booking_id": self.booking_id, "status": self.status,
+                "delay_reason": self.delay_reason}
+
+
+@dataclass
+class ExecutionPlan:
+    """One active plan per event, composing its tasks (Stage 1)."""
+
+    event_id: str
+    proposal_id: str
+    execution_plan_id: str
+    tasks: list[OperationalTask] = field(default_factory=list)
+
+    def add_task(self, task: OperationalTask) -> None:
+        if any(t.task_id == task.task_id for t in self.tasks):
+            raise ValueError("Duplicate task_id")
+        self.tasks.append(task)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"event_id": self.event_id, "proposal_id": self.proposal_id,
+                "execution_plan_id": self.execution_plan_id,
+                "tasks": [task.to_dict() for task in self.tasks]}
+
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
