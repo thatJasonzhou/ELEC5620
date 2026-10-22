@@ -1,17 +1,23 @@
 """Offline PaymentService implementation. No gateway, LLM or refunds."""
 from copy import deepcopy
 from src.services.payment_service import PaymentService
-from src.shared.schemas import CustomerPayment
+from src.shared.schemas import CustomerPayment, VendorPayment
 
 
 class MockPaymentService(PaymentService):
-    def __init__(self):
+    def __init__(self, *, vendor_outcome="success"):
+        if vendor_outcome not in ("success", "failure"):
+            raise ValueError("vendor_outcome must be success or failure")
+        self.vendor_outcome = vendor_outcome
         self._payments = {}
 
     def process_payment(self, payment):
-        if not isinstance(payment, CustomerPayment) or payment.status != "pending":
-            raise ValueError("Mock payment requires a pending CustomerPayment")
-        identity = (payment.event_id, payment.amount_cents, payment.customer_id)
+        if not isinstance(payment, (CustomerPayment, VendorPayment)) or payment.status != "pending":
+            raise ValueError("Mock payment requires a pending CustomerPayment or VendorPayment")
+        vendor = isinstance(payment, VendorPayment)
+        identity = (type(payment).__name__, payment.event_id, payment.amount_cents,
+                    (payment.vendor_id, payment.vendor_booking_id, payment.invoice_number)
+                    if vendor else payment.customer_id)
         existing = self._payments.get(payment.payment_id)
         if existing and existing[0] != identity:
             raise ValueError("Payment identity conflict")
@@ -21,10 +27,14 @@ class MockPaymentService(PaymentService):
                 "status": "paid", "mock": True,
                 "transaction_reference": "MOCK-" + payment.payment_id,
             })
+            if vendor and self.vendor_outcome == "failure":
+                self._payments[payment.payment_id][1].update(
+                    status="failed", transaction_reference=None,
+                    failure_reason="Explicit mock vendor payment failure")
         return deepcopy(self._payments[payment.payment_id][1])
 
     def verify_payment(self, transaction_reference):
-        return any(r[1]["transaction_reference"] == transaction_reference
+        return any(r[1]["status"] == "paid" and r[1]["transaction_reference"] == transaction_reference
                    for r in self._payments.values())
 
     def refund_payment(self, transaction_reference, amount_cents):

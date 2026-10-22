@@ -349,7 +349,7 @@ are conservatively stale, including descriptive edits. No new persistence, appro
 booking, invoice or payment workflow is introduced. Repeated generation creates a
 new quotation ID and timestamp. Customer approval remains a separate workflow.
 
-### 5.7 Explicit mock customer deposit (Story 5 / KAN-26)
+### 5.7 Explicit mock customer deposit (KAN-26)
 
 Use `FinancialManagerAgent(llm, MockPaymentService()).handle(request)`, or call
 `DepositService(MockPaymentService()).prepare / simulate_payment` directly.
@@ -407,6 +407,42 @@ not authenticate client-controlled data. Shared approval persistence and durable
 Financial storage remain Integration dependencies; real gateways/refunds remain
 outside this mock flow. Existing UML PaymentService signatures remain intact;
 MockPaymentService implements them without mapping paid to UML Confirmed.
+
+### 5.8 vendor settlement handoff (KAN-27)
+
+Financial Agent actions `prepare_vendor_payment_request` and
+`simulate_vendor_payment` delegate exclusively to `VendorSettlementService`.
+Both require event_id/proposal_id. Preparation accepts these structured inputs:
+
+- `invoice`: invoice_number, event_id, proposal_id, vendor_booking_id,
+  quotation_id, vendor_id, positive integer amount_cents, currency="AUD",
+  issued_date (YYYY-MM-DD), mock=true.
+- `completion`: completion_id, the same five identity references, status="completed",
+  completed_at (timezone-aware ISO datetime, not future), mock=true.
+
+Financial reloads saved Procurement quotes and confirmed bookings, compares all
+booking/quote identity, service, amount, date/headcount fields and the single-quote
+source fingerprint. Invoice amount must equal the full agreed quotation, with no
+company fee/contingency added and no customer deposit deduction. Mock evidence is
+trusted internal demo input, not authenticated proof of service. It does not update
+Procurement booking status or independently establish the latest Planning revision.
+
+Execution additionally requires simulate=true, payment_id and exact amount_cents.
+It first checks saved status: paid/failed returns the saved record without provider
+invocation; pending requires current matching evidence and Procurement validation.
+Output data.vendor_payment contains the existing VendorPayment fields plus
+proposal_id, quotation_id, currency, mock, source_quotation_fingerprint,
+invoice_snapshot, completion_snapshot, failed_at and failure_reason. Timestamps
+are UTC ISO strings. approved_at remains null; Owner Approval and vendor prepayments
+are explicitly deferred. Only pending -> paid/failed transitions are implemented.
+
+VendorPaymentRecordService owns SQLite storage, unique payment/booking identities,
+and unique (vendor_id, invoice_number). Same evidence reuses preparation; changed
+evidence conflicts. Failed records cannot be recreated or retried. No separate
+invoice persistence or Operations completion workflow is introduced. Calls are
+serialized; concurrent execution and crash recovery are outside this MVP. An
+interrupted execution or failed outcome save requires manual review before retry.
+The booking-only settle_vendor_payment method remains a legacy stub.
 
 ## 6. 公共定义放在哪里
 

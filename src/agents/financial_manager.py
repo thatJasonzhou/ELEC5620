@@ -12,6 +12,7 @@ from src.agents.base import AIAgent
 from src.llm import LLMClient
 from src.services.payment_service import PaymentService
 from src.services.deposit_service import DepositService
+from src.services.vendor_settlement_service import VendorSettlementService
 from src.services.customer_quotation_service import (
     CustomerQuotationService, source_fingerprint, budget_fingerprint,
 )
@@ -30,14 +31,19 @@ class FinancialManagerAgent(AIAgent):
         "prepare_budget", "update_proposal_cost", "record_customer_payment",
         "settle_vendor_payment", "reconcile_payments", "generate_customer_quotation",
         "prepare_deposit_request", "simulate_deposit_payment",
+        "prepare_vendor_payment_request", "simulate_vendor_payment",
     )
 
-    def __init__(self, llm: LLMClient, payment_service: PaymentService) -> None:
+    def __init__(self, llm: LLMClient, payment_service: PaymentService, *,
+                 settlement_service: VendorSettlementService | None = None) -> None:
         super().__init__(llm)
         if not isinstance(payment_service, PaymentService):
             raise TypeError("payment_service must be a PaymentService instance")
         self._payment_service = payment_service
         self._deposit_service = None
+        if settlement_service is not None and not isinstance(settlement_service, VendorSettlementService):
+            raise TypeError("settlement_service must be a VendorSettlementService")
+        self._settlement_service = settlement_service
 
     def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(request, dict):
@@ -52,6 +58,13 @@ class FinancialManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
 
         try:
+            if action in ("prepare_vendor_payment_request", "simulate_vendor_payment"):
+                if self._settlement_service is None:
+                    return self.envelope(event_id, "error", "VendorSettlementService is not configured")
+                operation = (self._settlement_service.prepare if action == "prepare_vendor_payment_request"
+                             else self._settlement_service.simulate_payment)
+                result = operation(request)
+                return self.envelope(event_id, result["status"], result["message"], result["data"])
             if action in ("prepare_deposit_request", "simulate_deposit_payment"):
                 if self._deposit_service is None:
                     try:
@@ -182,6 +195,7 @@ class FinancialManagerAgent(AIAgent):
         raise NotImplementedError("NOT_IMPLEMENTED: FinancialManagerAgent.record_customer_payment")
 
     def settle_vendor_payment(self, booking: VendorBooking) -> VendorPayment:
+        """Legacy UML stub. Structured actions use VendorSettlementService only."""
         raise NotImplementedError("NOT_IMPLEMENTED: FinancialManagerAgent.settle_vendor_payment")
 
     def reconcile_payments(self, event_id: str) -> bool:
