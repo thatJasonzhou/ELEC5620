@@ -298,6 +298,21 @@ KAN-24 example and tests (repository root, existing virtual environment):
 .\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q -p no:cacheprovider
 ```
 
+### Customer quotation generation (KAN-25)
+
+Run `python -m examples.customer_quotation_example` for an offline Procurement
+→ FIN-01 → customer quotation demonstration. Financial Manager accepts
+`action="generate_customer_quotation"` with the same current event, proposal,
+quotations and selected IDs as `prepare_budget`, plus `budget=budget_result["data"]`.
+The returned `data.customer_quotation` contains vendor references and costs,
+service fee, contingency, estimated customer total, provenance and timestamp.
+All amounts are integer AUD cents, copied from KAN-23.
+
+Missing, over-budget, incomplete or stale budgets block generation. Older budget
+handoffs without the new source/budget fingerprints require explicit FIN-01
+validation again. See section 5.6 of [the contracts](shared-data-and-interfaces.md).
+Generation does not persist quotations or perform approval, booking or payment.
+
 ## 目录结构
 
 | 路径 | 说明 |

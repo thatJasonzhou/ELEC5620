@@ -263,7 +263,7 @@ MockLLMClient，输出显式标注 MOCK）。
 不宣称实现真实交易或跨系统“恰好一次”。离线示例使用临时数据库：
 `py -3 -m examples.procurement_persistence_example`。
 
-### 5.5 Financial Budget Check V1
+### 5.5 Financial Budget Check V1 (KAN-24)
 
 Entry: FinancialManagerAgent.handle(request), action="prepare_budget".
 There is one budget calculation interface with fixed approved financial rules.
@@ -316,6 +316,38 @@ an internal validity assertion, not proof of origin. Customer approval, paid dep
 and quotation fingerprint gates remain independent and mandatory.
 
 No payment, invoice, budget persistence or automatic Planner revision is implemented.
+
+### 5.6 Customer quotation handoff (KAN-25)
+
+`FinancialManagerAgent.handle` accepts `action="generate_customer_quotation"`.
+Supply the current `event_id`, complete JSON `event` and `proposal`, `quotations`,
+`selected_quotation_ids`, and the validated FIN-01 `data` object as `budget`.
+The Agent delegates to `CustomerQuotationService.generate(request)`; failures
+return `blocked` with empty data, successes use the normal finance envelope.
+
+FIN-01 adds `source_fingerprint` (canonical complete event/proposal JSON) and
+`budget_fingerprint` (canonical financial/provenance handoff fields). No Budget
+class, pricing formula or PaymentService interface is changed. Existing booking
+consumers can ignore these additive fields. Source changes, including revisions
+under the same proposal ID, require an explicit fresh `prepare_budget` call.
+Quotation changes use the existing Procurement `quotation_fingerprint` helper.
+Old handoffs without these fields cannot generate customer quotations.
+
+`data.customer_quotation` contains `customer_quotation_id`, `generated_at` (UTC),
+`event_id`, `proposal_id`, `selected_quotation_ids`, `vendor_cost_breakdown`
+(detached selected Procurement snapshots with vendor IDs and quotation references),
+`vendor_total_cents`, `service_fee_cents`, `contingency_cents`,
+`tax_amount_cents`, `estimated_total_cents`, `price_basis`, `currency="AUD"`,
+and the three fingerprints above. All amounts are copied exactly from FIN-01;
+only consistency comparisons occur here, without recalculating fees or pricing.
+
+Caller must supply authoritative current snapshots, including quotations reloaded
+through `ProcurementRecordService.get_quotations` when persistence is enabled.
+Fingerprints detect changes; they do not authenticate caller-controlled data or
+query an independent Planning revision store. Full event/proposal snapshot changes
+are conservatively stale, including descriptive edits. No new persistence, approval,
+booking, invoice or payment workflow is introduced. Repeated generation creates a
+new quotation ID and timestamp. Customer approval remains a separate workflow.
 
 ## 6. 公共定义放在哪里
 
