@@ -11,6 +11,9 @@ from typing import Any
 from src.agents.base import AIAgent
 from src.llm import LLMClient
 from src.services.payment_service import PaymentService
+from src.services.customer_quotation_service import (
+    CustomerQuotationService, source_fingerprint, budget_fingerprint,
+)
 from src.services.vendor_booking_service import quotation_fingerprint
 from src.shared.schemas import (
     Budget, CustomerPayment, VendorBooking, VendorPayment, require_non_empty_str,
@@ -24,7 +27,7 @@ class FinancialManagerAgent(AIAgent):
     agent_name = "finance"
     _ACTIONS = (
         "prepare_budget", "update_proposal_cost", "record_customer_payment",
-        "settle_vendor_payment", "reconcile_payments",
+        "settle_vendor_payment", "reconcile_payments", "generate_customer_quotation",
     )
 
     def __init__(self, llm: LLMClient, payment_service: PaymentService) -> None:
@@ -47,6 +50,9 @@ class FinancialManagerAgent(AIAgent):
 
         try:
             # Budget V1 is approved; other workflows stay unfinished.
+            if action == "generate_customer_quotation":
+                result = CustomerQuotationService().generate(request)
+                return self.envelope(event_id, result["status"], result["message"], result["data"])
             if action == "prepare_budget":
                 result = self._check_budget(request)
                 result["data"].setdefault("budget_valid", False)
@@ -97,6 +103,7 @@ class FinancialManagerAgent(AIAgent):
                 require_non_empty_str(service, "required_services item")
             if len(set(required)) != len(required):
                 raise ValueError("duplicate required_services")
+            source = source_fingerprint(event, proposal)
             quotes = request.get("quotations")
             selected = request.get("selected_quotation_ids")
             if not isinstance(quotes, list):
@@ -147,7 +154,9 @@ class FinancialManagerAgent(AIAgent):
             "quotation_fingerprint": fingerprint, "selected_quotation_ids": list(selected),
             "budget_valid": True, "price_basis": "GST-inclusive",
             "required_services": list(required),
+            "source_fingerprint": source,
         }
+        data["budget_fingerprint"] = budget_fingerprint(data)
         return self.envelope(event_id, "success" if total <= limit else "blocked",
                              "GST-inclusive budget check. "
                              + ("Within budget." if total <= limit else "Over budget; Supervisor must coordinate revision."), data)
