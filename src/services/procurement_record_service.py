@@ -6,7 +6,7 @@ attempts: SQLite transactions do not make external supplier effects atomic.
 """
 from __future__ import annotations
 
-from contextlib import closing
+from contextlib import closing, nullcontext
 from copy import deepcopy
 import json
 import os
@@ -156,9 +156,9 @@ class ProcurementRecordService:
         """Internal refresh for BookingService's existing all-records accessor."""
         return self._read("procurement_bookings", None)
 
-    def _read(self, table, identity):
+    def _read(self, table, identity, *, connection=None):
         try:
-            with closing(self._connect()) as connection:
+            with (nullcontext(connection) if connection is not None else closing(self._connect())) as connection:
                 sql = f"SELECT event_id, proposal_id, quotation_id, payload FROM {table}"
                 if identity is not None:
                     sql += " WHERE event_id=? AND proposal_id=?"

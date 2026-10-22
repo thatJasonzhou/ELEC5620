@@ -622,6 +622,55 @@ zero balance, restart recovery and zero extra calls on replay. Partial/extra pay
 refunds, retry after failed payment, automatic reconciliation, live gateways and
 new UI/API screens remain outside this Story.
 
+### 5.11 Read-only reconciliation (KAN-32)
+
+Approved internal helper: FinancialReconciliationService(financial_records,
+procurement_records, vendor_records, context_provider=..., scope_provider=...).
+All initialized record services use the same database. Providers are trusted internal
+callables(event_id), not browser payloads; neither provider is inferred from payments.
+
+context_provider returns the current §5.7 event/proposal/quotations/selection/budget,
+customer_quotation, customer_id and approval. due_date and deposit-rate configuration
+are not required. Existing pure quotation validation and approval binding apply;
+the exact budget/customer quotation must exist in Financial persistence. This does
+not independently authenticate currentness: Integration owns latest context/approval.
+
+scope_provider returns event_id, nonempty settlement_scope_id, scope_complete=true,
+and bookings: [{proposal_id, vendor_booking_id, quotation_id, vendor_id}].
+Operations owns completeness. Missing/unconfirmed scope blocks. An explicitly complete
+empty list passes only the supplier portion; customer checks remain mandatory.
+Each booking's proposal is independent of the current customer proposal.
+
+Agent accepts reconciliation_service as an optional keyword. Existing direct
+reconcile_payments(event_id: str) -> bool returns the shared check's decision;
+system read failures raise FinancialStorageError. handle action reconcile_payments
+returns standard envelope: success only when financial_check_passed=true, blocked
+for business/evidence problems, error for data read failures. Unconfigured blocks.
+
+data contains financial_check_passed, summary_complete, settlement_scope_id when
+available, customer (existing balance fields plus payment_ids), vendors
+(amount_due_cents, amount_paid_cents, balance_cents, items, outstanding_items), and
+reason_codes. Supplier items reference vendor_booking_id and payment_id, with
+amount_due_cents and reason_code. Unknown summaries are null, never assumed zero;
+summary_complete=false identifies incomplete evidence. Amounts are integer AUD cents.
+
+Reasons include RECONCILIATION_INPUT_MISSING, SETTLEMENT_SCOPE_MISSING,
+CUSTOMER_BALANCE_OUTSTANDING, CUSTOMER_PAYMENT_UNCERTAIN, VENDOR_PAYMENT_MISSING,
+VENDOR_PAYMENT_UNPAID, VENDOR_PAYMENT_FAILED, VENDOR_PAYMENT_MISMATCH,
+EVIDENCE_INVALID, DATA_READ_FAILED. No new payment status is introduced.
+
+Customer totals reuse FinancialRecordService's existing cross-proposal successful
+payment calculation. Suppliers use persisted booking/quote identity and agreed full
+quoted_total_cents, matched to immutable invoice/completion and successful payment
+evidence. Owner approval remains outside the approved prototype. Same facts produce
+the same amounts and decision; envelope timestamps may differ.
+
+All persisted reads share one mode=ro/query_only SQLite transaction. Reconciliation
+never initializes tables, prepares requests, calls gateways, retries, repairs facts
+or closes events. Financial reports financial conditions only. Operations executes
+closure after its own checks. STUB tests demonstrate Financial/persistence behavior;
+real scope integration and actual closure end-to-end acceptance remain dependencies.
+
 ## 6. 公共定义放在哪里
 
 建议统一放在 `src/shared/schemas.py`，供各模块导入使用；具体目录若已有约定，沿用现有目录。共享数据由 SQLite 保存，模块经对应 Service 读取和更新。

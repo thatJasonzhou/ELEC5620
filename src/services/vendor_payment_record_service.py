@@ -1,5 +1,5 @@
 """Financial-owned SQLite settlement records. Callers serialize workflows."""
-from contextlib import closing
+from contextlib import closing, nullcontext
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -81,7 +81,7 @@ class VendorPaymentRecordService:
         return deepcopy(record)
 
 
-def read_vendor_payment_history(database_path, event_id, proposal_id=None):
+def read_vendor_payment_history(database_path, event_id, proposal_id=None, *, connection=None):
     """Read-only history projection; an uninitialized vendor module has no records."""
     from src.shared.schemas import require_non_empty_str
     require_non_empty_str(event_id, "event_id")
@@ -89,7 +89,8 @@ def read_vendor_payment_history(database_path, event_id, proposal_id=None):
         require_non_empty_str(proposal_id, "proposal_id")
     try:
         uri = Path(database_path).resolve().as_uri() + "?mode=ro"
-        with closing(sqlite3.connect(uri, timeout=5, uri=True)) as db:
+        with (nullcontext(connection) if connection is not None else
+              closing(sqlite3.connect(uri, timeout=5, uri=True))) as db:
             if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='vendor_payments'").fetchone() is None:
                 return []
             records = [json.loads(row[0]) for row in db.execute(
