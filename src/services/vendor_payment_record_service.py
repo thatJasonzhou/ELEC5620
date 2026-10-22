@@ -41,6 +41,10 @@ class VendorPaymentRecordService:
     def get_for_booking(self, booking_id):
         return self._read("vendor_booking_id", booking_id)
 
+    def get_for_event(self, event_id, proposal_id=None):
+        """Read existing JSON identities without migrating the KAN-27 table."""
+        return read_vendor_payment_history(self.database_path, event_id, proposal_id)
+
     def _read(self, column, identity):
         try:
             with closing(self._connect()) as db:
@@ -75,3 +79,25 @@ class VendorPaymentRecordService:
         except sqlite3.Error:
             raise VendorPaymentStorageError("Cannot save payment outcome; manual review required") from None
         return deepcopy(record)
+
+
+def read_vendor_payment_history(database_path, event_id, proposal_id=None):
+    """Read-only history projection; an uninitialized vendor module has no records."""
+    from src.shared.schemas import require_non_empty_str
+    require_non_empty_str(event_id, "event_id")
+    if proposal_id is not None:
+        require_non_empty_str(proposal_id, "proposal_id")
+    try:
+        uri = Path(database_path).resolve().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(uri, timeout=5, uri=True)) as db:
+            if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='vendor_payments'").fetchone() is None:
+                return []
+            records = [json.loads(row[0]) for row in db.execute(
+                "SELECT payload FROM vendor_payments ORDER BY rowid")]
+        if any(not isinstance(r, dict) or not isinstance(r.get("event_id"), str)
+               or not isinstance(r.get("proposal_id"), str) for r in records):
+            raise ValueError("Invalid vendor payment identity")
+        return [r for r in records if r["event_id"] == event_id
+                and (proposal_id is None or r["proposal_id"] == proposal_id)]
+    except (sqlite3.Error, ValueError, TypeError):
+        raise VendorPaymentStorageError("Cannot read vendor payment history") from None

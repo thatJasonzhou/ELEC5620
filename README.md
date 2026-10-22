@@ -218,7 +218,8 @@ deletes its temporary database on exit; no live API or payment is used.
 抽象接口，以及公共 `Budget`、抽象 `Payment`、`CustomerPayment`、
 `VendorPayment` 最小模型。复用已有 `envelope()`、LLM 接口和公共校验函数。
 KAN-23 本身不包含预算计算、客户报价、模拟或真实支付、退款、持久化或 Supervisor 集成；
-预算计算与检查现由后续 KAN-24 提供，支付、退款、Financial 持久化和 Supervisor 集成仍未实现。
+预算计算与检查由 KAN-24 提供，模拟支付由 KAN-26/27 提供，可选持久化见 KAN-29；
+退款和 Supervisor 集成仍未实现。
 
 直接从具体模块导入，不需要修改包级导出：
 
@@ -283,8 +284,9 @@ recalculate the service fee or contingency rates.
 A valid calculation alone does not authorize booking.
 
 Supplier replies still use Procurement Mock scenarios. PaymentService remains
-an abstract dependency; payment, invoice, budget persistence and automatic Planner
-revision are not implemented. Full interface: shared-data-and-interfaces.md sections
+an abstract dependency; mock payments are provided by KAN-26/27, optional budget
+persistence by KAN-29. Invoice workflows and automatic Planner revision are deferred.
+Full interface: shared-data-and-interfaces.md sections
 5.3 and 5.5.
 
 KAN-24 example and tests (repository root, existing virtual environment):
@@ -306,12 +308,13 @@ Run `python -m examples.customer_quotation_example` for an offline Procurement
 quotations and selected IDs as `prepare_budget`, plus `budget=budget_result["data"]`.
 The returned `data.customer_quotation` contains vendor references and costs,
 service fee, contingency, estimated customer total, provenance and timestamp.
-All amounts are integer AUD cents, copied from KAN-23.
+All amounts are integer AUD cents, copied from the KAN-24 FIN-01 budget.
 
 Missing, over-budget, incomplete or stale budgets block generation. Older budget
 handoffs without the new source/budget fingerprints require explicit FIN-01
 validation again. See section 5.6 of [the contracts](shared-data-and-interfaces.md).
-Generation does not persist quotations or perform approval, booking or payment.
+Generation does not perform approval, booking or payment. KAN-29 adds optional
+quotation persistence and reuse when record_service is injected.
 
 ### Record customer deposits (KAN-26)
 
@@ -345,9 +348,9 @@ and submits the output to existing KAN-20 validation with no supplier confirmati
 configured. Validation reaches the unconfigured supplier reply and creates no booking.
 See shared contract section 5.7 for Integration inputs and outputs.
 
-Financial records currently live in memory per Agent/DepositService instance.
-Keep that instance for retries; restarting loses requests and duplicate protection.
-There is no durable or cross-process guarantee and no shared Procurement DB change.
+Without record_service, records live in memory per Agent/DepositService instance
+and restarting loses them. KAN-29 adds optional SQLite restart protection below;
+cross-process exactly-once is not claimed.
 Integration must supply authoritative current snapshots and approval on every call;
 there is no independent Planning approval/revocation store yet.
 
@@ -394,6 +397,53 @@ processing is not claimed.
 .\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q -p no:cacheprovider
 ```
 
+### Financial persistence and recovery (KAN-29)
+
+Inject the internal SQLite helper explicitly:
+
+```python
+from src.services.financial_record_service import FinancialRecordService
+records = FinancialRecordService.from_env()
+agent = FinancialManagerAgent(llm, MockPaymentService(), record_service=records)
+```
+
+Use `ELEC5620_DB_PATH` (default `runtime/procurement.sqlite3`) consistently with
+Procurement and KAN-27. Existing constructions without this dependency remain in
+memory. Initialization fails explicitly; enabled persistence never falls back silently.
+Valid calculated budgets, including overruns, customer quotations and deposit
+requests/results are saved in dedicated schema-versioned tables. Existing tables
+are not migrated. PaymentService, Budget calculation and budget fingerprints remain unchanged.
+
+Business identities use SQLite unique constraints. Identical retries preserve
+original IDs/timestamps; changed immutable contents conflict. Deposit due date,
+customer, amount and quote association are immutable. Repeated preparation also
+returns the original paid record after current approval validation.
+
+Pure quotation validation creates no UUID or stored quote. Customer payment first
+commits an execution marker; paid evidence and completion are saved atomically.
+Storage failures return error. Interrupted or uncertain execution blocks automatic
+retries after restart and requires manual review, even if the visible record is
+still pending. This journal applies to customer deposits; KAN-27 keeps its existing
+settlement behavior. No automatic reconciliation or cross-process exactly-once is added.
+
+`action="get_event_financial_records"` takes event_id and optional proposal_id.
+It returns budgets, customer_quotations, deposits and vendor_payments collections;
+customer payment evidence is inside each deposit. Vendor history reads existing
+JSON payloads without migrating or initializing the vendor table. Empty history
+is success with empty collections; read failure is error. Current approval remains
+mandatory for preparation/payment, including paid retries. History is not approval.
+
+Implementation decisions: [KAN-29 plan](docs/kan29-persistence-plan.md), especially
+section 2 (identity/recovery) and section 4 (transactions/payment protection).
+The CLI uses a temporary database, external MOCK approval and actual deposit-rate
+configuration, verifies restart recovery and zero repeated payment calls, then removes
+its own temporary database. No UI changes or live calls are included.
+
+```powershell
+.\.venv\Scripts\python.exe -B -m examples.financial_persistence_example
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q -p no:cacheprovider
+```
+
 ## 目录结构
 
 | 路径 | 说明 |
@@ -425,3 +475,6 @@ processing is not claimed.
 | `tests/unit/test_procurement_persistence.py` | Durable records, isolation, conflicts and failure tests |
 | `src/services/payment_service.py` | Stage 1 PaymentService 抽象接口，无支付实现 |
 | `tests/unit/test_financial_foundation.py` | 财务继承、基础校验、错误信封与未实现行为测试 |
+| `src/services/financial_record_service.py` | KAN-29 财务快照与订金执行日志 |
+| `examples/financial_persistence_example.py` | 离线保存、重建 Service、恢复和重复付款保护演示 |
+| `tests/unit/test_financial_records.py` / `test_financial_persistence.py` | 存储与财务工作流故障、冲突和恢复测试 |
