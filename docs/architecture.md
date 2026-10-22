@@ -1,6 +1,23 @@
-# Approved UC4 V1 UML adjustment
+# Stage 2 architecture records
 
-## Approved Story 6 MVP scope (KAN-27, 2026-10-22)
+## KAN-29 internal financial persistence extension (2026-10-22)
+
+FinancialRecordService is a Stage 2 internal SQLite implementation helper.
+Review of the Stage 1 report pp24/26/47/48 found no direct conflict with its UML;
+this does not mean Stage 1 explicitly authorized this new class. The user approved
+this implementation extension after the read-only review. Existing inheritance,
+domain relationships, PaymentService signatures and Budget.calculate_total()
+responsibility are retained. budget_fingerprint and list-order semantics are unchanged.
+
+Agent delegates persistence through Services. Pure quotation validation is shared
+by quotation generation and deposit validation. Dedicated financial tables preserve
+schema-versioned snapshots and a conservative customer-deposit execution journal.
+KAN-27 tables and workflow remain intact; its event query reads existing payloads.
+No automatic reconciliation, database migration or cross-process exactly-once is added.
+Identity rules are in [KAN-29 plan section 2](kan29-persistence-plan.md#2-记录身份不可变内容与恢复);
+transactions and failure protection are in section 4 of that plan.
+
+## Approved MVP scope (KAN-27, 2026-10-22)
 
 User approved a single VendorSettlementService for structured preparation and
 explicit simulation, with Financial-owned SQLite persistence. PaymentService
@@ -56,5 +73,6 @@ integer cents, including amounts larger than the default Decimal precision.
 No BudgetService is introduced. PaymentService remains untouched.
 
 Budget's transient selected quote snapshots implement its existing aggregation;
-they are not database persistence. Internal `Calculated` string denotes a
+they are not database persistence. KAN-29 separately persists the FIN-01 handoff
+through FinancialRecordService. Internal `Calculated` string denotes a
 calculation record only, not customer approval or an added UML status transition.

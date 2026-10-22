@@ -122,7 +122,7 @@ def test_failed_mock_reply_does_not_mark_paid(setup, monkeypatch):
     service, r = setup
     p = pay_request(service, r)
     monkeypatch.setattr(service._payments, "process_payment", lambda payment: {"status": "failed"})
-    assert service.simulate_payment(p)["status"] == "blocked"
+    assert service.simulate_payment(p)["status"] == "error"
     assert not service.records
 
 
@@ -148,5 +148,5 @@ def test_paid_request_cannot_prepare_second_payment(setup):
     service, r = setup
     p = pay_request(service, r)
     service.simulate_payment(p)
-    assert service.prepare(r)["status"] == "blocked"
+    assert service.prepare(r)["data"]["deposit"]["status"] == "paid"
     assert len(service.records) == 1

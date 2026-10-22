@@ -315,7 +315,8 @@ limit/within_budget consistency. It does not construct Budget or recalculate the
 an internal validity assertion, not proof of origin. Customer approval, paid deposit
 and quotation fingerprint gates remain independent and mandatory.
 
-No payment, invoice, budget persistence or automatic Planner revision is implemented.
+KAN-24 itself adds no payment or invoice workflow. Optional budget persistence is
+provided by KAN-29 (§5.9); automatic Planner revision remains deferred.
 
 ### 5.6 Customer quotation handoff (KAN-25)
 
@@ -323,7 +324,8 @@ No payment, invoice, budget persistence or automatic Planner revision is impleme
 Supply the current `event_id`, complete JSON `event` and `proposal`, `quotations`,
 `selected_quotation_ids`, and the validated FIN-01 `data` object as `budget`.
 The Agent delegates to `CustomerQuotationService.generate(request)`; failures
-return `blocked` with empty data, successes use the normal finance envelope.
+return `blocked` for validation/conflicts or `error` for storage failures, with
+empty data; successes use the normal finance envelope.
 
 FIN-01 adds `source_fingerprint` (canonical complete event/proposal JSON) and
 `budget_fingerprint` (canonical financial/provenance handoff fields). No Budget
@@ -345,15 +347,16 @@ Caller must supply authoritative current snapshots, including quotations reloade
 through `ProcurementRecordService.get_quotations` when persistence is enabled.
 Fingerprints detect changes; they do not authenticate caller-controlled data or
 query an independent Planning revision store. Full event/proposal snapshot changes
-are conservatively stale, including descriptive edits. No new persistence, approval,
-booking, invoice or payment workflow is introduced. Repeated generation creates a
-new quotation ID and timestamp. Customer approval remains a separate workflow.
+are conservatively stale, including descriptive edits. Approval, booking, invoice
+and payment remain separate workflows. Without storage, repeated generation creates
+a new quotation ID/timestamp; KAN-29 persistence (§5.9) reuses the original quote
+for the same budget business identity after validating current sources.
 
 ### 5.7 Explicit mock customer deposit (KAN-26)
 
 Use `FinancialManagerAgent(llm, MockPaymentService()).handle(request)`, or call
 `DepositService(MockPaymentService()).prepare / simulate_payment` directly.
-Keep the same instance throughout the workflow. Agent returns the existing
+Without KAN-29 storage, keep the same instance throughout the workflow. Agent returns the existing
 finance envelope; Service returns `status`, `message`, `data`. Envelope success
 is distinct from `data.deposit.status`, which is pending or paid.
 
@@ -381,8 +384,9 @@ Return `data.deposit`: `event_id`, `proposal_id`, `customer_quotation_id`,
 `status="pending"`, `quotation_fingerprint`, `mock=true`, UTC `created_at`.
 `data.budget` preserves the validated FIN-01 fields and adds `deposit_due_cents`.
 Preparation never calls the payment provider or records paid evidence. Repeated
-pending preparation for the same quote/customer reuses the request; conflicting
-contents/rate or preparing again after payment is blocked.
+preparation for the same quote/customer reuses the pending or paid request after
+current approval validation; conflicting due_date, amount, customer/quote association
+or other immutable contents are blocked. No second payment is created.
 
 Future Pay Deposit click: send the same current context/approval plus
 `action="simulate_deposit_payment"`, `simulate=true`, `deposit_request_id`,
@@ -399,12 +403,12 @@ Success returns the same deposit with `status="paid"`, UTC `paid_at`, and
 `deposit`, `data.budget` as `budget`, original external `approval`, and selected
 vendor snapshots as `quotations`. Financial does not call VendorBookingService.
 
-Storage is in memory in this Story; records property returns detached paid
-records. Calls are serialized per DepositService. No restart, multi-process or
-durable exactly-once protection is claimed. Integration must provide latest
+Without KAN-29 storage, records are in memory; records property returns detached paid
+records in both modes. KAN-29 adds restart/execution protection (§5.9). Calls remain
+serialized; multi-process exactly-once protection is not claimed. Integration must provide latest
 Planning/approval/revocation snapshots; fingerprints detect consistency but do
-not authenticate client-controlled data. Shared approval persistence and durable
-Financial storage remain Integration dependencies; real gateways/refunds remain
+not authenticate client-controlled data. Shared approval persistence remains an
+Integration dependency; durable Financial storage is opt-in via KAN-29; real gateways/refunds remain
 outside this mock flow. Existing UML PaymentService signatures remain intact;
 MockPaymentService implements them without mapping paid to UML Confirmed.
 
@@ -443,6 +447,65 @@ invoice persistence or Operations completion workflow is introduced. Calls are
 serialized; concurrent execution and crash recovery are outside this MVP. An
 interrupted execution or failed outcome save requires manual review before retry.
 The booking-only settle_vendor_payment method remains a legacy stub.
+
+### 5.9 Financial persistence and activity history (KAN-29)
+
+Inject `FinancialRecordService.from_env()` into FinancialManagerAgent using
+`record_service=`; standalone CustomerQuotationService and DepositService accept
+the same optional dependency. Use the same ELEC5620_DB_PATH as Procurement/KAN-27;
+default is repository-root runtime/procurement.sqlite3. No silent memory fallback.
+
+Dedicated financial_snapshots and financial_deposits tables preserve original
+business JSON and internal schema_version=1. Budgets are identified by the existing
+budget_fingerprint; customer quotations are unique per budget fingerprint, with
+quotation ID uniqueness. Deposits have unique request ID, payment ID and
+(customer_quotation_id, customer_id). Canonical business comparison sorts object
+keys, excludes generated IDs/timestamps, and preserves list order. Associated quote
+ID, customer, due_date and amount remain immutable business content. Matching
+retries return original records; conflicting identities return blocked without overwrite.
+The existing budget_fingerprint algorithm and list-order sensitivity are unchanged.
+
+Pure `CustomerQuotationService.quotation_content(request)` validates/builds quote
+content without UUID or writes. Both generate and deposit validation reuse it.
+Generation validates current sources before saving/reusing; validation alone never
+creates a persistent quote. Budgets with budget_valid=true are saved, including
+within_budget=false results that remain blocked.
+
+Customer deposit internal execution_state is independent of public pending/paid:
+not_started -> execution_started (committed before provider call) -> result_recorded
+(committed atomically with paid evidence). Provider uncertainty or failed result
+save attempts requires_reconciliation. Either execution_started or
+requires_reconciliation prevents automatic retries, including after restart.
+A result-save rollback retains pending in SQLite, which is not proof no payment
+occurred. Even if the reconciliation marker cannot be saved, the committed start
+marker blocks another call. Only committed paid evidence is returned as completed.
+Current context and approval checks still run before paid reuse. No automatic
+reconciliation, real gateway, refund or cross-process exactly-once is introduced.
+KAN-27 vendor execution semantics are unchanged.
+
+Query `records.get_event_financial_records(event_id, proposal_id=None)` or Agent
+`action="get_event_financial_records"` with the same identities. Agent uses the normal
+finance envelope; Service returns a dictionary of four lists:
+
+- budgets: original FIN-01 budget snapshots.
+- customer_quotations: original customer quotation objects.
+- deposits: quote/customer_id/due_date/budget/deposit snapshots plus execution_state;
+  customer payment outcome is inside deposit, not a separate duplicate history.
+- vendor_payments: existing KAN-27 records, including pending/paid/failed.
+
+`get_event_records` returns only the first three lists. The vendor-only interface
+is `VendorPaymentRecordService.get_for_event(event_id, proposal_id=None)`, reading
+existing payload JSON without migrating vendor_payments. A shared read-only helper
+supports aggregation without initializing the vendor table. No vendor table yet
+means no vendor records; unreadable storage or malformed JSON raises an error.
+No records is a successful empty history; read failure never becomes empty success
+or partial success. These reads do not establish current approval or an atomic
+cross-module workflow snapshot. Initialization raises FinancialStorageError;
+business calls translate storage failures to error and immutable conflicts to blocked.
+
+Detailed identity and transaction rules are maintained in
+[the KAN-29 plan](docs/kan29-persistence-plan.md), sections 2 and 4.
+Offline demonstration: `python -B -m examples.financial_persistence_example`.
 
 ## 6. 公共定义放在哪里
 

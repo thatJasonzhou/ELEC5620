@@ -36,7 +36,11 @@ def budget_fingerprint(budget):
 class CustomerQuotationService:
     """Validate provenance and copy amounts without invoking pricing or payments."""
 
-    def generate(self, request):
+    def __init__(self, record_service=None):
+        self._records = record_service
+
+    @staticmethod
+    def quotation_content(request):
         if not isinstance(request, dict):
             return {"status": "blocked", "message": "request must be an object", "data": {}}
         try:
@@ -105,8 +109,7 @@ class CustomerQuotationService:
             "service_fee_cents", "contingency_cents", "tax_amount_cents",
             "estimated_total_cents", "quotation_fingerprint", "source_fingerprint",
             "budget_fingerprint", "price_basis")}
-        quotation.update(customer_quotation_id="CQ-" + uuid4().hex,
-                         generated_at=datetime.now(timezone.utc).isoformat(),
+        quotation.update(
                          # Export only primitive fields already validated by
                          # quotation_fingerprint; supplier metadata stays internal.
                          vendor_cost_breakdown=[{key: q[key] for key in (
@@ -114,5 +117,23 @@ class CustomerQuotationService:
                              "offering_id", "service_type", "event_date", "guest_count",
                              "quoted_total_cents", "available", "mock",
                          )} for q in chosen], currency="AUD")
-        return {"status": "success", "message": "Customer quotation generated for review.",
+        return {"status": "success", "message": "Customer quotation validated.",
                 "data": {"customer_quotation": quotation}}
+
+    def generate(self, request):
+        result = self.quotation_content(request)
+        if result["status"] != "success":
+            return result
+        quotation = result["data"]["customer_quotation"]
+        quotation.update(customer_quotation_id="CQ-" + uuid4().hex,
+                         generated_at=datetime.now(timezone.utc).isoformat())
+        if self._records is not None:
+            from src.services.financial_record_service import FinancialStorageError, FinancialRecordConflict
+            try:
+                quotation = self._records.save_quotation(quotation)
+            except FinancialStorageError:
+                return dict(status="error", message="Customer quotation storage failed", data={})
+            except FinancialRecordConflict as exc:
+                return dict(status="blocked", message=str(exc), data={})
+        return dict(status="success", message="Customer quotation generated for review.",
+                    data={"customer_quotation": quotation})
