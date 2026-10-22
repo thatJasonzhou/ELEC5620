@@ -1,5 +1,22 @@
 # Stage 2 architecture records
 
+## KAN-30 customer balance and final payment (2026-10-22)
+
+User approved CustomerBalanceService as an internal Stage 2 helper and a shared
+transactional collection claim for deposits/finals in FinancialRecordService.
+FinancialManagerAgent delegates structured balance/preparation/simulation actions;
+CustomerPayment inheritance, PaymentService signatures and Stage 1 relationships
+remain unchanged. No Agent computes money or accesses SQLite directly.
+
+Final requests have independent execution states and immutable saved payment
+results. BEGIN IMMEDIATE serializes balance checks and durable execution claims
+for each event/customer across both payment entry points. Claims survive uncertain
+outcomes; terminal result saves release them atomically. Historical successful
+deposits span quote revisions; only valid durable success evidence counts.
+Existing deposit journal state names remain compatible. New final-request and
+claim tables are additive; the original tables and vendor workflow are retained.
+See shared-data-and-interfaces.md §5.10 for contracts and recovery limitations.
+
 ## KAN-29 internal financial persistence extension (2026-10-22)
 
 FinancialRecordService is a Stage 2 internal SQLite implementation helper.
@@ -14,8 +31,8 @@ by quotation generation and deposit validation. Dedicated financial tables prese
 schema-versioned snapshots and a conservative customer-deposit execution journal.
 KAN-27 tables and workflow remain intact; its event query reads existing payloads.
 No automatic reconciliation, database migration or cross-process exactly-once is added.
-Identity rules are in [KAN-29 plan section 2](kan29-persistence-plan.md#2-记录身份不可变内容与恢复);
-transactions and failure protection are in section 4 of that plan.
+Identity, recovery and transaction rules are in shared-data-and-interfaces.md
+§5.9, extended by §5.10 for shared customer collection protection.
 
 ## Approved MVP scope (KAN-27, 2026-10-22)
 

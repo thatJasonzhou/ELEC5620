@@ -14,6 +14,7 @@ from src.services.payment_service import PaymentService
 from src.services.financial_record_service import FinancialStorageError, FinancialRecordConflict
 from src.services.vendor_payment_record_service import VendorPaymentStorageError
 from src.services.deposit_service import DepositService
+from src.services.customer_balance_service import CustomerBalanceService
 from src.services.vendor_settlement_service import VendorSettlementService
 from src.services.customer_quotation_service import (
     CustomerQuotationService, source_fingerprint, budget_fingerprint,
@@ -35,6 +36,7 @@ class FinancialManagerAgent(AIAgent):
         "prepare_deposit_request", "simulate_deposit_payment",
         "prepare_vendor_payment_request", "simulate_vendor_payment",
         "get_event_financial_records",
+        "get_customer_balance", "prepare_final_payment_request", "simulate_final_payment",
     )
 
     def __init__(self, llm: LLMClient, payment_service: PaymentService, *,
@@ -63,6 +65,16 @@ class FinancialManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
 
         try:
+            if action in ('get_customer_balance', 'prepare_final_payment_request', 'simulate_final_payment'):
+                try:
+                    service = CustomerBalanceService(self._payment_service, self._record_service)
+                except TypeError as exc:
+                    return self.envelope(event_id, 'error', str(exc))
+                operation = {'get_customer_balance': service.balance,
+                             'prepare_final_payment_request': service.prepare,
+                             'simulate_final_payment': service.simulate_payment}[action]
+                result = operation(request)
+                return self.envelope(event_id, result['status'], result['message'], result['data'])
             if action == "get_event_financial_records":
                 if self._record_service is None:
                     return self.envelope(event_id, "error", "FinancialRecordService is not configured")
