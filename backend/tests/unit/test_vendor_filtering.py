@@ -107,6 +107,15 @@ class TestFilterCriteria:
         )
         assert all(r["service_type"] == "photography" for r in results)
 
+    def test_any_service_disables_only_service_filter(self, service: VendorProcurementService):
+        results = service.filter_vendors(
+            service_type="any",
+            date="2026-12-05",
+            guest_count=80,
+            location="Sydney",
+        )
+        assert {r["service_type"] for r in results} == {"catering", "photography"}
+
     def test_no_match_returns_empty_list(self, service: VendorProcurementService):
         results = service.filter_vendors(
             service_type="catering",

@@ -19,6 +19,9 @@ from src.shared.schemas import (
 )
 
 
+ANY_SERVICE_TYPE = "any"
+
+
 class VendorProcurementService:
     """Read-only access to the vendor catalog with deterministic filtering."""
 
@@ -80,7 +83,8 @@ class VendorProcurementService:
         """Return matching offerings, sorted deterministically.
 
         Criteria (all must hold):
-        - offering.service_type == service_type (case-insensitive)
+        - offering.service_type == service_type (case-insensitive), unless
+          service_type is "any", which disables only the service filter
         - offering available on ``date`` (YYYY-MM-DD)
         - offering.guest_capacity >= guest_count
         - offering.service_location == location (case-insensitive)
@@ -104,7 +108,7 @@ class VendorProcurementService:
 
         for vendor in self._catalog:
             for offering in vendor.service_offerings:
-                if offering.service_type.lower() != wanted_type:
+                if wanted_type != ANY_SERVICE_TYPE and offering.service_type.lower() != wanted_type:
                     continue
                 if not offering.is_available_on(event_date):
                     continue

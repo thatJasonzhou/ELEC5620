@@ -7,6 +7,8 @@ export interface EventRequirements {
   guest_count?: number | null;
   budget_limit_cents?: number | null;
   required_services?: string[];
+  services_confirmed?: boolean;
+  vendor_budget_cents?: number | null;
   customer_preferences?: string | null;
 }
 export interface ProgressState {

@@ -48,7 +48,12 @@ from src.shared.schemas import (
 )
 
 #: Closed set of basis codes the model may cite for a recommendation.
-ALLOWED_BASIS_CODES = ("lowest_price", "highest_rating", "highest_capacity")
+ALLOWED_BASIS_CODES = (
+    "lowest_price",
+    "highest_rating",
+    "highest_capacity",
+    "within_budget",
+)
 
 #: Output limits for ``data.recommendations``.
 MIN_RECOMMENDATIONS = 1
@@ -71,6 +76,7 @@ Event:
 - guest_count: {guest_count}
 - location: {location}
 - min_rating (already applied by code): {min_rating}
+- target_vendor_budget_cents: {target_vendor_budget_cents}
 
 Customer preferences (SOFT guidance only. Use them to compare candidates.
 Do NOT treat them as hard filters, do NOT promise anything that is not in
@@ -87,6 +93,7 @@ Shape:
 Rules:
 - Return {min_count} to {max_count} recommendations, chosen ONLY from the candidates.
 - Order matters: the first item is rank 1 (your top pick).
+- Prefer candidates within target_vendor_budget_cents. If none are within the target, prefer the closest available price and clearly explain that it is over budget.
 - (vendor_id, offering_id) pairs must come from the candidates and must not repeat.
 - "basis_codes" is a list drawn ONLY from: {basis_codes}.
   A basis code may be listed for a recommendation only if it is factually
@@ -167,6 +174,18 @@ class VendorProcurementManagerAgent(AIAgent):
                 for c in candidates
                 if c["rating"] >= params["min_rating"]
             ]
+
+        target_budget = params["target_vendor_budget_cents"]
+        for candidate in candidates:
+            candidate["within_target_budget"] = (
+                target_budget is None
+                or candidate["total_price_cents"] <= target_budget
+            )
+            candidate["budget_gap_cents"] = (
+                0
+                if target_budget is None
+                else candidate["total_price_cents"] - target_budget
+            )
 
         if not candidates:
             return self.envelope(
@@ -405,6 +424,21 @@ class VendorProcurementManagerAgent(AIAgent):
                     min_rating = None
         params["min_rating"] = min_rating
 
+        target_vendor_budget: int | None = None
+        if (
+            "target_vendor_budget_cents" in request
+            and request["target_vendor_budget_cents"] is not None
+        ):
+            try:
+                target_vendor_budget = require_int(
+                    request["target_vendor_budget_cents"],
+                    "target_vendor_budget_cents",
+                    minimum=1,
+                )
+            except ValueError as exc:
+                errors.append(("target_vendor_budget_cents", str(exc)))
+        params["target_vendor_budget_cents"] = target_vendor_budget
+
         return event_id, params, errors
 
     # ------------------------------------------------------------------
@@ -424,6 +458,8 @@ class VendorProcurementManagerAgent(AIAgent):
                 "guest_capacity": c["guest_capacity"],
                 "rating": c["rating"],
                 "total_price_cents": c["total_price_cents"],
+                "within_target_budget": c.get("within_target_budget", True),
+                "budget_gap_cents": c.get("budget_gap_cents", 0),
             }
             for c in candidates
         ]
@@ -435,6 +471,11 @@ class VendorProcurementManagerAgent(AIAgent):
             min_rating=(
                 params["min_rating"]
                 if params["min_rating"] is not None
+                else "not set"
+            ),
+            target_vendor_budget_cents=(
+                params["target_vendor_budget_cents"]
+                if params["target_vendor_budget_cents"] is not None
                 else "not set"
             ),
             customer_preferences=(
@@ -496,6 +537,7 @@ class VendorProcurementManagerAgent(AIAgent):
             "lowest_price": (min_price, lambda c: c["total_price_cents"]),
             "highest_rating": (max_rating, lambda c: c["rating"]),
             "highest_capacity": (max_capacity, lambda c: c["guest_capacity"]),
+            "within_budget": (True, lambda c: c.get("within_target_budget", True)),
         }
 
         recommendations: list[dict[str, Any]] = []

@@ -26,7 +26,7 @@ class PlannerMessageRequest(BaseModel):
 
 
 class VendorSelectionRequest(BaseModel):
-    offering_ids: list[str] = Field(min_length=1, max_length=1)
+    offering_ids: list[str] = Field(min_length=1)
 
 
 def build_workflow() -> PlannerWorkflowService:

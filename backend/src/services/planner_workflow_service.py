@@ -69,9 +69,11 @@ class PlannerWorkflowService:
             session["vendor_recommendations"] = recommendations
             if recommendations:
                 session["stage"] = "vendor_review"
+                service_count = len({item["service_type"] for item in recommendations})
                 reply += (
-                    f" I found {len(recommendations)} matching vendor option"
-                    f"{'s' if len(recommendations) != 1 else ''}. Please review and confirm your choices."
+                    f"\n\nI found vendor options for {service_count} service"
+                    f"{'s' if service_count != 1 else ''}. "
+                    "Please select one vendor for each service."
                 )
             else:
                 blocked_services = [
@@ -98,20 +100,31 @@ class PlannerWorkflowService:
         if session is None:
             raise KeyError("event not found")
         available = {
-            item["offering_id"] for item in session.get("vendor_recommendations", [])
+            item["offering_id"]: item
+            for item in session.get("vendor_recommendations", [])
         }
         selected = list(dict.fromkeys(selected_offering_ids))
-        if len(selected) != 1:
-            raise ValueError("select exactly one vendor option")
+        if not selected:
+            raise ValueError("select at least one vendor option")
         unknown = [item for item in selected if item not in available]
         if unknown:
             raise ValueError(f"unknown offering ids: {', '.join(unknown)}")
+        selected_services = [available[item]["service_type"] for item in selected]
+        if len(selected_services) != len(set(selected_services)):
+            raise ValueError("select only one vendor for each service")
+        expected_services = {item["service_type"] for item in available.values()}
+        missing_services = expected_services - set(selected_services)
+        if missing_services:
+            raise ValueError(
+                "select one vendor for each service: "
+                + ", ".join(sorted(missing_services))
+            )
         session["selected_offering_ids"] = selected
         session["stage"] = "proposal"
         session["history"].append(
             {
                 "role": "assistant",
-                "content": "The customer confirmed the selected vendor option.",
+                "content": "The customer confirmed one vendor for each service.",
             }
         )
         self._sessions.save(session)
@@ -119,13 +132,14 @@ class PlannerWorkflowService:
             "event_id": event_id,
             "stage": session["stage"],
             "selected_offering_ids": selected,
-            "message": "Vendor choice confirmed. The event can now move to proposal and quotation preparation.",
+            "message": "Vendor choices confirmed. The selected services can now be combined into the event proposal.",
         }
     def _find_vendors(
         self, event_id: str, requirements: dict[str, Any]
     ) -> list[dict[str, Any]]:
         results = []
-        for service_type in requirements["required_services"]:
+        service_types = requirements.get("required_services") or ["any"]
+        for service_type in service_types:
             result = self._procurement.handle(
                 {
                     "event_id": event_id,
@@ -133,10 +147,13 @@ class PlannerWorkflowService:
                     "event_date": requirements["event_date"],
                     "guest_count": requirements["guest_count"],
                     "location": requirements["location"],
+                    "target_vendor_budget_cents": requirements.get("vendor_budget_cents"),
                     "customer_preferences": requirements.get("customer_preferences", ""),
                 }
             )
-            result["requested_service"] = service_type
+            result["requested_service"] = (
+                service_type if service_type != "any" else "available vendor"
+            )
             results.append(result)
         return results
 

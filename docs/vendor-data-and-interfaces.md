@@ -39,6 +39,9 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 - 日期使用 `YYYY-MM-DD`；日期时间使用带时区偏移的 ISO 8601 格式，例如 `2026-11-20T18:00:00+11:00`。
 - 金额统一使用澳元。交接字段以 `_cents` 结尾，使用整数分：`500000` 表示 AUD 5,000，避免金额精度歧义。
 - `budget_limit_cents` 是整场活动的总预算上限，不能直接当成每一类服务的预算。
+- 客户只提供整场活动预算；Planning 根据活动需求生成内部的 `vendor_budget_cents`，作为全部供应商的目标预算，并保证它不超过总预算。
+- 服务偏好是可选筛选条件。未讨论时必须询问一次；客户明确不需要额外服务时，记录 `services_confirmed=true` 和空的 `required_services`，后续不按服务类型筛选。
+- 当前流程允许组合多个供应商，但每种服务只能确认一个供应商，例如餐饮一家、摄影一家、场地一家。
 - 服务类型第一轮统一使用 `venue`、`catering`、`photography`；需要其他类型时在公共定义中补充。
 - 必填数据缺失时返回提示；不让 LLM 擅自补出日期、人数、预算或供应商确认结果。
 
@@ -48,8 +51,8 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 
 | 数据 | 第一轮字段 | 负责产生或维护 |
 |---|---|---|
-| 活动需求 `EventRequirement` | `event_id`、`request_text`、`event_type`、`event_date`、`location`、`guest_count`、`budget_limit_cents` | Planning 整理，客户确认 |
-| 活动方案 `EventProposal` | `event_id`、`proposal_id`、`summary`、`required_services`、`timeline`、`status` | Planning |
+| 活动需求 `EventRequirement` | `event_id`、`request_text`、`event_type`、`event_date`、`location`、`guest_count`、`budget_limit_cents`、`services_confirmed` | Planning 整理，客户确认 |
+| 活动方案 `EventProposal` | `event_id`、`proposal_id`、`summary`、`required_services`、`vendor_budget_cents`、`timeline`、`status` | Planning |
 | 供应商报价 `VendorQuotation` 的交接数据 | `event_id`、`proposal_id`、`quotation_id`、`vendor_id`、`service_type`、`quoted_total_cents`、`available`、`recommendation_reason` | Procurement |
 | 预算检查结果 | `event_id`、`proposal_id`、`vendor_total_cents`、`service_fee_cents`、`contingency_cents`、`estimated_total_cents`、`within_budget` | Financial |
 | 客户确认记录的交接数据 | `event_id`、`proposal_id`、`approved_quotation_ids`、`approved` | 由客户在界面操作产生，通过 Service 保存 |
@@ -59,7 +62,9 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 
 补充约定：
 
-- `required_services` 是服务类型列表，例如 `["catering", "photography"]`。
+- `required_services` 是可选的服务筛选列表，例如 `["catering", "photography"]`。客户确认不需要额外服务时使用空列表。
+- `services_confirmed` 用于区分“尚未询问服务”和“客户确认不需要服务”，避免对空列表重复追问。
+- `vendor_budget_cents` 是 Planning 从整场预算中分配给全部供应商的内部目标预算，客户不需要另外填写。
 - `timeline` 是活动节目安排列表，每项包含 `title`、`start_at`、`end_at`；不在这里分配供应商或布置任务。
 - `tasks` 是执行任务列表，每项包含 `task_id`、`title`、`scheduled_at`、`booking_id`、`status`。不涉及供应商的任务，`booking_id` 可以为 `null`。
 - 方案状态沿用 Stage 1：`Draft`、`PendingReview`、`Approved`、`Rejected`。客户确认由界面操作触发，Agent 不能自行设为 Approved。
@@ -71,7 +76,7 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 
 ## 5. 模块入口与返回方式
 
-下表是供 Supervisor 调用的模块入口约定，不是替换 Stage 1 Service 方法的完整清单。模块内部仍通过 Service 和领域对象完成业务操作，不直接操作数据库。
+下表是供应用工作流调用的模块入口约定，不是替换 Stage 1 Service 方法的完整清单。模块内部仍通过 Service 和领域对象完成业务操作，不直接操作数据库。本项目没有独立的 Supervisor Agent。
 
 | 模块入口 | 读取的主要数据 | 返回的 `data` |
 |---|---|---|
@@ -116,12 +121,13 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 | 字段 | 必填 | 类型与约束 | 说明 |
 |---|---|---|---|
 | `event_id` | 是 | 非空字符串 | 活动 ID |
-| `service_type` | 是 | 非空字符串 | 第一轮：`venue` / `catering` / `photography` |
+| `service_type` | 是 | 非空字符串 | `venue` / `catering` / `photography`；工作流在客户确认不需要额外服务时可传内部值 `any`，仅取消服务类型筛选 |
 | `event_date` | 是 | `YYYY-MM-DD` 字符串 | 映射为 Service 的 `date` 参数 |
 | `guest_count` | 是 | 整数，≥0（bool 不接受） | 预计人数 |
 | `location` | 是 | 非空字符串 | 活动城市 |
 | `customer_preferences` | 否 | 字符串 | 软性偏好，仅供 LLM 参考，不参与代码筛选 |
 | `min_rating` | 否 | 数字，0–5（bool、字符串不接受） | 代码侧评分下限筛选 |
+| `target_vendor_budget_cents` | 否 | 正整数 | Planning 分配的单一供应商目标预算，用于排序和解释，不改变目录中的真实价格 |
 
 **status 规则**：输入缺失/非法 → `needs_input`（不调用 LLM；`event_id` 缺失时信封 `event_id` 为 `null`）；
 无可用候选（筛选无结果，或 `min_rating` 过滤后为空）→ `blocked`（不调用 LLM）；LLM 调用失败或模型输出校验失败 → `error`；
@@ -154,6 +160,7 @@ Supervisor 负责分派和协调，不代替业务 Agent 完成业务判断。�
 | `lowest_price` | 该候选 `total_price_cents` 为当前候选集合中的最低值 |
 | `highest_rating` | 该候选 `rating` 为当前候选集合中的最高值 |
 | `highest_capacity` | 该候选 `guest_capacity` 为当前候选集合中的最大值 |
+| `within_budget` | 该候选的目录价格不高于 `target_vendor_budget_cents` |
 
 同一 `(vendor_id, offering_id)` 不得重复推荐；`recommendation_reason` 为自由文本，属于 AI 偏好解释，即使
 basis codes 核验通过也不视为完全事实核验。示例：`py -3 -m examples.vendor_recommendation_example`（默认

@@ -40,6 +40,8 @@ def test_multiturn_planner_to_vendor_flow() -> None:
     )
     assert complete["stage"] == "vendor_review"
     assert complete["progress"]["completed"] == 6
+    assert "Please select one vendor for each service." in complete["reply"]
+    assert "Event Type" not in complete["reply"]
     assert {item["service_type"] for item in complete["vendor_recommendations"]} == {
         "catering",
         "photography",
@@ -50,14 +52,22 @@ def test_multiturn_planner_to_vendor_flow() -> None:
         "procurement",
     ]
 
-    selected = [complete["vendor_recommendations"][0]["offering_id"]]
+    selected = [
+        next(
+            item["offering_id"]
+            for item in complete["vendor_recommendations"]
+            if item["service_type"] == service
+        )
+        for service in ("catering", "photography")
+    ]
     confirmation = workflow.confirm_vendor_selection(first["event_id"], selected)
     assert confirmation["stage"] == "proposal"
+    assert confirmation["selected_offering_ids"] == selected
 
-    with pytest.raises(ValueError, match="exactly one"):
+    with pytest.raises(ValueError, match="one vendor for each service"):
         workflow.confirm_vendor_selection(
             first["event_id"],
-            [item["offering_id"] for item in complete["vendor_recommendations"]],
+            [selected[0]],
         )
 
 
@@ -73,3 +83,35 @@ def test_complete_requirements_can_return_no_vendor_match() -> None:
     assert response["progress"]["completed"] == 6
     assert response["vendor_recommendations"] == []
     assert "could not find" in response["reply"]
+
+
+def test_no_extra_services_still_runs_global_vendor_matching() -> None:
+    workflow = make_workflow()
+    first = workflow.handle_message(
+        event_id=None,
+        message=(
+            "I need a birthday in Sydney on 5 December 2026 from 3 pm to 6 pm "
+            "for 30 guests with a budget of 30000 dollars."
+        ),
+    )
+    assert first["stage"] == "requirements"
+    assert first["progress"]["completed"] == 5
+    assert first["progress"]["missing_fields"] == ["services"]
+    assert first["requirements"]["vendor_budget_cents"] == 2_100_000
+
+    complete = workflow.handle_message(
+        event_id=first["event_id"],
+        message="I do not need any additional services.",
+    )
+    assert complete["stage"] == "vendor_review"
+    assert complete["progress"]["completed"] == 6
+    assert complete["requirements"]["required_services"] == []
+    assert complete["requirements"]["services_confirmed"] is True
+    assert {item["service_type"] for item in complete["vendor_recommendations"]} == {
+        "catering",
+        "photography",
+    }
+    assert [item["agent"] for item in complete["agent_trace"]] == [
+        "planning",
+        "procurement",
+    ]

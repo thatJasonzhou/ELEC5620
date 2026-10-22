@@ -36,6 +36,8 @@ PLANNER_OUTPUT_SCHEMA: dict[str, Any] = {
                     "type": ["array", "null"],
                     "items": {"type": "string"},
                 },
+                "services_confirmed": {"type": ["boolean", "null"]},
+                "vendor_budget_cents": {"type": ["integer", "null"]},
                 "customer_preferences": {"type": ["string", "null"]},
             },
             "required": [
@@ -47,6 +49,8 @@ PLANNER_OUTPUT_SCHEMA: dict[str, Any] = {
                 "guest_count",
                 "budget_limit_cents",
                 "required_services",
+                "services_confirmed",
+                "vendor_budget_cents",
                 "customer_preferences",
             ],
             "additionalProperties": False,
@@ -66,9 +70,12 @@ Responsibilities:
 - Never invent a date, time, location, guest count, budget or service.
 - Return null for an unchanged or unknown field.
 - Dates use YYYY-MM-DD, times use HH:MM, and budgets use integer AUD cents.
+- Services are an optional vendor filter, but the customer's preference must be confirmed once. If the customer names a service, return it in required_services and set services_confirmed to true. If the customer explicitly says no extra services are needed, return an empty required_services list and set services_confirmed to true. If services have not been discussed, return null for both fields.
 - Supported mock vendor services are catering and photography. Other requested services may still be recorded but can return no vendor match.
+- When the total budget is known, propose vendor_budget_cents as the total amount available across all selected vendors. It must be positive and must not exceed budget_limit_cents. Recalculate it when the total budget changes. Do not ask the customer to provide this internal allocation.
 - Ask one concise follow-up question for the most important missing or ambiguous item.
 - Exact event date, start time and end time are required before vendor matching.
+- Keep reply to one or two short sentences. Do not repeat a field-by-field summary, JSON field names, internal budget fields or agent hand-off details.
 - decision_summary contains short user-visible facts such as "Resolved next Friday to 2026-10-23". Do not expose hidden chain-of-thought.
 """
 
@@ -78,7 +85,7 @@ _FOLLOW_UPS = {
     "location": "Which city or venue area should the event be held in?",
     "guest_count": "Approximately how many guests will attend?",
     "budget": "What is your total budget in Australian dollars?",
-    "services": "Which services do you need, such as catering or photography?",
+    "services": "Do you need any additional services, such as catering or photography? You can also say that no extra services are needed.",
 }
 
 
@@ -137,17 +144,15 @@ class EventPlannerAgent(AIAgent):
             "total": len(REQUIREMENT_GROUPS),
             "missing_fields": missing,
         }
-        reply = result["reply"].strip()
         if missing:
             question = _FOLLOW_UPS[missing[0]]
-            if "?" not in reply:
-                reply = f"{reply} {question}".strip()
+            reply = f"Thanks — I’ve saved those details.\n\n{question}"
             status = "needs_input"
         else:
             reply = (
-                f"{reply} Your requirements are complete. "
-                "I’ll now ask the Vendor Procurement Manager Agent to find suitable options."
-            ).strip()
+                "Thanks — your event requirements are complete.\n\n"
+                "I’ll now find suitable vendors for each requested service."
+            )
             status = "success"
 
         return self.envelope(
@@ -192,8 +197,11 @@ class EventPlannerAgent(AIAgent):
             "guest_count": saved.get("guest_count"),
             "budget_limit_cents": saved.get("budget_limit_cents"),
             "required_services": list(saved.get("required_services") or []),
+            "services_confirmed": saved.get("services_confirmed") is True,
+            "vendor_budget_cents": saved.get("vendor_budget_cents"),
             "customer_preferences": saved.get("customer_preferences") or "",
         }
+        services_were_updated = False
         for field, value in updates.items():
             if field not in result or value is None:
                 continue
@@ -210,14 +218,27 @@ class EventPlannerAgent(AIAgent):
             elif field == "budget_limit_cents":
                 result[field] = require_int(value, field, minimum=1)
             elif field == "required_services":
-                if not isinstance(value, list) or not value:
-                    raise ValueError("required_services must be a non-empty list")
+                if not isinstance(value, list):
+                    raise ValueError("required_services must be a list")
                 cleaned = [require_non_empty_str(item, "required_services item").strip().lower() for item in value]
                 result[field] = list(dict.fromkeys(cleaned))
+                services_were_updated = True
+            elif field == "services_confirmed":
+                if not isinstance(value, bool):
+                    raise ValueError("services_confirmed must be a boolean")
+                result[field] = value
+            elif field == "vendor_budget_cents":
+                result[field] = require_int(value, field, minimum=1)
             elif field == "customer_preferences":
                 if not isinstance(value, str):
                     raise ValueError("customer_preferences must be a string")
                 result[field] = value.strip()
+        if services_were_updated:
+            result["services_confirmed"] = True
+        total_budget = result.get("budget_limit_cents")
+        vendor_budget = result.get("vendor_budget_cents")
+        if vendor_budget is not None and total_budget is not None and vendor_budget > total_budget:
+            raise ValueError("vendor_budget_cents must not exceed budget_limit_cents")
         return result
 
     @staticmethod
@@ -233,6 +254,6 @@ class EventPlannerAgent(AIAgent):
             missing.append("guest_count")
         if not requirements.get("budget_limit_cents"):
             missing.append("budget")
-        if not requirements.get("required_services"):
+        if requirements.get("services_confirmed") is not True:
             missing.append("services")
         return missing

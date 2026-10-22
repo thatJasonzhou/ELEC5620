@@ -47,6 +47,8 @@ class DemoLLMClient(LLMClient):
             "guest_count": None,
             "budget_limit_cents": None,
             "required_services": None,
+            "services_confirmed": None,
+            "vendor_budget_cents": None,
             "customer_preferences": None,
         }
 
@@ -111,9 +113,28 @@ class DemoLLMClient(LLMClient):
                 amount *= 1000
             updates["budget_limit_cents"] = amount * 100
 
+        total_budget = updates["budget_limit_cents"] or (
+            payload.get("saved_requirements", {}).get("budget_limit_cents")
+        )
+        saved_vendor_budget = payload.get("saved_requirements", {}).get(
+            "vendor_budget_cents"
+        )
+        if total_budget and (updates["budget_limit_cents"] is not None or not saved_vendor_budget):
+            updates["vendor_budget_cents"] = max(1, int(total_budget * 0.7))
+
         services = [name for name in ("catering", "photography") if name in lower]
-        if services:
+        no_services = bool(
+            re.search(
+                r"(?:no|without|do not need|don't need)\s+(?:any\s+)?(?:extra\s+|additional\s+)?services?",
+                lower,
+            )
+        )
+        if no_services:
+            updates["required_services"] = []
+            updates["services_confirmed"] = True
+        elif services:
             updates["required_services"] = services
+            updates["services_confirmed"] = True
 
         if any(word in lower for word in ("outdoor", "vegetarian", "modern", "casual")):
             updates["customer_preferences"] = text
@@ -157,7 +178,12 @@ class DemoLLMClient(LLMClient):
         maximum_capacity = max(item["guest_capacity"] for item in candidates)
         ranked = sorted(
             candidates,
-            key=lambda item: (-item["rating"], item["total_price_cents"]),
+            key=lambda item: (
+                not item.get("within_target_budget", True),
+                abs(item.get("budget_gap_cents", 0)),
+                -item["rating"],
+                item["total_price_cents"],
+            ),
         )[:3]
         recommendations = []
         for item in ranked:
@@ -168,6 +194,8 @@ class DemoLLMClient(LLMClient):
                 codes.append("highest_rating")
             if item["guest_capacity"] == maximum_capacity:
                 codes.append("highest_capacity")
+            if item.get("within_target_budget", True):
+                codes.append("within_budget")
             recommendations.append(
                 {
                     "vendor_id": item["vendor_id"],
