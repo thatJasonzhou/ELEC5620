@@ -42,12 +42,13 @@ class FinancialManagerAgent(AIAgent):
 
     def __init__(self, llm: LLMClient, payment_service: PaymentService, *,
                  settlement_service: VendorSettlementService | None = None,
-                 record_service=None) -> None:
+                 record_service=None, reconciliation_service=None) -> None:
         super().__init__(llm)
         if not isinstance(payment_service, PaymentService):
             raise TypeError("payment_service must be a PaymentService instance")
         self._payment_service = payment_service
         self._record_service = record_service
+        self._reconciliation_service = reconciliation_service
         self._deposit_service = None
         if settlement_service is not None and not isinstance(settlement_service, VendorSettlementService):
             raise TypeError("settlement_service must be a VendorSettlementService")
@@ -66,6 +67,9 @@ class FinancialManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
 
         try:
+            if action == 'reconcile_payments':
+                result = self._reconcile(event_id)
+                return self.envelope(event_id, result['status'], result['message'], result['data'])
             if action == 'get_event_funds':
                 if self._record_service is None:
                     return self.envelope(event_id, 'error', 'FinancialRecordService is not configured')
@@ -234,4 +238,14 @@ class FinancialManagerAgent(AIAgent):
 
     def reconcile_payments(self, event_id: str) -> bool:
         """UML reconcilePayments(eventId:int):Boolean; IDs cross as strings."""
-        raise NotImplementedError("NOT_IMPLEMENTED: FinancialManagerAgent.reconcile_payments")
+        result = self._reconcile(event_id)
+        if result['status'] == 'error':
+            raise FinancialStorageError(result['message'])
+        return result['data']['financial_check_passed']
+
+    def _reconcile(self, event_id):
+        require_non_empty_str(event_id, 'event_id')
+        if self._reconciliation_service is None:
+            return dict(status='blocked', message='Reconciliation service and Operations scope required',
+                        data=dict(financial_check_passed=False, reason_codes=['RECONCILIATION_INPUT_MISSING']))
+        return self._reconciliation_service.reconcile(event_id)

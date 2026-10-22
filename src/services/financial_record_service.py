@@ -250,6 +250,19 @@ class FinancialRecordService:
             db.execute('BEGIN IMMEDIATE')
             return self._balance(db, quote, customer_id)
 
+    @contextmanager
+    def reconciliation_snapshot(self):
+        """Existing database only; one read transaction for all financial evidence."""
+        try:
+            uri = self.database_path.as_uri() + '?mode=ro'
+            with closing(sqlite3.connect(uri, uri=True, timeout=5)) as db:
+                db.execute('PRAGMA query_only=ON')
+                db.execute('BEGIN')
+                yield db
+                db.rollback()
+        except (sqlite3.Error, OSError, json.JSONDecodeError):
+            raise FinancialStorageError('Cannot read reconciliation snapshot') from None
+
     def event_funds(self, event_id):
         """Activity-wide durable receipts and vendor expenditure, across revisions.
 

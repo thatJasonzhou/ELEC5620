@@ -1,5 +1,27 @@
 # Stage 2 architecture records
 
+## KAN-32 read-only financial reconciliation (2026-10-22)
+
+User approved FinancialReconciliationService as an internal helper and injectable
+trusted current-context / Operations-scope providers. Existing Agent inheritance,
+PaymentService and reconcile_payments(event_id: str) -> bool remain intact.
+Both Agent entry points share reconciliation logic; Boolean returns false for
+business blocks and raises FinancialStorageError for system read errors.
+
+FinancialRecordService opens an existing database using mode=ro, query_only and
+BEGIN. Its existing _balance calculation, Procurement snapshot reads and vendor
+history reads share that connection. No tables, requests, payment facts or event
+states are written during reconciliation. Initialized record services are injected.
+Current authority remains a trusted Integration handoff, validated against stored
+budget/customer quote; no independent current-revision store is claimed.
+
+Operations supplies the complete settlement scope independently of payment history;
+each booking references its proposal, allowing outstanding historical obligations.
+Confirmed full quotation amounts remain the vendor payable basis. Missing or invalid
+evidence blocks; data-access failures produce error. No payment provider is used.
+See shared-data-and-interfaces.md §5.11. Tests/demos use STUB Operations scope;
+real Operations integration and final event closure acceptance remain deferred.
+
 ## KAN-31 supplier settlement conditions (2026-10-22)
 
 User explicitly authorized no Owner Approval requirement for this prototype.

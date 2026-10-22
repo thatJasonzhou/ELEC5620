@@ -105,6 +105,10 @@ def test_legal_actions_return_error_without_side_effects(worker, action):
     if action == "prepare_budget":
         assert result["status"] == "needs_input" and "event and proposal" in result["message"]
         assert result["data"] == {"budget_valid": False}
+    elif action == 'reconcile_payments':
+        assert result['status'] == 'blocked'
+        assert result['data']['financial_check_passed'] is False
+        assert worker.reconcile_payments('EV1') is False
     else:
         assert result["status"] == "error" and "NOT_IMPLEMENTED" in result["message"]
         assert result["data"] == {}
@@ -135,7 +139,6 @@ def test_non_object_request_errors(worker, payload):
 @pytest.mark.parametrize("name,args", [
     ("prepare_budget", (None, [])), ("update_proposal_cost", (None, None)),
     ("record_customer_payment", (None,)), ("settle_vendor_payment", (None,)),
-    ("reconcile_payments", ("EV1",)),
 ])
 def test_direct_agent_business_methods_are_unimplemented(worker, name, args):
     with pytest.raises(ValueError if name == "prepare_budget" else NotImplementedError):

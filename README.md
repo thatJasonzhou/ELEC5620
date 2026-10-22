@@ -486,6 +486,32 @@ $env:ELEC5620_DEPOSIT_RATE = '0.30'
 最新报价和批准由 Integration 提供；本轮“过期”指与当前快照或批准不一致，未增加报价有效期。
 少付、多付、退款、失败后重新扣款、自动核对及真实支付网关留待后续，无新增 UI/API 页面。
 
+
+### 财务只读核对（KAN-32）
+
+`FinancialManagerAgent.reconcile_payments(event_id) -> bool` 与
+`handle({"event_id": "EV001", "action": "reconcile_payments"})` 复用
+`FinancialReconciliationService`。后者返回标准 finance envelope，包含客户余额、
+供应商应付/已付/未结算项、证据引用及原因码。欠款、未结算或必要依据缺失返回
+`blocked`，读取故障返回 `error`；Boolean 入口在系统错误时抛出存储异常。
+
+构造 Agent 时注入 `reconciliation_service`；Service 注入同一 SQLite 路径的
+FinancialRecordService、ProcurementRecordService、VendorPaymentRecordService，
+以及可信的 `context_provider(event_id)` 和 Operations `scope_provider(event_id)`。
+未配置 Service 或有效范围会阻塞。接口见公共文档 §5.11。
+核对使用同一只读事务，不执行付款、重试、记录修复或活动关闭。
+
+运行离线演示和验证：
+
+```powershell
+py -3 -B -m examples.financial_reconciliation_example
+py -3 -m pytest tests/unit/ tests/integration/ tests/e2e/ -q
+```
+
+演示先显式创建模拟付款事实，再核对；Operations 范围明确为 **STUB**。
+本阶段仅验证 Financial 与持久化模块，真实 Operations 权威范围接入及
+活动关闭端到端验收仍是后续依赖，最终关闭由 Operations 执行。
+
 ## 目录结构
 
 | 路径 | 说明 |
