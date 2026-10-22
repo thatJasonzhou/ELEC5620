@@ -349,6 +349,65 @@ are conservatively stale, including descriptive edits. No new persistence, appro
 booking, invoice or payment workflow is introduced. Repeated generation creates a
 new quotation ID and timestamp. Customer approval remains a separate workflow.
 
+### 5.7 Explicit mock customer deposit (Story 5 / KAN-26)
+
+Use `FinancialManagerAgent(llm, MockPaymentService()).handle(request)`, or call
+`DepositService(MockPaymentService()).prepare / simulate_payment` directly.
+Keep the same instance throughout the workflow. Agent returns the existing
+finance envelope; Service returns `status`, `message`, `data`. Envelope success
+is distinct from `data.deposit.status`, which is pending or paid.
+
+Both operations require the current KAN-25 inputs: `event_id`, `event`,
+`proposal`, `quotations`, `selected_quotation_ids`, validated FIN-01 `budget`,
+and the original `customer_quotation` object. Integration additionally supplies
+`customer_id`, ISO date `due_date`, and external `approval` with:
+`event_id`, `proposal_id`, `approved=true` (actual boolean), unique exact
+`approved_quotation_ids`, current `quotation_fingerprint`, and
+`customer_quotation_id` identifying the customer-reviewed quotation.
+Financial neither creates approval nor changes Proposal status. This additive
+Approval reference binds consent to the customer quote as well as vendor selection.
+
+Prepare with `action="prepare_deposit_request"`. Required environment setting
+`ELEC5620_DEPOSIT_RATE` has no default and must satisfy `0 < rate <= 1`.
+Process environment overrides project-root `.env`; only this setting is read
+from that file, without loading unrelated credentials. `.env.example` is an
+example, never an automatic fallback. Missing/invalid config returns blocked.
+Deposit basis is the existing customer quotation `estimated_total_cents`, the
+GST-inclusive total actually presented for approval. Decimal ROUND_HALF_UP
+produces positive integer cents; no new final-total field or rate is hardcoded.
+
+Return `data.deposit`: `event_id`, `proposal_id`, `customer_quotation_id`,
+`deposit_request_id`, Financial-generated `payment_id`, `amount_cents`,
+`status="pending"`, `quotation_fingerprint`, `mock=true`, UTC `created_at`.
+`data.budget` preserves the validated FIN-01 fields and adds `deposit_due_cents`.
+Preparation never calls the payment provider or records paid evidence. Repeated
+pending preparation for the same quote/customer reuses the request; conflicting
+contents/rate or preparing again after payment is blocked.
+
+Future Pay Deposit click: send the same current context/approval plus
+`action="simulate_deposit_payment"`, `simulate=true`, `deposit_request_id`,
+and integer `amount_cents` exactly matching the request. Integration supplies
+context from trusted internal sources, not unchecked browser snapshots. Financial
+revalidates source, budget, quote, exact approval selection/customer quote ID,
+customer and amount before invoking MockPaymentService. Request ID is the
+idempotency identity: repeated valid payment calls reuse the same paid record.
+Missing consent, stale context, wrong amount or unknown request is blocked with
+empty data. A previous paid record remains retained when a later retry is blocked.
+
+Success returns the same deposit with `status="paid"`, UTC `paid_at`, and
+`transaction_reference` prefixed MOCK. Forward `data.deposit` as KAN-20
+`deposit`, `data.budget` as `budget`, original external `approval`, and selected
+vendor snapshots as `quotations`. Financial does not call VendorBookingService.
+
+Storage is in memory in this Story; records property returns detached paid
+records. Calls are serialized per DepositService. No restart, multi-process or
+durable exactly-once protection is claimed. Integration must provide latest
+Planning/approval/revocation snapshots; fingerprints detect consistency but do
+not authenticate client-controlled data. Shared approval persistence and durable
+Financial storage remain Integration dependencies; real gateways/refunds remain
+outside this mock flow. Existing UML PaymentService signatures remain intact;
+MockPaymentService implements them without mapping paid to UML Confirmed.
+
 ## 6. 公共定义放在哪里
 
 建议统一放在 `src/shared/schemas.py`，供各模块导入使用；具体目录若已有约定，沿用现有目录。共享数据由 SQLite 保存，模块经对应 Service 读取和更新。

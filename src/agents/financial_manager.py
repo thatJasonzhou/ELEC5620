@@ -2,7 +2,7 @@
 
 Structured requests select quotations for the current proposal. Budget owns
 exact monetary calculation; this Agent validates inputs and returns envelopes.
-Payment workflows remain separate and unimplemented.
+Mock customer deposits require an explicit payment request.
 """
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from typing import Any
 from src.agents.base import AIAgent
 from src.llm import LLMClient
 from src.services.payment_service import PaymentService
+from src.services.deposit_service import DepositService
 from src.services.customer_quotation_service import (
     CustomerQuotationService, source_fingerprint, budget_fingerprint,
 )
@@ -22,12 +23,13 @@ from src.shared.schemas import (
 
 
 class FinancialManagerAgent(AIAgent):
-    """V1 budget checks; payment workflows remain unfinished."""
+    """Budget checks, customer quotations and explicit mock customer deposits."""
 
     agent_name = "finance"
     _ACTIONS = (
         "prepare_budget", "update_proposal_cost", "record_customer_payment",
         "settle_vendor_payment", "reconcile_payments", "generate_customer_quotation",
+        "prepare_deposit_request", "simulate_deposit_payment",
     )
 
     def __init__(self, llm: LLMClient, payment_service: PaymentService) -> None:
@@ -35,6 +37,7 @@ class FinancialManagerAgent(AIAgent):
         if not isinstance(payment_service, PaymentService):
             raise TypeError("payment_service must be a PaymentService instance")
         self._payment_service = payment_service
+        self._deposit_service = None
 
     def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(request, dict):
@@ -49,7 +52,17 @@ class FinancialManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
 
         try:
-            # Budget V1 is approved; other workflows stay unfinished.
+            if action in ("prepare_deposit_request", "simulate_deposit_payment"):
+                if self._deposit_service is None:
+                    try:
+                        self._deposit_service = DepositService(self._payment_service)
+                    except TypeError as exc:
+                        return self.envelope(event_id, "error", str(exc))
+                operation = (self._deposit_service.prepare if action == "prepare_deposit_request"
+                             else self._deposit_service.simulate_payment)
+                result = operation(request)
+                return self.envelope(event_id, result["status"], result["message"], result["data"])
+            # Existing financial workflows retain their contracts.
             if action == "generate_customer_quotation":
                 result = CustomerQuotationService().generate(request)
                 return self.envelope(event_id, result["status"], result["message"], result["data"])
