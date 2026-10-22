@@ -212,7 +212,7 @@ The offline example uses a temporary SQLite file, recreates its Services, and
 checks that the booking ID survives with zero supplier calls after reload. It
 deletes its temporary database on exit; no live API or payment is used.
 
-## Financial Foundation (KAN-23)
+### Financial Foundation (KAN-23)
 
 本 Story 提供 `FinancialManagerAgent(AIAgent)` 骨架、`PaymentService`
 抽象接口，以及公共 `Budget`、抽象 `Payment`、`CustomerPayment`、
@@ -255,7 +255,7 @@ UML 映射、关联限制及已批准的 KAN-24 Budget 调整见 [架构记录](
 .\.venv\Scripts\python.exe -B -m pytest tests/unit/ -q -p no:cacheprovider --ignore=tests/unit/test_vendor_ui.py
 ```
 
-## Financial Budget Check V1 (KAN-24)
+### Financial Budget Check V1 (KAN-24)
 
 KAN-24 在 KAN-23 Foundation 基础上新增 UC4 预算计算与检查，保留现有 Agent、
 Budget 和统一响应 envelope。
@@ -312,6 +312,44 @@ Missing, over-budget, incomplete or stale budgets block generation. Older budget
 handoffs without the new source/budget fingerprints require explicit FIN-01
 validation again. See section 5.6 of [the contracts](shared-data-and-interfaces.md).
 Generation does not persist quotations or perform approval, booking or payment.
+
+### Record customer deposits (KAN-26)
+
+Financial supports `prepare_deposit_request` and `simulate_deposit_payment` via
+the existing Agent `handle` interface, using `MockPaymentService`. Preparation
+creates only pending requests; only an explicit `simulate=true` payment call
+can create paid evidence. No UI, gateway, LLM payment decision or booking is added.
+
+Set required `ELEC5620_DEPOSIT_RATE` in the process environment or project-root
+`.env`; `.env.example` provides an example. `.env` is already ignored by Git.
+Process environment takes precedence, even when invalid. The Financial config
+reader reads only this setting from `.env`, requires a finite `0 < rate <= 1`,
+and has no default. No extra dependencies or shell activation are necessary.
+Tests set explicit isolated configuration; the Demo uses your actual setting.
+
+Customer Quotation's existing `estimated_total_cents` is its customer-facing
+GST-inclusive quote total (vendor cost + service fee + contingency), copied from
+FIN-01. There is no separate final-price field. Deposit uses this quoted total
+only after receiving external approval for the specific customer quotation ID.
+Decimal multiplication and ROUND_HALF_UP yield integer cents; a result below
+one cent is blocked. No pricing or public total field is changed.
+
+```powershell
+.\.venv\Scripts\python.exe -B -m examples.deposit_payment_example
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q -p no:cacheprovider
+```
+
+Demo approval is explicitly external MOCK test input, not Financial-generated
+approval. It prepares pending, simulates a customer click, retries the payment,
+and submits the output to existing KAN-20 validation with no supplier confirmation
+configured. Validation reaches the unconfigured supplier reply and creates no booking.
+See shared contract section 5.7 for Integration inputs and outputs.
+
+Financial records currently live in memory per Agent/DepositService instance.
+Keep that instance for retries; restarting loses requests and duplicate protection.
+There is no durable or cross-process guarantee and no shared Procurement DB change.
+Integration must supply authoritative current snapshots and approval on every call;
+there is no independent Planning approval/revocation store yet.
 
 ## 目录结构
 
