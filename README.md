@@ -351,6 +351,49 @@ There is no durable or cross-process guarantee and no shared Procurement DB chan
 Integration must supply authoritative current snapshots and approval on every call;
 there is no independent Planning approval/revocation store yet.
 
+
+### Manage Vendor Payments (KAN-27)
+
+`VendorSettlementService` is the single mock vendor settlement workflow.
+Inject `MockPaymentService`, `ProcurementRecordService`, and
+`VendorPaymentRecordService` with an explicit SQLite path (normally the existing
+`ProcurementRecordService.from_env().database_path`, using `ELEC5620_DB_PATH`).
+Inject the settlement service into `FinancialManagerAgent` using the optional
+`settlement_service=` keyword; existing Story 5 construction remains compatible.
+
+- `action="prepare_vendor_payment_request"`: provide `event_id`, `proposal_id`,
+  structured `invoice` and `completion` objects. Validates persisted Procurement
+  bookings/quotations and saves a pending record without calling the provider.
+- `action="simulate_vendor_payment"`: provide the same evidence plus `simulate=true`,
+  the prepared `payment_id`, and exact integer `amount_cents`.
+- Results use `data.vendor_payment`. Payment statuses are pending/paid/failed;
+  envelope success is independent of payment status. Failed payments return blocked.
+- `MockPaymentService(vendor_outcome="success" | "failure")` selects deterministic
+  vendor outcomes in trusted test/demo setup. Customer deposits retain their behavior.
+
+Invoice/completion fixtures in `data/mock_vendor_invoices.json` and
+`data/mock_service_completions.json` are mock inputs, not persisted Procurement
+records. Their exact validated snapshots are retained with the payment. The CLI
+seeds mock Procurement snapshots into a temporary database for demonstration only.
+
+Only full settlement after mock completion is supported. Owner Approval, vendor
+prepayments, partial/instalment payments, real gateways and UI changes are deferred.
+`approved_at` remains null. `settle_vendor_payment(booking)` remains a legacy UML
+stub; use the structured actions above, not a second payment path.
+
+Calls must be serialized. SQLite uniqueness prevents duplicate booking/invoice
+records, and persisted paid/failed status prevents another provider invocation,
+including after restart. Failed payments are terminal; no automatic retries occur.
+Cross-process coordination and crash recovery are deferred. If execution succeeds
+but saving fails, or the process stops between execution and save, retain the error
+and perform manual review before any further execution; durable exactly-once
+processing is not claimed.
+
+```powershell
+.\.venv\Scripts\python.exe -B -m examples.vendor_payment_example
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q -p no:cacheprovider
+```
+
 ## 目录结构
 
 | 路径 | 说明 |

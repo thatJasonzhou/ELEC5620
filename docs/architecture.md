@@ -1,5 +1,24 @@
 # Approved UC4 V1 UML adjustment
 
+## Approved Story 6 MVP scope (KAN-27, 2026-10-22)
+
+User approved a single VendorSettlementService for structured preparation and
+explicit simulation, with Financial-owned SQLite persistence. PaymentService
+signatures and Payment -> VendorPayment inheritance remain unchanged.
+FinancialManagerAgent.settle_vendor_payment(booking) retains its UML signature
+as a documented legacy stub because it cannot receive invoice/completion evidence;
+the additive Agent actions use the single settlement service instead.
+
+Business Owner Approval and vendor prepayments are deferred requirements, not
+implicitly satisfied. approved_at stays null; no approve_settlement call or
+fabricated approval occurs. pending/paid/failed are MVP handoff states, not a
+mapping to UML Confirmed. Structured mock service completion is separate from
+the immutable Procurement Confirmed booking. Booking -> VendorPayment (0..1)
+is enforced by SQLite booking uniqueness. Workflows are serialized; cross-process
+execution and crash recovery are deferred, with manual review after uncertain saves.
+
+## UC4 Budget adjustment
+
 Date: 2026-10-21. Approval: user explicitly approved proposal items 1 and 3,
 and specified taxAmount remains integer zero for V1 instead of None.
 
