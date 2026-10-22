@@ -250,6 +250,54 @@ class FinancialRecordService:
             db.execute('BEGIN IMMEDIATE')
             return self._balance(db, quote, customer_id)
 
+    def event_funds(self, event_id):
+        """Activity-wide durable receipts and vendor expenditure, across revisions.
+
+        Serialized demo workflows only; this read does not reserve funds.
+        """
+        from src.services.vendor_payment_record_service import read_vendor_payment_history
+        from src.shared.schemas import require_int
+        require_non_empty_str(event_id, 'event_id')
+        collections = []
+        with self._db() as db:
+            customers = db.execute('SELECT customer_id FROM financial_deposits WHERE event_id=? '
+                'UNION SELECT customer_id FROM financial_final_requests WHERE event_id=?',
+                (event_id, event_id)).fetchall()
+            for (customer,) in customers:
+                collections.extend((p, state, customer) for p, state, _ in
+                                   self._collections(db, event_id, customer))
+        vendors = read_vendor_payment_history(self.database_path, event_id)
+
+        def total(items):
+            paid = {}
+            for payment, state, owner in items:
+                if payment.get('status') != 'paid':
+                    continue
+                try:
+                    identity = require_non_empty_str(payment.get('payment_id'), 'payment_id')
+                    amount = require_int(payment.get('amount_cents'), 'amount_cents', minimum=1)
+                    if (state not in ('result_recorded', 'completed')
+                            or payment.get('event_id') != event_id
+                            or payment.get('mock') is not True
+                            or payment.get('currency', 'AUD') != 'AUD'
+                            or payment.get('transaction_reference') != 'MOCK-' + identity
+                            or datetime.fromisoformat(payment['paid_at']).utcoffset() is None):
+                        raise ValueError('Invalid paid evidence')
+                    evidence = (amount, owner)
+                    if identity in paid and paid[identity] != evidence:
+                        raise ValueError('Conflicting duplicate paid evidence')
+                    paid[identity] = evidence
+                except (KeyError, ValueError, TypeError):
+                    raise FinancialRecordConflict('Invalid successful payment evidence; review required') from None
+            return sum(item[0] for item in paid.values())
+
+        received = total(collections)
+        spent = total((p, 'completed', p.get('vendor_booking_id')) for p in vendors)
+        if spent > received:
+            raise FinancialRecordConflict('Vendor expenditure exceeds recorded receipts; review required')
+        return dict(event_id=event_id, currency='AUD', received_total_cents=received,
+                    vendor_paid_total_cents=spent, available_funds_cents=received-spent)
+
     def _claim(self, db, record, token, amount, *, final):
         quote, customer = record['quote'], record['customer_id']
         event = quote['event_id']

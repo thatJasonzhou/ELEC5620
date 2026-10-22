@@ -1,5 +1,18 @@
 # Stage 2 architecture records
 
+## KAN-31 supplier settlement conditions (2026-10-22)
+
+User explicitly authorized no Owner Approval requirement for this prototype.
+This clarifies KAN-27's deferral: no approval subsystem is implemented and missing
+Owner approval does not block settlement. approved_at remains null, never fabricated.
+Customer approval remains mandatory. VendorSettlementService now checks current
+persisted budget/quote, external current customer approval, activity-wide approved
+vendor capacity and durable available receipts before preparation/pending execution.
+FinancialRecordService provides activity funds through Services; existing Agent
+inheritance, PaymentService signatures and serialized KAN-27 execution remain intact.
+The pre-execution gate is the future extension point for Owner approval.
+See docs/kan31-settlement-budget-plan.md and shared-data-and-interfaces.md section 5.8.
+
 ## KAN-30 customer balance and final payment (2026-10-22)
 
 User approved CustomerBalanceService as an internal Stage 2 helper and a shared

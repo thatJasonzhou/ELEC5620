@@ -36,6 +36,7 @@ class FinancialManagerAgent(AIAgent):
         "prepare_deposit_request", "simulate_deposit_payment",
         "prepare_vendor_payment_request", "simulate_vendor_payment",
         "get_event_financial_records",
+        "get_event_funds",
         "get_customer_balance", "prepare_final_payment_request", "simulate_final_payment",
     )
 
@@ -65,6 +66,11 @@ class FinancialManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
 
         try:
+            if action == 'get_event_funds':
+                if self._record_service is None:
+                    return self.envelope(event_id, 'error', 'FinancialRecordService is not configured')
+                return self.envelope(event_id, 'success', 'Activity funds',
+                                     self._record_service.event_funds(event_id))
             if action in ('get_customer_balance', 'prepare_final_payment_request', 'simulate_final_payment'):
                 try:
                     service = CustomerBalanceService(self._payment_service, self._record_service)
