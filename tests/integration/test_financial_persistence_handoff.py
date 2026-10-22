@@ -27,5 +27,8 @@ def test_existing_vendor_settlement_in_financial_history(tmp_path):
     records = FinancialRecordService(path)
     history = records.get_event_financial_records(request['event_id'], request['proposal_id'])
     assert history['vendor_payments'] == [paid['data']['vendor_payment']]
-    assert history['budgets'] == [] and history['deposits'] == []
+    assert len(history['budgets']) == 1 and len(history['final_payments']) == 1
+    funds = records.event_funds(request['event_id'])
+    assert funds['vendor_paid_total_cents'] == pending['amount_cents']
+    assert funds['available_funds_cents'] == funds['received_total_cents'] - pending['amount_cents']
     assert procurement.get_bookings(request['event_id'], request['proposal_id'])

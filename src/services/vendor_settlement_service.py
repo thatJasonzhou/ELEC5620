@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from src.services.mock_payment_service import MockPaymentService
+from src.services.financial_record_service import FinancialRecordService, FinancialStorageError, canonical
+from src.services.deposit_service import DepositService
 from src.services.procurement_record_service import ProcurementRecordService, ProcurementStorageError
 from src.services.vendor_booking_service import quotation_fingerprint
 from src.services.vendor_payment_record_service import VendorPaymentRecordService, VendorPaymentStorageError
@@ -22,6 +24,35 @@ class VendorSettlementService:
         self._payments = payment_service
         self._procurement = procurement_records
         self._records = payment_records
+        self._financial = FinancialRecordService(payment_records.database_path)
+        if procurement_records.database_path != payment_records.database_path:
+            raise ValueError('Procurement and Financial must use the same database')
+
+    def _conditions(self, request, invoice):
+        # Current snapshots/approval are trusted Integration handoffs, never Owner approval.
+        quote = DepositService(self._payments)._validate(request)
+        if quote['proposal_id'] != request['proposal_id']:
+            raise ValueError('Current proposal mismatch')
+        history = self._financial.get_event_records(request['event_id'], request['proposal_id'])
+        budget = request['budget']
+        if not any(canonical(b) == canonical(budget) for b in history['budgets']):
+            raise ValueError('Current persisted budget required')
+        if not any(canonical(q) == canonical(quote) for q in history['customer_quotations']):
+            raise ValueError('Current persisted customer quotation required')
+        current = next((q for q in request['quotations']
+                        if q['quotation_id'] == invoice['quotation_id']), None)
+        persisted = next((q for q in self._procurement.get_quotations(
+            request['event_id'], request['proposal_id'])
+            if q['quotation_id'] == invoice['quotation_id']), None)
+        if (invoice['quotation_id'] not in quote['selected_quotation_ids']
+                or current is None or current != persisted):
+            raise ValueError('Invoice quotation is not in current approved selection')
+        funds = self._financial.event_funds(request['event_id'])
+        limit = budget['vendor_total_cents']
+        funds.update(vendor_limit_cents=limit,
+            budget_shortfall_cents=max(0, funds['vendor_paid_total_cents'] + invoice['amount_cents'] - limit),
+            funds_shortfall_cents=max(0, invoice['amount_cents'] - funds['available_funds_cents']))
+        return funds
 
     def _eligible(self, request):
         invoice, completion = validate_vendor_evidence(request)
@@ -77,6 +108,10 @@ class VendorSettlementService:
                 if saved["status"] in ("paid", "failed"):
                     return self._result(saved)
             invoice, completion, fingerprint = self._eligible(request)
+            conditions = self._conditions(request, invoice)
+            if conditions['budget_shortfall_cents'] or conditions['funds_shortfall_cents']:
+                return dict(status='blocked', message='Insufficient approved budget or available funds',
+                            data={'settlement_check': conditions})
             if not execute:
                 saved = self._records.get_for_booking(invoice["vendor_booking_id"])
             if saved is not None:
@@ -118,7 +153,7 @@ class VendorSettlementService:
                 saved.update(status="failed", failed_at=datetime.now(timezone.utc).isoformat(),
                              failure_reason="Mock execution error; manual review required")
             return self._result(self._records.finish(saved))
-        except (ProcurementStorageError, VendorPaymentStorageError):
+        except (ProcurementStorageError, VendorPaymentStorageError, FinancialStorageError):
             return dict(status="error", message="Settlement storage failure; manual review required", data={})
         except (ValueError, TypeError, KeyError) as exc:
             return dict(status="blocked", message=str(exc), data={})

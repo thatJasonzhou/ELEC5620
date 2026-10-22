@@ -1,7 +1,7 @@
 # 公共数据与模块接口规范 v0.1
 
-项目：One-Person AI Event Management Company（ELEC5620 Stage 2）  
-维护人：Zidong Zhou  
+项目：One-Person AI Event Management Company（ELEC5620 Stage 2）
+维护人：Zidong Zhou
 状态：第一轮联调草案，供团队确认后实现。
 
 ## 1. 这份文档解决什么问题
@@ -412,7 +412,7 @@ Integration dependency; durable Financial storage is opt-in via KAN-29; real gat
 outside this mock flow. Existing UML PaymentService signatures remain intact;
 MockPaymentService implements them without mapping paid to UML Confirmed.
 
-### 5.8 vendor settlement handoff (KAN-27)
+### 5.8 Vendor settlement handoff (KAN-27, KAN-31)
 
 Financial Agent actions `prepare_vendor_payment_request` and
 `simulate_vendor_payment` delegate exclusively to `VendorSettlementService`.
@@ -433,12 +433,13 @@ Procurement booking status or independently establish the latest Planning revisi
 
 Execution additionally requires simulate=true, payment_id and exact amount_cents.
 It first checks saved status: paid/failed returns the saved record without provider
-invocation; pending requires current matching evidence and Procurement validation.
+invocation; pending requires current matching evidence, Procurement validation
+and the budget, customer approval and funds checks below.
 Output data.vendor_payment contains the existing VendorPayment fields plus
 proposal_id, quotation_id, currency, mock, source_quotation_fingerprint,
 invoice_snapshot, completion_snapshot, failed_at and failure_reason. Timestamps
-are UTC ISO strings. approved_at remains null; Owner Approval and vendor prepayments
-are explicitly deferred. Only pending -> paid/failed transitions are implemented.
+are UTC ISO strings. approved_at remains null; Owner Approval is not required or
+implemented in this prototype. Vendor prepayments remain deferred. Only pending -> paid/failed transitions are implemented.
 
 VendorPaymentRecordService owns SQLite storage, unique payment/booking identities,
 and unique (vendor_id, invoice_number). Same evidence reuses preparation; changed
@@ -447,6 +448,38 @@ invoice persistence or Operations completion workflow is introduced. Calls are
 serialized; concurrent execution and crash recovery are outside this MVP. An
 interrupted execution or failed outcome save requires manual review before retry.
 The booking-only settle_vendor_payment method remains a legacy stub.
+
+Preparation and pending execution additionally require the
+same current context as section 5.7 (event, proposal, quotations,
+selected_quotation_ids, budget, customer_quotation, customer_id, due_date, approval).
+Integration must provide authoritative latest snapshots and customer approval;
+Financial checks consistency and matching persisted budget/customer quotation,
+not origin authenticity. Owner Approval is not required or implemented in this
+prototype; approved_at remains null and no approval is fabricated.
+
+The selected invoice quotation must match Procurement persistence. Approved
+supplier capacity is budget.vendor_total_cents, excluding fee and contingency.
+Across the whole activity, valid durable customer deposits/final payments form
+received_total_cents; valid paid vendor payments form vendor_paid_total_cents.
+Deduplicate payment IDs; inconsistent successful evidence blocks for review.
+Pending/failed/uncertain customer outcomes do not count. Proposal changes never
+reset activity totals. available_funds_cents = received_total_cents - vendor_paid_total_cents.
+Expenditure exceeding receipts blocks for review rather than silently clamping.
+
+On insufficient conditions return blocked and data.settlement_check containing
+event_id, currency, received_total_cents, vendor_paid_total_cents,
+available_funds_cents, vendor_limit_cents, budget_shortfall_cents and
+funds_shortfall_cents. The latter two are respectively max(0, paid + invoice - limit)
+and max(0, invoice - available). No provider call; pending remains pending.
+Missing or invalid context returns blocked with an explanation. Storage failure
+returns error. Both preparation and pending execution check current conditions;
+preparation does not reserve cash. Terminal replay returns the saved record as described above.
+
+Agent action get_event_funds with event_id delegates to
+FinancialRecordService.event_funds(event_id), returning the first five fields
+above in its normal finance envelope. It reads all proposals/customers and
+supports restart queries. Vendor calls must remain serialized; no concurrency
+or crash recovery guarantee is added. Offline demo: python -B -m examples.vendor_payment_example.
 
 ### 5.9 Financial persistence and activity history (KAN-29)
 
