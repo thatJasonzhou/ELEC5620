@@ -123,7 +123,7 @@ class DepositService:
                         or saved["customer_id"] != request["customer_id"]
                         or saved["due_date"] != request["due_date"] or amount != deposit["amount_cents"]):
                     raise ValueError("Deposit request, quotation, customer or amount mismatch")
-                if deposit["status"] == "paid":
+                if deposit["status"] in ("paid", "failed"):
                     return self._result(saved)
                 if saved.get("execution_state", "not_started") != "not_started":
                     raise RuntimeError("Payment execution uncertain; reconciliation required")
@@ -137,21 +137,32 @@ class DepositService:
                 self._requests[token] = deepcopy(saved)
                 try:
                     reply = self._payments.process_payment(payment)
-                except Exception:
+                except BaseException as exc:
                     self._mark_uncertain(token)
+                    if not isinstance(exc, Exception):
+                        raise
                     raise RuntimeError("Payment execution uncertain; reconciliation required") from None
-                if (not isinstance(reply, dict) or reply.get("status") != "paid" or reply.get("mock") is not True
+                if (not isinstance(reply, dict) or reply.get("status") not in ("paid", "failed") or reply.get("mock") is not True
                         or reply.get("payment_id") != payment.payment_id
                         or type(reply.get("amount_cents")) is not int or reply["amount_cents"] != amount):
                     self._mark_uncertain(token)
                     raise RuntimeError("Mock payment did not return matching successful evidence")
                 try:
-                    reference = require_non_empty_str(reply.get("transaction_reference"), "transaction_reference")
+                    if reply['status'] == 'paid':
+                        reference = require_non_empty_str(reply.get("transaction_reference"), "transaction_reference")
+                        if reference != 'MOCK-' + payment.payment_id:
+                            raise ValueError('Mismatched mock reference')
+                    else:
+                        require_non_empty_str(reply.get('failure_reason'), 'failure_reason')
                 except ValueError:
                     self._mark_uncertain(token)
                     raise RuntimeError("Missing payment evidence; reconciliation required") from None
-                deposit.update(status="paid", paid_at=datetime.now(timezone.utc).isoformat(),
-                               transaction_reference=reference)
+                now = datetime.now(timezone.utc).isoformat()
+                if reply['status'] == 'paid':
+                    deposit.update(status="paid", paid_at=now, transaction_reference=reference)
+                else:
+                    deposit.update(status='failed', failed_at=now, failure_reason=reply['failure_reason'],
+                                   transaction_reference=None)
                 saved["execution_state"] = "result_recorded"
                 try:
                     if self._records is not None:

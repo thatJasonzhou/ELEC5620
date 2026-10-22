@@ -503,9 +503,91 @@ or partial success. These reads do not establish current approval or an atomic
 cross-module workflow snapshot. Initialization raises FinancialStorageError;
 business calls translate storage failures to error and immutable conflicts to blocked.
 
-Detailed identity and transaction rules are maintained in
-[the KAN-29 plan](docs/kan29-persistence-plan.md), sections 2 and 4.
+Identity and transaction rules are defined in this section; KAN-30 extends
+customer collection protection in §5.10 below.
 Offline demonstration: `python -B -m examples.financial_persistence_example`.
+
+### 5.10 Customer final payment and balance (KAN-30)
+
+FinancialManagerAgent adds `get_customer_balance`, `prepare_final_payment_request`
+and `simulate_final_payment`. All three require the same current context as §5.7:
+event_id, event, proposal, quotations, selected_quotation_ids, validated budget,
+original customer_quotation, customer_id, due_date and current external approval.
+Inject MockPaymentService and persistent FinancialRecordService using the same
+ELEC5620_DB_PATH as deposits. No memory fallback is available for final payments.
+Agent delegates to CustomerBalanceService; no LLM determines amounts or outcomes.
+CustomerPayment inheritance and PaymentService signatures are unchanged.
+
+`data.balance` contains event_id, customer_id, customer_quotation_id, currency=AUD,
+quotation_total_cents, paid_total_cents and balance_cents. The approved customer
+quotation estimated_total_cents is the total. Sum durable successful customer
+payments for this event/customer across all proposals and quote versions, deduplicated
+by payment_id. A paid record must have completed execution, a positive integer
+amount, mock=true, timezone-aware paid_at and matching MOCK-<payment_id> reference.
+Invalid paid evidence or conflicting duplicate evidence blocks calculation for review;
+it is never silently deducted. Pending, failed and uncertain payments do not count.
+Vendor payments do not count. A negative balance blocks processing; no clamping occurs.
+
+Preparation returns `data.final_payment` with event_id, proposal_id,
+customer_quotation_id, quotation_fingerprint, final_request_id, payment_id,
+payment_type=final, amount_cents, status=pending, mock=true and UTC created_at.
+`data.execution_state` is separate from payment status. Zero balance returns
+final_payment=null and execution_state=null without creating a request.
+Preparation never invokes MockPaymentService.
+
+Repeated preparation reuses only a prepared request with the same quote/customer,
+unchanged due_date and amount equal to current balance. Changed balance or quote
+marks old unexecuted requests stale and permits a new request. Successful collections
+also mark prepared final requests stale in the result-save transaction. Existing
+paid, failed and uncertain records remain unchanged. Failed final payments cannot
+be replaced by another request in this Story. Conflicting due_date blocks reuse.
+
+Simulation additionally requires simulate=true, final_request_id and exact integer
+amount_cents. Before execution Financial revalidates current approval and quote,
+event/customer, immutable request context, exact amount and current balance.
+Old quote means inconsistent with current supplied snapshots/approval, including
+source revisions; no date-based quote expiry field is introduced. Integration must
+provide authoritative latest snapshots, as for §5.7. Fingerprints are consistency
+checks, not authentication of browser-supplied input.
+
+Final request execution states are prepared -> executing -> completed; stale and
+requires_reconciliation prevent execution. CustomerPayment.status remains
+pending/paid/failed. A valid paid result adds paid_at and transaction_reference;
+a valid failed result adds failed_at, failure_reason and null transaction_reference.
+An operation success envelope may contain a failed payment: inspect the payment
+status. Both terminal results replay without calling MockPaymentService, including
+after restart, after current identity/approval validation. Preparation after a failed
+final result is blocked; replay uses the original request ID. A settled preparation
+returns no new request. Failure never changes paid_total_cents or balance_cents.
+
+Both persisted deposit and final execution use BEGIN IMMEDIATE to check available
+balance and acquire the same unique (event_id,customer_id) collection claim before
+any payment call. Deposits may not exceed available balance; finals must equal it.
+The claim and execution marker commit before the call. Terminal result save and
+claim release are atomic. This prevents concurrent deposit/final overcollection
+across Service instances sharing this SQLite file. Legacy in-memory deposits are
+outside this durable workflow. Deposit journal names remain not_started,
+execution_started, result_recorded, requires_reconciliation for compatibility.
+
+Exceptions, malformed results and failed result saves mark requires_reconciliation
+and retain the claim. A hard process kill or failure to save that marker may leave
+executing/execution_started durable; these states also block every new collection
+and require manual reconciliation. No automatic replay of uncertain execution is
+allowed. SQLite cannot atomically commit an external payment and its local result;
+this is conservative duplicate prevention, not a gateway exactly-once guarantee.
+
+MockPaymentService(customer_outcome="success" | "failure") selects the explicit
+customer outcome; default success preserves earlier demos. Deposits also persist
+matching failed results as terminal and never execute those requests again.
+`get_event_financial_records` adds final_payments, containing saved request
+snapshots and execution_state (optional proposal_id filter still applies). Balance
+always spans proposals for the event/customer, independent of that history filter.
+
+Offline demonstration: `python -B -m examples.final_payment_example` with
+ELEC5620_DEPOSIT_RATE=0.30. It verifies deposit deduction, explicit final payment,
+zero balance, restart recovery and zero extra calls on replay. Partial/extra payments,
+refunds, retry after failed payment, automatic reconciliation, live gateways and
+new UI/API screens remain outside this Story.
 
 ## 6. 公共定义放在哪里
 

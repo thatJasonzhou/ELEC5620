@@ -5,7 +5,10 @@ from src.shared.schemas import CustomerPayment, VendorPayment
 
 
 class MockPaymentService(PaymentService):
-    def __init__(self, *, vendor_outcome="success"):
+    def __init__(self, *, vendor_outcome="success", customer_outcome="success"):
+        if customer_outcome not in ("success", "failure"):
+            raise ValueError("customer_outcome must be success or failure")
+        self.customer_outcome = customer_outcome
         if vendor_outcome not in ("success", "failure"):
             raise ValueError("vendor_outcome must be success or failure")
         self.vendor_outcome = vendor_outcome
@@ -27,10 +30,10 @@ class MockPaymentService(PaymentService):
                 "status": "paid", "mock": True,
                 "transaction_reference": "MOCK-" + payment.payment_id,
             })
-            if vendor and self.vendor_outcome == "failure":
+            if (vendor and self.vendor_outcome == "failure") or (not vendor and self.customer_outcome == "failure"):
                 self._payments[payment.payment_id][1].update(
                     status="failed", transaction_reference=None,
-                    failure_reason="Explicit mock vendor payment failure")
+                    failure_reason="Explicit mock payment failure")
         return deepcopy(self._payments[payment.payment_id][1])
 
     def verify_payment(self, transaction_reference):

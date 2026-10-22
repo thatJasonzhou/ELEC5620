@@ -136,7 +136,7 @@ def test_crash_after_start_blocks_restart(context, monkeypatch):
     monkeypatch.setattr(provider, 'process_payment', crash)
     with pytest.raises(SystemExit):
         service.simulate_payment(pay)
-    assert records.get_deposit(pay['deposit_request_id'])['execution_state'] == 'execution_started'
+    assert records.get_deposit(pay['deposit_request_id'])['execution_state'] == 'requires_reconciliation'
     fresh_provider = CountingMock()
     fresh = DepositService(fresh_provider, FinancialRecordService(records.database_path))
     assert fresh.simulate_payment(pay)['status'] == 'error'

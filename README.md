@@ -433,8 +433,8 @@ JSON payloads without migrating or initializing the vendor table. Empty history
 is success with empty collections; read failure is error. Current approval remains
 mandatory for preparation/payment, including paid retries. History is not approval.
 
-Implementation decisions: [KAN-29 plan](docs/kan29-persistence-plan.md), especially
-section 2 (identity/recovery) and section 4 (transactions/payment protection).
+Implementation decisions: [shared interfaces](shared-data-and-interfaces.md),
+sections 5.9 (persistence) and 5.10 (customer collection protection).
 The CLI uses a temporary database, external MOCK approval and actual deposit-rate
 configuration, verifies restart recovery and zero repeated payment calls, then removes
 its own temporary database. No UI changes or live calls are included.
@@ -443,6 +443,48 @@ its own temporary database. No UI changes or live calls are included.
 .\.venv\Scripts\python.exe -B -m examples.financial_persistence_example
 .\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q -p no:cacheprovider
 ```
+
+## KAN-30：模拟客户尾款与余额
+
+保留 Story 1 的“创建请求 → 显式模拟支付 → 保存结果”流程。FinancialManagerAgent
+新增 `get_customer_balance`、`prepare_final_payment_request`、`simulate_final_payment`，
+委派给 CustomerBalanceService。复用 CustomerPayment、PaymentService 和现有 SQLite
+财务存储；不修改 Stage 1 继承关系或接口签名，不调用 LLM 决定金额。
+
+余额 = 当前批准客户报价 `estimated_total_cents` − 同活动、客户下已持久化的成功付款。
+按 payment_id 去重，历史报价下的成功订金继续抵扣；pending、failed、待核对及供应商付款
+不计入。仅有完整有效成功凭据的 paid 记录可抵扣，凭据异常阻止计算并要求核对。
+
+三个入口沿用订金的当前报价、预算、方案、客户批准、customer_id 和 due_date 输入。
+准备返回 `data.final_payment`、`data.execution_state`、`data.balance`；查询余额返回
+final_payment=null。模拟付款还需 `simulate=true`、`final_request_id` 和精确的
+`amount_cents`。错误活动、客户、金额及失效报价均被阻止。
+
+同报价、客户仅复用仍有效且金额等于当前余额的 prepared 请求。余额或报价变化使旧未执行
+请求 stale，可创建新请求；零余额不创建请求。付款状态仍为 pending/paid/failed，执行状态
+单独使用 prepared/executing/completed/stale/requires_reconciliation。
+paid 和 failed 均为该请求终态，重放返回原结果，不再次调用 Mock。
+`MockPaymentService(customer_outcome="failure")` 可显式演示失败，余额保持不变。
+
+订金和尾款必须使用同一 FinancialRecordService 数据库（ELEC5620_DB_PATH）。SQLite
+事务在付款前检查余额并持久化共享收款占用，防止两个入口同时收款；成功保存结果后原子释放。
+执行中断、结果不确定或结果保存失败时保留占用并要求人工核对，禁止自动重付。硬终止或
+数据库持续故障可能保留 executing/execution_started，同样阻止新收款。重启从付款结果
+重新计算余额，不维护独立余额缓存。原来的内存订金演示不提供这套跨实例保护。
+
+离线演示使用临时 SQLite、外部模拟批准及明确的付款操作，验证订金抵扣、尾款清零、
+重建 Agent 后恢复和重复调用零新增扣款；不需要 API Key：
+
+```powershell
+$env:ELEC5620_DEPOSIT_RATE = '0.30'
+.\.venv\Scripts\python.exe -B -m examples.final_payment_example
+.\.venv\Scripts\python.exe -B -m pytest tests/unit/ tests/integration/ tests/e2e/ -q
+```
+
+`get_event_financial_records` 额外返回 final_payments；完整输入输出见
+[接口约定 §5.10](shared-data-and-interfaces.md#510-customer-final-payment-and-balance-kan-30)。
+最新报价和批准由 Integration 提供；本轮“过期”指与当前快照或批准不一致，未增加报价有效期。
+少付、多付、退款、失败后重新扣款、自动核对及真实支付网关留待后续，无新增 UI/API 页面。
 
 ## 目录结构
 
