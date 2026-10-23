@@ -15,6 +15,19 @@ py -3 -m pip install -r requirements-dev.txt
 
 ## 当前功能
 
+### Operations 最小流程（KAN-28）
+
+接收已批准方案及完整成功的 Procurement 预订结果，生成任务、明确关联供应商，
+人工更新未开始／进行中／延期／完成，并检查执行是否全部完成。
+当前内存原型不调用 LLM，不代表活动关闭或付款结清。
+
+```sh
+python -m examples.operations_example
+python -m streamlit run ui/event_operations_ui.py
+```
+
+详细输入、对接代码、限制与后续扩展见 [Operations 对接说明](docs/operations-minimal.md)。
+
 ### 供应商确定性筛选（KAN-15）
 
 基于虚构供应商目录 `data/vendor_catalog.json`（catering / photography），
