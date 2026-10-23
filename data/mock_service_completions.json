@@ -1,0 +1,3 @@
+[
+  {"completion_id":"MOCK-C1","event_id":"EV001","proposal_id":"P1","vendor_booking_id":"VB1","quotation_id":"Q1","vendor_id":"V1","status":"completed","completed_at":"2026-10-21T12:00:00+00:00","mock":true}
+]

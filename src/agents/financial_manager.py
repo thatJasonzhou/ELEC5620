@@ -2,7 +2,7 @@
 
 Structured requests select quotations for the current proposal. Budget owns
 exact monetary calculation; this Agent validates inputs and returns envelopes.
-Payment workflows remain separate and unimplemented.
+Mock customer deposits require an explicit payment request.
 """
 from __future__ import annotations
 
@@ -11,6 +11,11 @@ from typing import Any
 from src.agents.base import AIAgent
 from src.llm import LLMClient
 from src.services.payment_service import PaymentService
+from src.services.financial_record_service import FinancialStorageError, FinancialRecordConflict
+from src.services.vendor_payment_record_service import VendorPaymentStorageError
+from src.services.deposit_service import DepositService
+from src.services.customer_balance_service import CustomerBalanceService
+from src.services.vendor_settlement_service import VendorSettlementService
 from src.services.customer_quotation_service import (
     CustomerQuotationService, source_fingerprint, budget_fingerprint,
 )
@@ -22,19 +27,32 @@ from src.shared.schemas import (
 
 
 class FinancialManagerAgent(AIAgent):
-    """V1 budget checks; payment workflows remain unfinished."""
+    """Budget checks, customer quotations and explicit mock customer deposits."""
 
     agent_name = "finance"
     _ACTIONS = (
         "prepare_budget", "update_proposal_cost", "record_customer_payment",
         "settle_vendor_payment", "reconcile_payments", "generate_customer_quotation",
+        "prepare_deposit_request", "simulate_deposit_payment",
+        "prepare_vendor_payment_request", "simulate_vendor_payment",
+        "get_event_financial_records",
+        "get_event_funds",
+        "get_customer_balance", "prepare_final_payment_request", "simulate_final_payment",
     )
 
-    def __init__(self, llm: LLMClient, payment_service: PaymentService) -> None:
+    def __init__(self, llm: LLMClient, payment_service: PaymentService, *,
+                 settlement_service: VendorSettlementService | None = None,
+                 record_service=None, reconciliation_service=None) -> None:
         super().__init__(llm)
         if not isinstance(payment_service, PaymentService):
             raise TypeError("payment_service must be a PaymentService instance")
         self._payment_service = payment_service
+        self._record_service = record_service
+        self._reconciliation_service = reconciliation_service
+        self._deposit_service = None
+        if settlement_service is not None and not isinstance(settlement_service, VendorSettlementService):
+            raise TypeError("settlement_service must be a VendorSettlementService")
+        self._settlement_service = settlement_service
 
     def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(request, dict):
@@ -49,13 +67,55 @@ class FinancialManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
 
         try:
-            # Budget V1 is approved; other workflows stay unfinished.
+            if action == 'reconcile_payments':
+                result = self._reconcile(event_id)
+                return self.envelope(event_id, result['status'], result['message'], result['data'])
+            if action == 'get_event_funds':
+                if self._record_service is None:
+                    return self.envelope(event_id, 'error', 'FinancialRecordService is not configured')
+                return self.envelope(event_id, 'success', 'Activity funds',
+                                     self._record_service.event_funds(event_id))
+            if action in ('get_customer_balance', 'prepare_final_payment_request', 'simulate_final_payment'):
+                try:
+                    service = CustomerBalanceService(self._payment_service, self._record_service)
+                except TypeError as exc:
+                    return self.envelope(event_id, 'error', str(exc))
+                operation = {'get_customer_balance': service.balance,
+                             'prepare_final_payment_request': service.prepare,
+                             'simulate_final_payment': service.simulate_payment}[action]
+                result = operation(request)
+                return self.envelope(event_id, result['status'], result['message'], result['data'])
+            if action == "get_event_financial_records":
+                if self._record_service is None:
+                    return self.envelope(event_id, "error", "FinancialRecordService is not configured")
+                data = self._record_service.get_event_financial_records(event_id, request.get("proposal_id"))
+                return self.envelope(event_id, "success", "Saved financial history", data)
+            if action in ("prepare_vendor_payment_request", "simulate_vendor_payment"):
+                if self._settlement_service is None:
+                    return self.envelope(event_id, "error", "VendorSettlementService is not configured")
+                operation = (self._settlement_service.prepare if action == "prepare_vendor_payment_request"
+                             else self._settlement_service.simulate_payment)
+                result = operation(request)
+                return self.envelope(event_id, result["status"], result["message"], result["data"])
+            if action in ("prepare_deposit_request", "simulate_deposit_payment"):
+                if self._deposit_service is None:
+                    try:
+                        self._deposit_service = DepositService(self._payment_service, self._record_service)
+                    except TypeError as exc:
+                        return self.envelope(event_id, "error", str(exc))
+                operation = (self._deposit_service.prepare if action == "prepare_deposit_request"
+                             else self._deposit_service.simulate_payment)
+                result = operation(request)
+                return self.envelope(event_id, result["status"], result["message"], result["data"])
+            # Existing financial workflows retain their contracts.
             if action == "generate_customer_quotation":
-                result = CustomerQuotationService().generate(request)
+                result = CustomerQuotationService(self._record_service).generate(request)
                 return self.envelope(event_id, result["status"], result["message"], result["data"])
             if action == "prepare_budget":
                 result = self._check_budget(request)
                 result["data"].setdefault("budget_valid", False)
+                if self._record_service is not None and result["data"]["budget_valid"]:
+                    result["data"] = self._record_service.save_budget(result["data"])
                 return result
             elif action == "update_proposal_cost":
                 self.update_proposal_cost(request.get("proposal"), request.get("budget"))
@@ -67,6 +127,10 @@ class FinancialManagerAgent(AIAgent):
                 self.reconcile_payments(event_id)
         except NotImplementedError as exc:
             return self.envelope(event_id, "error", str(exc))
+        except (FinancialStorageError, VendorPaymentStorageError):
+            return self.envelope(event_id, "error", "Financial storage failed; review required")
+        except (FinancialRecordConflict, ValueError) as exc:
+            return self.envelope(event_id, "blocked", str(exc))
         # Other financial workflows are not implemented.
         return self.envelope(event_id, "error", "NOT_IMPLEMENTED: Financial workflow")
 
@@ -169,8 +233,19 @@ class FinancialManagerAgent(AIAgent):
         raise NotImplementedError("NOT_IMPLEMENTED: FinancialManagerAgent.record_customer_payment")
 
     def settle_vendor_payment(self, booking: VendorBooking) -> VendorPayment:
+        """Legacy UML stub. Structured actions use VendorSettlementService only."""
         raise NotImplementedError("NOT_IMPLEMENTED: FinancialManagerAgent.settle_vendor_payment")
 
     def reconcile_payments(self, event_id: str) -> bool:
         """UML reconcilePayments(eventId:int):Boolean; IDs cross as strings."""
-        raise NotImplementedError("NOT_IMPLEMENTED: FinancialManagerAgent.reconcile_payments")
+        result = self._reconcile(event_id)
+        if result['status'] == 'error':
+            raise FinancialStorageError(result['message'])
+        return result['data']['financial_check_passed']
+
+    def _reconcile(self, event_id):
+        require_non_empty_str(event_id, 'event_id')
+        if self._reconciliation_service is None:
+            return dict(status='blocked', message='Reconciliation service and Operations scope required',
+                        data=dict(financial_check_passed=False, reason_codes=['RECONCILIATION_INPUT_MISSING']))
+        return self._reconciliation_service.reconcile(event_id)

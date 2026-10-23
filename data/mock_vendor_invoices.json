@@ -1,0 +1,3 @@
+[
+  {"invoice_number":"MOCK-INV1","event_id":"EV001","proposal_id":"P1","vendor_booking_id":"VB1","quotation_id":"Q1","vendor_id":"V1","amount_cents":10000,"currency":"AUD","issued_date":"2026-10-21","mock":true}
+]

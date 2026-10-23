@@ -95,6 +95,37 @@ class ExecutionPlan:
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
+def validate_vendor_evidence(request):
+    """Validate explicit mock evidence; Procurement matching belongs to Service."""
+    from copy import deepcopy
+    from datetime import timezone
+    invoice, completion = request.get("invoice"), request.get("completion")
+    if not isinstance(invoice, dict) or not isinstance(completion, dict):
+        raise ValueError("Structured invoice and completion objects are required")
+    for item in (invoice, completion):
+        for key in ("event_id", "proposal_id", "vendor_booking_id", "quotation_id", "vendor_id"):
+            require_non_empty_str(item.get(key), key)
+            if item[key] != invoice.get(key):
+                raise ValueError("Invoice/completion mismatch: " + key)
+        for key in ("event_id", "proposal_id"):
+            if item[key] != request.get(key):
+                raise ValueError("Evidence request mismatch: " + key)
+        if item.get("mock") is not True:
+            raise ValueError("Evidence must be explicitly mock")
+    require_non_empty_str(invoice.get("invoice_number"), "invoice_number")
+    require_int(invoice.get("amount_cents"), "amount_cents", minimum=1)
+    require_valid_date(invoice.get("issued_date"), "issued_date")
+    if invoice.get("currency") != "AUD":
+        raise ValueError("Invoice currency must be AUD")
+    require_non_empty_str(completion.get("completion_id"), "completion_id")
+    if completion.get("status") != "completed":
+        raise ValueError("Service must be completed")
+    completed = datetime.fromisoformat(require_non_empty_str(completion.get("completed_at"), "completed_at"))
+    if completed.utcoffset() is None or completed > datetime.now(timezone.utc):
+        raise ValueError("completed_at must be timezone-aware and not in the future")
+    return deepcopy(invoice), deepcopy(completion)
+
+
 def require_non_empty_str(value: Any, field_name: str) -> str:
     """Return ``value`` if it is a non-empty string, else raise ValueError."""
     if not isinstance(value, str) or not value.strip():
