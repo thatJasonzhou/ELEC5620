@@ -671,6 +671,37 @@ or closes events. Financial reports financial conditions only. Operations execut
 closure after its own checks. STUB tests demonstrate Financial/persistence behavior;
 real scope integration and actual closure end-to-end acceptance remain dependencies.
 
+### 5.12 Standalone Financial demo adapter
+
+`src.demo.financial_app.FinancialDemoApp` assembles existing Agent contracts for
+`ui/financial_ui.py`. It is a local single-operator demo, not the production
+Supervisor/Planning/Operations interface. Source labels are PLANNING_STUB,
+DEMO_USER and OPERATIONS_STUB; payment/supplier outcomes remain MOCK.
+
+The coordinator reads the latest saved context before every action. Approval is
+bound to customer_quotation_id and quotation_fingerprint, with exact selected IDs.
+Selection/budget changes require expected_revision and atomically clear current
+budget/quote/approval references while preserving historical financial snapshots.
+Creation of a deposit/final request freezes demo input edits. Payment IDs and
+amounts still undergo existing Service validation, including terminal replays.
+
+The booking handoff includes only selected quotations, the original paid deposit,
+and a copied budget with deposit_due_cents from the saved deposit request. The
+original Financial budget snapshot is not mutated. No fixture paid record is used.
+
+Explicit Operations STUB generation saves §5.8 invoice/completion objects against
+all the activity's confirmed mock bookings across proposals, and the §5.11 complete
+scope. No bookings means blocked. Subsequent scope changes block review rather
+than silently regenerating evidence. Future activity dates are allowed only as an
+explicit mock early-completion scenario, never as real evidence of completion.
+
+All actions return standard envelopes. UI rerenders perform reads only after
+dependency initialization; business writes require explicit button submissions.
+The demo context's vendor_execution_attempts marker blocks uncertain pending
+supplier re-execution, including after restart. Customer uncertainty protection
+continues to use existing Financial collection claims. No automatic recovery,
+event closure, real provider, Owner approval or additional LLM call is introduced.
+
 ## 6. 公共定义放在哪里
 
 建议统一放在 `src/shared/schemas.py`，供各模块导入使用；具体目录若已有约定，沿用现有目录。共享数据由 SQLite 保存，模块经对应 Service 读取和更新。

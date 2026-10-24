@@ -1,5 +1,34 @@
 # Stage 2 architecture records
 
+## Financial standalone demo UI (2026-10-23)
+
+User authorized implementation of docs/financial-ui-mvp-plan.md with Operations
+unavailable. src/demo contains local orchestration and fixture adapters, not a new
+business Agent, Supervisor, PlanningService or EventOperationsService implementation.
+Review of Stage 1 report pp24/47/48 supports keeping calculations and persistence
+in existing domain/Service implementations; no existing inheritance, associations,
+PaymentService signatures or legacy UML stubs were changed. This helper extension
+was authorized by the implementation request, not claimed as an original UML class.
+
+FinancialDemoApp calls Procurement and Financial Agents separately; Agents never
+import each other. Budget and payment rules remain in existing Services. SQLite
+demo_financial_contexts supplies durable current demo context/customer approval;
+demo_operations_evidence stores explicit immutable mock invoices/completions and
+a fixed activity-wide booking scope. Revision checks reject stale updates. Inputs
+freeze after a collection request. Saved financial facts are never cleared.
+
+All Services receive one explicit database path: ELEC5620_DB_PATH or the local UI
+default runtime/financial-demo.sqlite3. Demo-only vendor_execution_attempts in the
+context commits before a pending supplier execution. A pending result with a prior
+attempt blocks retries after restart; terminal results replay through the existing
+service. This conservative guard does not change KAN-27 execution semantics outside
+the demo coordinator and does not claim automatic recovery/exactly-once execution.
+
+Single operator and serial supplier execution only. No real Operations completion,
+Planning approval authority, LangGraph/FastAPI integration or event closure is claimed.
+AppTest covers page interaction; browser visual/manual acceptance remains separately
+required. Jira issue and member attribution must use actual team-provided identities.
+
 ## KAN-32 read-only financial reconciliation (2026-10-22)
 
 User approved FinancialReconciliationService as an internal helper and injectable
