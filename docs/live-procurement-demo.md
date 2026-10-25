@@ -23,12 +23,16 @@ serial and `--concurrency 5` permits five. Supplier quotes and final responses
 remain explicit simulated data; the LLM performs live recommendation/comparison.
 Choose 1-5 services with `--services` as before.
 
-Progress goes to stderr, e.g. `[shortlist] photography: submitted`, then
+Default progress announces each stage once and then reports each response.
+Verbose mode also reports every submission. Progress goes to stderr, e.g. `[shortlist] photography: submitted`, then
 `received (13.5s)` or `error`; `submitted` includes queued work.
 The comparison stage appears after all shortlists and mock replies are ready.
 `received` only means model text arrived; the usual output validation still follows.
-The final stdout JSON includes `llm_mode`, `supplier_source`, `llm_concurrency`,
-`elapsed_seconds` and the normal selected quotes/status.
+The default stdout view is a short summary: mode, status, total elapsed time,
+enquiry/selection counts and one row per selected supplier/price. A normal five-service
+run prints nine result lines plus at most twelve progress lines.
+Add `--verbose` only when full diagnostic JSON is needed; it includes `llm_mode`,
+`supplier_source`, `llm_concurrency`, `elapsed_seconds` and full quotation/service snapshots.
 CLI exits nonzero if a complete valid selection was not obtained.
 
 ## Implementation and team integration

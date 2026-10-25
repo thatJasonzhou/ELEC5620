@@ -157,6 +157,7 @@ its `--live` switch changes the LLM only. See [supplier demo data](supplier-demo
 Pass `llm_concurrency=3` (integer 1-5) and optionally `progress_callback=callable`
 when constructing the Agent to overlap LLM requests within each activity phase.
 Agent default is 1; shared-data CLI default is 3 and accepts `--concurrency`.
+The CLI prints a short summary by default; add `--verbose` for complete diagnostic JSON.
 Only model calls run in worker threads, while input snapshots, state writes,
 SQLite and output validation remain sequential. Request ordering and complete-selection
 gates are preserved. The same Agent must still receive external requests serially.

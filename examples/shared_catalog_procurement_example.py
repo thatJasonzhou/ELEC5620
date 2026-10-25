@@ -48,6 +48,27 @@ def event_request(*, city="Sydney", date="2026-12-16", guests=50, services=None)
     }
 
 
+
+def format_summary(summary):
+    """Keep the normal terminal view short; detailed snapshots are opt-in."""
+    lines = [
+        f"LLM: {summary['llm_mode'].upper()} | suppliers: MOCK | concurrency: {summary['llm_concurrency']}",
+        f"Status: {summary['status']} | selection_complete: {str(summary['selection_complete']).lower()}",
+        f"Elapsed: {summary['elapsed_seconds']:.2f}s | enquiries: {summary['enquiry_count']} | selected: {len(summary['selected_quotation_ids'])}",
+    ]
+    if summary["quotations"]:
+        lines.append(f"{'Service':<18} {'Supplier':<16} Quote (AUD)")
+        for quote in summary["quotations"]:
+            lines.append(f"{quote['service_type']:<18} {quote['vendor_id']:<16} {quote['quoted_total_cents'] / 100:,.2f}")
+    if summary["status"] != "success" or not summary["selection_complete"]:
+        lines.append(" ".join(summary["message"].split())[:180])
+        for item in summary["service_results"]:
+            if item["status"] != "success":
+                reason = " ".join(item["message"].split())[:160]
+                lines.append(f"{item['service_type']}: {item['status']} - {reason}")
+    return "\n".join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true",
@@ -59,10 +80,20 @@ def main():
                         help="Choose 1-5 services from the shared catalogue; defaults to the original five.")
     parser.add_argument("--concurrency", type=int, choices=range(1, 6), default=3,
                         help="Maximum simultaneous LLM calls per stage (default 3; use 1 for serial).")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Print complete diagnostic JSON snapshots instead of the short summary.")
     args = parser.parse_args()
     if args.services is not None and (len(args.services) > 5 or len(set(args.services)) != len(args.services)):
         parser.error("--services requires 1-5 distinct categories.")
+    announced_stages = set()
+
     def report(event):
+        if event["state"] == "submitted" and not args.verbose:
+            if event["stage"] in announced_stages:
+                return
+            announced_stages.add(event["stage"])
+            print(f"[{event['stage']}] LLM requests queued/running...", file=sys.stderr, flush=True)
+            return
         duration = (f" ({event['elapsed_seconds']:.1f}s)"
                     if "elapsed_seconds" in event else "")
         print(f"[{event['stage']}] {event['service_type']}: {event['state']}{duration}",
@@ -74,7 +105,7 @@ def main():
         event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
-    print(json.dumps({
+    summary = {
         "llm_mode": "live" if args.live else "mock", "supplier_source": "mock",
         "llm_concurrency": args.concurrency, "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],
@@ -83,7 +114,11 @@ def main():
         "selected_quotation_ids": data.get("selected_quotation_ids", []),
         "quotations": data.get("quotations", []),
         "service_results": data.get("service_results", []),
-    }, ensure_ascii=False, indent=2))
+    }
+    if args.verbose:
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+    else:
+        print(format_summary(summary))
     if result["status"] != "success" or not data.get("selection_complete"):
         raise SystemExit(1)
 

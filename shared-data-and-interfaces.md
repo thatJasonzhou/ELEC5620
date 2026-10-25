@@ -748,5 +748,6 @@ on the caller thread. Service results preserve request order. Existing request/e
 and complete-selection semantics are unchanged. External requests remain serialized.
 Progress events contain `stage`, `service_type`, `state` and terminal
 `elapsed_seconds`; they do not contain prompts, credentials or model responses.
-The example CLI opts into concurrency 3 and emits progress on stderr and JSON on stdout.
+The example CLI opts into concurrency 3, emits bounded progress on stderr and a
+short status/selected-supplier summary on stdout. Add --verbose for full diagnostic JSON.
 See `docs/live-procurement-demo.md` for full observer/client requirements.

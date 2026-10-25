@@ -203,3 +203,23 @@ def test_concurrency_requires_one_to_five_integer(workers):
 def test_progress_must_be_callable():
     with pytest.raises(TypeError, match="progress_callback"):
         parallel_agent(progress="print")
+
+def test_failure_summary_is_short_and_includes_failed_service_without_snapshots():
+    from examples.shared_catalog_procurement_example import format_summary
+    summary = {
+        "llm_mode": "live", "llm_concurrency": 3, "status": "error",
+        "selection_complete": False, "elapsed_seconds": 60.0,
+        "enquiry_count": 15, "selected_quotation_ids": [], "quotations": [],
+        "message": "No complete selection.\n" + "detail " * 500,
+        "service_results": [{
+            "service_type": "photography", "status": "error",
+            "message": "Comparison failed.\n" + "detail " * 500,
+            "data": {"private_snapshot": "not for the normal terminal view"},
+        }],
+    }
+    text = format_summary(summary)
+    assert "Status: error" in text and "selected: 0" in text
+    assert "photography: error" in text
+    assert len(text.splitlines()) <= 5
+    assert max(map(len, text.splitlines())) <= 200
+    assert "private_snapshot" not in text

@@ -585,7 +585,8 @@ See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs an
 For a fresh-download live demonstration, run
 `py -3 -m examples.shared_catalog_procurement_example --live --concurrency 3`
 after setting the school environment variables. The CLI shows per-service progress
-and total elapsed time; default concurrency is 3, adjustable from 1 to 5.
+and total elapsed time, followed by a short result table. Full raw JSON is opt-in
+with `--verbose`; default concurrency is 3, adjustable from 1 to 5.
 Module callers opt in with `VendorProcurementManagerAgent(..., llm_concurrency=3)`;
 the Agent default remains serial for compatibility. Only LLM requests overlap;
 state, storage and validation remain on the caller thread.
