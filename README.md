@@ -559,3 +559,13 @@ py -3 -m pytest tests/unit/ tests/integration/ tests/e2e/ -q
 | `src/services/financial_record_service.py` | KAN-29 财务快照与订金执行日志 |
 | `examples/financial_persistence_example.py` | 离线保存、重建 Service、恢复和重复付款保护演示 |
 | `tests/unit/test_financial_records.py` / `test_financial_persistence.py` | 存储与财务工作流故障、冲突和恢复测试 |
+
+## Procurement quotation workflow (KAN-36)
+
+Run `python -m examples.event_procurement_example` for up to five services:
+requirements -> top-three shortlists -> simulated supplier quotation replies ->
+received-price comparison -> one proposed supplier per service. The updated
+`procure_services` module entry returns selected quotes ready for Financial.
+The team pulls this update and connects its own orchestration locally.
+See [Procurement interface](docs/shortlisted-quotations.md) for the input/output
+contract and the supplier reply seam reusable by a later supplier UI.

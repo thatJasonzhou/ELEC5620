@@ -128,3 +128,27 @@ Budget's transient selected quote snapshots implement its existing aggregation;
 they are not database persistence. KAN-29 separately persists the FIN-01 handoff
 through FinancialRecordService. Internal `Calculated` string denotes a
 calculation record only, not customer approval or an added UML status transition.
+
+
+## KAN-36 Procurement quotation workflow (2026-10-25)
+
+The updated Procurement module accepts a complete list of 1-5 service categories.
+For each it shortlists up to three candidates, obtains explicitly simulated
+supplier replies, and re-compares confirmed quotations. VendorEnquiryService owns
+the process-local per-service rounds and activity batch, validates the five-service
+boundary, binds supplier responses to stored enquiries, and delegates optional
+accepted-quote persistence to ProcurementRecordService.
+
+procure_services is the module-level workflow entry, not a cross-Agent Supervisor.
+The staged prepare_event_enquiries / request_event_quotations /
+compare_event_quotations calls share the submit_quotation_reply seam that a later
+supplier input UI can use. Existing recommendation, quotation and booking entry
+points stay compatible. AIAgent inheritance, Stage 1 entity/Service signatures
+and domain relationships remain unchanged.
+
+All requested services must produce valid choices before an activity-level
+selected quotation list is released. Alternatives remain separate. Financial
+continues to calculate the whole-event budget; existing approval, deposit and
+booking gates are retained. Team members pull and wire the module locally;
+this change does not edit other Agents, the Supervisor or their UI.
+See docs/shortlisted-quotations.md for contracts and runtime limitations.
