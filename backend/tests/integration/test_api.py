@@ -1,6 +1,6 @@
 from src.api.app import (
     PlannerMessageRequest,
-    VendorSelectionRequest,
+    QuotationSelectionRequest,
     health,
     planner_message,
 )
@@ -20,8 +20,8 @@ def test_planner_message_contract() -> None:
     assert body["progress"]["completed"] == 3
 
 
-def test_vendor_selection_contract_accepts_one_vendor_per_service() -> None:
-    body = VendorSelectionRequest(
-        offering_ids=["V-CAT-001-O2", "V-PHOTO-001-O2"]
+def test_quotation_selection_contract_accepts_multiple_services() -> None:
+    body = QuotationSelectionRequest(
+        quotation_ids=["MQ-CATERING", "MQ-PHOTOGRAPHY"]
     )
-    assert body.offering_ids == ["V-CAT-001-O2", "V-PHOTO-001-O2"]
+    assert body.quotation_ids == ["MQ-CATERING", "MQ-PHOTOGRAPHY"]

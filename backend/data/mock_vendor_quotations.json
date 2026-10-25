@@ -5,9 +5,8 @@
       "vendor_id": "V-CAT-001",
       "offering_id": "V-CAT-001-O1",
       "event_date": "2026-12-05",
-      "guest_count": 120,
       "reply": "accepted",
-      "reason": "MOCK: Golden Whisker Catering confirms capacity for 120 guests on 2026-12-05 in Melbourne.",
+      "reason": "MOCK: Golden Whisker Catering confirms availability on 2026-12-05 in Melbourne.",
       "quoted_total_cents": 1850000
     },
     {
@@ -15,7 +14,6 @@
       "vendor_id": "V-PHOTO-001",
       "offering_id": "V-PHOTO-001-O2",
       "event_date": "2026-12-05",
-      "guest_count": 80,
       "reply": "rejected",
       "reason": "MOCK: Shutter & Frame Photography is already booked for another Sydney event on 2026-12-05."
     },
@@ -24,9 +22,35 @@
       "vendor_id": "V-CAT-002",
       "offering_id": "V-CAT-002-O1",
       "event_date": "2026-12-05",
-      "guest_count": 120,
       "reply": "pending",
       "reason": "MOCK: Bayside Bite Co has not replied to this quotation request yet; the offer is unconfirmed."
+    },
+    {
+      "scenario_id": "MOCK-Q-ACCEPT-002",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-05",
+      "reply": "accepted",
+      "reason": "MOCK: Shutter & Frame Photography confirms availability for the Melbourne event.",
+      "quoted_total_cents": 2400000
+    },
+    {
+      "scenario_id": "MOCK-Q-ACCEPT-003",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-05",
+      "reply": "accepted",
+      "reason": "MOCK: Golden Whisker Catering confirms availability for the Sydney event.",
+      "quoted_total_cents": 980000
+    },
+    {
+      "scenario_id": "MOCK-Q-ACCEPT-004",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O1",
+      "event_date": "2026-12-05",
+      "reply": "accepted",
+      "reason": "MOCK: Harbour Light Photography confirms availability for the Sydney event.",
+      "quoted_total_cents": 1350000
     }
   ]
 }

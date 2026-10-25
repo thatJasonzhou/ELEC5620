@@ -54,7 +54,12 @@ class NoBookingScenarioError(ValueError):
 
 
 class MockVendorBookingService:
-    """Preset final replies, independent of enquiry/catalogue availability."""
+    """Preset final replies for catalogue-filtered offerings and dates.
+
+    Guest capacity is validated before this service is called. A scenario is
+    therefore keyed by supplier offering and date rather than an exact guest
+    count, while the returned confirmation still echoes the requested count.
+    """
 
     def __init__(self, scenarios: list[dict[str, Any]]) -> None:
         if not isinstance(scenarios, list):
@@ -66,7 +71,6 @@ class MockVendorBookingService:
                 raise ValueError("booking scenario must be an object")
             item = {n: _text(raw.get(n), n) for n in ("scenario_id", "vendor_id", "offering_id", "reason")}
             item["event_date"] = require_valid_date(raw.get("event_date"), "event_date")
-            item["guest_count"] = require_int(raw.get("guest_count"), "guest_count", minimum=0)
             status = raw.get("status")
             if status not in ("confirmed", "rejected", "pending"):
                 raise ValueError("booking scenario status must be confirmed/rejected/pending")
@@ -84,7 +88,7 @@ class MockVendorBookingService:
 
     @staticmethod
     def _key(item):
-        return tuple(item[n] for n in ("vendor_id", "offering_id", "event_date", "guest_count"))
+        return tuple(item[n] for n in ("vendor_id", "offering_id", "event_date"))
 
     @classmethod
     def from_json_file(cls, path: str | Path):
@@ -99,8 +103,24 @@ class MockVendorBookingService:
         scenario = self._index.get(self._key(quote))
         if scenario is None:
             raise NoBookingScenarioError("No final mock supplier booking reply configured.")
-        return {**quote, **{n: scenario[n] for n in
-                ("scenario_id", "status", "reason", "supplier_confirmation_id")}, "mock": True}
+        confirmation = scenario["supplier_confirmation_id"]
+        if scenario["status"] == "confirmed":
+            identity = json.dumps(
+                [quote["event_id"], quote["proposal_id"], quote["quotation_id"]],
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            confirmation = (
+                f"{confirmation}-{sha256(identity.encode('utf-8')).hexdigest()[:10].upper()}"
+            )
+        return {
+            **quote,
+            "scenario_id": scenario["scenario_id"],
+            "status": scenario["status"],
+            "reason": scenario["reason"],
+            "supplier_confirmation_id": confirmation,
+            "mock": True,
+        }
 
 
 class VendorBookingService:

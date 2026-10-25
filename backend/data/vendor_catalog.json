@@ -97,6 +97,24 @@
           ]
         }
       ]
+    },
+    {
+      "vendor_id": "V-PHOTO-003",
+      "name": "Harbour Light Photography",
+      "service_offerings": [
+        {
+          "offering_id": "V-PHOTO-003-O1",
+          "service_type": "photography",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.4,
+          "total_price_cents": 1350000,
+          "availability": [
+            {"date": "2026-12-05", "available": true},
+            {"date": "2026-12-06", "available": true}
+          ]
+        }
+      ]
     }
   ]
 }

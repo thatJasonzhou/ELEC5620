@@ -1,4 +1,4 @@
-"""HTTP API connecting the React interface to Planning and Procurement."""
+"""HTTP API connecting React to the Stage 2 multi-agent workflow."""
 from __future__ import annotations
 
 import os
@@ -9,11 +9,22 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from src.agents import EventPlannerAgent, VendorProcurementManagerAgent
+from src.agents import (
+    EventPlannerAgent,
+    FinancialManagerAgent,
+    VendorProcurementManagerAgent,
+)
 from src.llm import DemoLLMClient, LLMError, OpenAIResponsesClient
 from src.services.event_session_service import EventSessionService
+from src.services.financial_workflow_service import FinancialWorkflowService
 from src.services.planner_workflow_service import PlannerWorkflowService
+from src.services.procurement_record_service import ProcurementRecordService
+from src.services.vendor_booking_service import (
+    MockVendorBookingService,
+    VendorBookingService,
+)
 from src.services.vendor_procurement_service import VendorProcurementService
+from src.services.vendor_quotation_service import MockVendorQuotationService
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
@@ -25,8 +36,8 @@ class PlannerMessageRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
 
 
-class VendorSelectionRequest(BaseModel):
-    offering_ids: list[str] = Field(min_length=1)
+class QuotationSelectionRequest(BaseModel):
+    quotation_ids: list[str] = Field(min_length=1)
 
 
 def build_workflow() -> PlannerWorkflowService:
@@ -41,9 +52,30 @@ def build_workflow() -> PlannerWorkflowService:
     vendor_service = VendorProcurementService.from_json_file(
         BACKEND_ROOT / "data" / "vendor_catalog.json"
     )
+    quotation_service = MockVendorQuotationService.from_json_file(
+        BACKEND_ROOT / "data" / "mock_vendor_quotations.json"
+    )
+    records = ProcurementRecordService.from_env()
+    booking_service = VendorBookingService(
+        MockVendorBookingService.from_json_file(
+            BACKEND_ROOT / "data" / "mock_vendor_bookings.json"
+        ),
+        record_service=records,
+    )
+    procurement = VendorProcurementManagerAgent(
+        llm,
+        vendor_service,
+        quotation_service,
+        booking_service,
+        record_service=records,
+    )
+    deposit_percent = int(os.getenv("DEPOSIT_PERCENT", "30"))
     return PlannerWorkflowService(
         EventPlannerAgent(llm),
-        VendorProcurementManagerAgent(llm, vendor_service),
+        procurement,
+        FinancialManagerAgent(
+            llm, FinancialWorkflowService(deposit_percent=deposit_percent)
+        ),
         EventSessionService(),
         timezone=os.getenv("APP_TIMEZONE", "Australia/Sydney"),
         llm_mode=mode,
@@ -54,7 +86,7 @@ workflow = build_workflow()
 app = FastAPI(
     title="EventPilot API",
     version="0.1.0",
-    description="Event Planner and Vendor Procurement prototype API",
+    description="Planning, procurement, financial and mock booking prototype API",
 )
 origins = [
     item.strip()
@@ -98,11 +130,42 @@ def get_event(event_id: str) -> dict:
     return event
 
 
-@app.post("/api/events/{event_id}/vendor-selection")
-def confirm_vendor_selection(event_id: str, request: VendorSelectionRequest) -> dict:
+def _run_event_action(action, event_id: str) -> dict:
     try:
-        return workflow.confirm_vendor_selection(event_id, request.offering_ids)
+        return action(event_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/events/{event_id}/quotations")
+def request_quotations(event_id: str) -> dict:
+    return _run_event_action(workflow.request_vendor_quotations, event_id)
+
+
+@app.post("/api/events/{event_id}/quotation-selection")
+def confirm_quotation_selection(
+    event_id: str, request: QuotationSelectionRequest
+) -> dict:
+    try:
+        return workflow.confirm_quotation_selection(event_id, request.quotation_ids)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/events/{event_id}/quotation-approval")
+def approve_quotation(event_id: str) -> dict:
+    return _run_event_action(workflow.approve_customer_quotation, event_id)
+
+
+@app.post("/api/events/{event_id}/deposit-payment")
+def pay_deposit(event_id: str) -> dict:
+    return _run_event_action(workflow.pay_deposit, event_id)
+
+
+@app.post("/api/events/{event_id}/bookings")
+def confirm_bookings(event_id: str) -> dict:
+    return _run_event_action(workflow.confirm_bookings, event_id)

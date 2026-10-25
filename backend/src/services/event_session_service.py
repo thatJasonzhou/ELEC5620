@@ -25,10 +25,20 @@ class EventSessionService:
                 self._sessions[identifier] = {
                     "event_id": identifier,
                     "requirements": {},
+                    "progress": {"completed": 0, "total": 6, "missing_fields": []},
                     "history": [],
                     "stage": "requirements",
+                    "proposal": None,
                     "vendor_recommendations": [],
-                    "selected_offering_ids": [],
+                    "vendor_quotations": [],
+                    "supplier_replies": [],
+                    "selected_quotation_ids": [],
+                    "budget": None,
+                    "customer_quotation": None,
+                    "approval": None,
+                    "deposit": None,
+                    "bookings": [],
+                    "booking_replies": [],
                 }
             return deepcopy(self._sessions[identifier])
 

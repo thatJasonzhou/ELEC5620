@@ -34,7 +34,7 @@ def quote(**changes):
 
 def scenario(q=None, confirmation="CONF1", status="confirmed"):
     q = q or quote()
-    return {**{k: q[k] for k in ("vendor_id", "offering_id", "event_date", "guest_count")},
+    return {**{k: q[k] for k in ("vendor_id", "offering_id", "event_date")},
             "scenario_id": "MOCK-B-" + q["quotation_id"], "status": status, "reason": "MOCK " + status,
             "supplier_confirmation_id": confirmation if status == "confirmed" else None}
 

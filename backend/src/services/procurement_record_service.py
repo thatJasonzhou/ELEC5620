@@ -59,8 +59,17 @@ class ProcurementRecordService:
     @classmethod
     def from_env(cls) -> "ProcurementRecordService":
         """ELEC5620_DB_PATH overrides the repository-root runtime default."""
-        default = Path(__file__).resolve().parents[2] / "runtime" / "procurement.sqlite3"
-        return cls(os.environ.get("ELEC5620_DB_PATH", str(default)))
+        backend_root = Path(__file__).resolve().parents[2]
+        default = backend_root / "runtime" / "procurement.sqlite3"
+        configured = os.environ.get("ELEC5620_DB_PATH")
+        if configured is None:
+            return cls(default)
+        if not configured.strip():
+            raise ValueError("ELEC5620_DB_PATH must be a non-empty file path")
+        path = Path(configured)
+        if not path.is_absolute():
+            path = backend_root.parent / path
+        return cls(path)
 
     def _connect(self):
         return sqlite3.connect(str(self.database_path), timeout=5)

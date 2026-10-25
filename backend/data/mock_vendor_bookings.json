@@ -5,10 +5,36 @@
       "vendor_id": "V-CAT-001",
       "offering_id": "V-CAT-001-O1",
       "event_date": "2026-12-05",
-      "guest_count": 120,
       "status": "confirmed",
       "reason": "MOCK: supplier explicitly confirms this final booking request.",
       "supplier_confirmation_id": "MOCK-SUPPLIER-CONF-001"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-CONFIRM-002",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-05",
+      "status": "confirmed",
+      "reason": "MOCK: photography supplier confirms the final Melbourne booking.",
+      "supplier_confirmation_id": "MOCK-SUPPLIER-CONF-002"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-CONFIRM-003",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-05",
+      "status": "confirmed",
+      "reason": "MOCK: catering supplier confirms the final Sydney booking.",
+      "supplier_confirmation_id": "MOCK-SUPPLIER-CONF-003"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-CONFIRM-004",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O1",
+      "event_date": "2026-12-05",
+      "status": "confirmed",
+      "reason": "MOCK: photography supplier confirms the final Sydney booking.",
+      "supplier_confirmation_id": "MOCK-SUPPLIER-CONF-004"
     }
   ]
 }

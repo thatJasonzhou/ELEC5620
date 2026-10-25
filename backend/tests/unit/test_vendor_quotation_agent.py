@@ -50,8 +50,7 @@ def test_accepted_only_and_pending_reason_preserved(vendors, quotes):
 
 
 @pytest.mark.parametrize("overrides,reply_status", [
-    ({"service_type": "photography", "location": "Sydney", "guest_count": 80}, "rejected"),
-    ({"guest_count": 80}, "unconfigured"),
+    ({"service_type": "photography", "location": "Sydney", "guest_count": 80, "min_rating": 4.5}, "rejected"),
     ({"min_rating": 5}, None), ({"location": "Brisbane"}, None),
 ])
 def test_no_confirmed_quotes_block(vendors, quotes, overrides, reply_status):
@@ -61,6 +60,15 @@ def test_no_confirmed_quotes_block(vendors, quotes, overrides, reply_status):
     if reply_status:
         assert any(r["status"] == reply_status for r in env["data"]["supplier_replies"])
     assert env["message"] and agent.llm.calls == []
+
+
+def test_smaller_guest_count_uses_catalogue_capacity_not_exact_mock_count(vendors, quotes):
+    agent = make_agent(vendors, quotes)
+    env = agent.request_quotations({**REQUEST, "guest_count": 50})
+    assert env["status"] == "success"
+    quotation, = env["data"]["quotations"]
+    assert quotation["vendor_id"] == "V-CAT-001"
+    assert quotation["guest_count"] == 50
 
 
 def test_pending_only_blocks(vendors, quotes):

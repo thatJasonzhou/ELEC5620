@@ -1,22 +1,25 @@
-"""Application workflow connecting Planning and Procurement."""
+"""Application workflow connecting Planning, Procurement and Financial Agents."""
 from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from src.agents.event_planner import EventPlannerAgent
+from src.agents.financial_manager import FinancialManagerAgent
 from src.agents.vendor_procurement_manager import VendorProcurementManagerAgent
 from src.services.event_session_service import EventSessionService
 
 
 class PlannerWorkflowService:
-    """Coordinate existing Agents without introducing a fifth Agent."""
+    """Coordinate business Agents without introducing a fifth Agent."""
 
     def __init__(
         self,
         planner: EventPlannerAgent,
         procurement: VendorProcurementManagerAgent,
+        finance: FinancialManagerAgent,
         sessions: EventSessionService,
         *,
         timezone: str = "Australia/Sydney",
@@ -24,6 +27,7 @@ class PlannerWorkflowService:
     ) -> None:
         self._planner = planner
         self._procurement = procurement
+        self._finance = finance
         self._sessions = sessions
         self._timezone = timezone
         self._llm_mode = llm_mode
@@ -43,10 +47,11 @@ class PlannerWorkflowService:
         )
         trace = [self._trace(planner_result)]
         if planner_result["status"] == "error":
-            return self._response(session, planner_result["message"], trace, [])
+            return self._response(session, planner_result["message"], trace)
 
         data = planner_result["data"]
         session["requirements"] = data["requirements"]
+        session["progress"] = data["progress"]
         session["history"].extend(
             [
                 {"role": "user", "content": message},
@@ -55,11 +60,12 @@ class PlannerWorkflowService:
         )
         session["stage"] = "requirements"
         reply = planner_result["message"]
-        vendor_results: list[dict[str, Any]] = []
 
         if data["ready_for_vendor_matching"]:
-            session["stage"] = "vendors"
-            vendor_results = self._find_vendors(session["event_id"], session["requirements"])
+            self._clear_after_requirements(session)
+            vendor_results = self._find_vendors(
+                session["event_id"], session["requirements"]
+            )
             trace.extend(self._trace(result) for result in vendor_results)
             recommendations = [
                 item
@@ -67,73 +73,249 @@ class PlannerWorkflowService:
                 for item in result.get("data", {}).get("recommendations", [])
             ]
             session["vendor_recommendations"] = recommendations
-            if recommendations:
-                session["stage"] = "vendor_review"
-                service_count = len({item["service_type"] for item in recommendations})
+            requested = session["requirements"].get("required_services") or []
+            services = list(dict.fromkeys(requested))
+            if not services:
+                services = sorted({item["service_type"] for item in recommendations})
+            if recommendations and services:
+                session["proposal"] = self._build_proposal(session, services)
+                session["stage"] = "proposal"
                 reply += (
-                    f"\n\nI found vendor options for {service_count} service"
-                    f"{'s' if service_count != 1 else ''}. "
-                    "Please select one vendor for each service."
+                    " I prepared a service plan and found catalogue candidates. "
+                    "Review the plan, then request confirmed mock quotations."
                 )
             else:
-                blocked_services = [
-                    result.get("requested_service", "requested service")
-                    for result in vendor_results
-                    if result.get("status") != "success"
-                ]
+                session["stage"] = "vendor_attention"
                 reply += (
-                    " I could not find a catalogue match for "
-                    + ", ".join(blocked_services)
-                    + ". You can change the date, location, guest count or requested services."
+                    " I could not find catalogue candidates for the current requirements. "
+                    "Please change the date, location, guest count or services."
                 )
 
         self._sessions.save(session)
-        return self._response(session, reply, trace, vendor_results, data)
+        return self._response(
+            session,
+            reply,
+            trace,
+            decision_summary=data.get("decision_summary", []),
+        )
 
     def get_event(self, event_id: str) -> dict[str, Any] | None:
-        return self._sessions.get(event_id)
-
-    def confirm_vendor_selection(
-        self, event_id: str, selected_offering_ids: list[str]
-    ) -> dict[str, Any]:
         session = self._sessions.get(event_id)
-        if session is None:
-            raise KeyError("event not found")
-        available = {
-            item["offering_id"]: item
-            for item in session.get("vendor_recommendations", [])
-        }
-        selected = list(dict.fromkeys(selected_offering_ids))
-        if not selected:
-            raise ValueError("select at least one vendor option")
-        unknown = [item for item in selected if item not in available]
-        if unknown:
-            raise ValueError(f"unknown offering ids: {', '.join(unknown)}")
-        selected_services = [available[item]["service_type"] for item in selected]
-        if len(selected_services) != len(set(selected_services)):
-            raise ValueError("select only one vendor for each service")
-        expected_services = {item["service_type"] for item in available.values()}
-        missing_services = expected_services - set(selected_services)
-        if missing_services:
-            raise ValueError(
-                "select one vendor for each service: "
-                + ", ".join(sorted(missing_services))
+        return self._response(session, "Current event state.", []) if session else None
+
+    def request_vendor_quotations(self, event_id: str) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        proposal = session.get("proposal")
+        if not isinstance(proposal, dict):
+            raise ValueError("confirm complete requirements before requesting quotations")
+        requirements = session["requirements"]
+        quotations: list[dict[str, Any]] = []
+        replies: list[dict[str, Any]] = []
+        trace: list[dict[str, Any]] = []
+        missing_services: list[str] = []
+        for service in proposal["required_services"]:
+            result = self._procurement.request_quotations(
+                {
+                    "event_id": event_id,
+                    "proposal_id": proposal["proposal_id"],
+                    "service_type": service,
+                    "event_date": requirements["event_date"],
+                    "guest_count": requirements["guest_count"],
+                    "location": requirements["location"],
+                }
             )
-        session["selected_offering_ids"] = selected
-        session["stage"] = "proposal"
-        session["history"].append(
+            trace.append(self._trace(result))
+            service_quotes = result.get("data", {}).get("quotations", [])
+            quotations.extend(service_quotes)
+            replies.extend(result.get("data", {}).get("supplier_replies", []))
+            if not service_quotes:
+                missing_services.append(service)
+        session["vendor_quotations"] = quotations
+        session["supplier_replies"] = replies
+        if missing_services:
+            session["stage"] = "quotation_attention"
+            reply = (
+                "Some suppliers did not return an available quotation for: "
+                + ", ".join(missing_services)
+                + ". Review the supplier replies or revise the plan."
+            )
+        else:
+            session["stage"] = "quotation_review"
+            reply = (
+                f"I received {len(quotations)} confirmed mock quotation"
+                f"{'s' if len(quotations) != 1 else ''}. "
+                "Select one quotation for each service."
+            )
+        self._sessions.save(session)
+        return self._response(session, reply, trace)
+
+    def confirm_quotation_selection(
+        self, event_id: str, quotation_ids: list[str]
+    ) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        proposal = session.get("proposal")
+        if not isinstance(proposal, dict):
+            raise ValueError("proposal is missing")
+        result = self._finance.handle(
             {
-                "role": "assistant",
-                "content": "The customer confirmed one vendor for each service.",
+                "event_id": event_id,
+                "action": "prepare_budget",
+                "proposal": proposal,
+                "quotations": session.get("vendor_quotations", []),
+                "selected_quotation_ids": quotation_ids,
+                "budget_limit_cents": session["requirements"].get(
+                    "budget_limit_cents"
+                ),
             }
         )
+        trace = [self._trace(result)]
+        data = result.get("data", {})
+        session["selected_quotation_ids"] = list(quotation_ids)
+        session["budget"] = data.get("budget")
+        if result["status"] != "success":
+            session["customer_quotation"] = None
+            session["stage"] = "quotation_review"
+            self._sessions.save(session)
+            return self._response(session, result["message"], trace)
+
+        quotation_result = self._finance.handle(
+            {
+                "event_id": event_id,
+                "action": "generate_customer_quotation",
+                "budget": data["budget"],
+                "selected_quotations": data["selected_quotations"],
+            }
+        )
+        trace.append(self._trace(quotation_result))
+        if quotation_result["status"] != "success":
+            raise ValueError(quotation_result["message"])
+        session["customer_quotation"] = quotation_result["data"][
+            "customer_quotation"
+        ]
+        session["stage"] = "quotation"
         self._sessions.save(session)
-        return {
+        return self._response(
+            session,
+            "Your customer quotation is ready. Review the full cost before approving it.",
+            trace,
+        )
+
+    def approve_customer_quotation(self, event_id: str) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        quotation = session.get("customer_quotation")
+        if not isinstance(quotation, dict):
+            raise ValueError("customer quotation is not ready")
+        approval = {
             "event_id": event_id,
-            "stage": session["stage"],
-            "selected_offering_ids": selected,
-            "message": "Vendor choices confirmed. The selected services can now be combined into the event proposal.",
+            "proposal_id": quotation["proposal_id"],
+            "customer_quotation_id": quotation["customer_quotation_id"],
+            "quotation_fingerprint": quotation["quotation_fingerprint"],
+            "approved": True,
+            "approved_quotation_ids": list(quotation["selected_quotation_ids"]),
+            "approved_at": datetime.now(ZoneInfo(self._timezone)).isoformat(),
         }
+        result = self._finance.handle(
+            {
+                "event_id": event_id,
+                "action": "prepare_deposit",
+                "customer_quotation": quotation,
+                "approval": approval,
+            }
+        )
+        if result["status"] != "success":
+            raise ValueError(result["message"])
+        session["approval"] = approval
+        session["deposit"] = result["data"]["deposit"]
+        session["stage"] = "payment"
+        self._sessions.save(session)
+        return self._response(
+            session,
+            "Quotation approved. Complete the simulated deposit payment before booking suppliers.",
+            [self._trace(result)],
+        )
+
+    def pay_deposit(self, event_id: str) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        deposit = session.get("deposit")
+        if not isinstance(deposit, dict):
+            raise ValueError("deposit request is not ready")
+        if deposit.get("status") == "paid":
+            return self._response(
+                session, "The simulated deposit has already been paid.", []
+            )
+        result = self._finance.handle(
+            {
+                "event_id": event_id,
+                "action": "simulate_deposit_payment",
+                "deposit": deposit,
+            }
+        )
+        if result["status"] != "success":
+            raise ValueError(result["message"])
+        session["deposit"] = result["data"]["deposit"]
+        session["stage"] = "booking"
+        self._sessions.save(session)
+        return self._response(
+            session,
+            "The simulated deposit was paid successfully. You can now confirm the supplier bookings.",
+            [self._trace(result)],
+        )
+
+    def confirm_bookings(self, event_id: str) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        selected = set(session.get("selected_quotation_ids", []))
+        quotations = [
+            item
+            for item in session.get("vendor_quotations", [])
+            if item.get("quotation_id") in selected
+        ]
+        budget = dict(session.get("budget") or {})
+        deposit = session.get("deposit")
+        approval = session.get("approval")
+        if not isinstance(deposit, dict) or deposit.get("status") != "paid":
+            raise ValueError("simulated deposit must be paid before booking")
+        budget["deposit_due_cents"] = deposit["amount_cents"]
+        result = self._procurement.confirm_bookings(
+            {
+                "event_id": event_id,
+                "proposal_id": session["proposal"]["proposal_id"],
+                "quotations": quotations,
+                "approval": approval,
+                "budget": budget,
+                "deposit": deposit,
+            }
+        )
+        session["bookings"] = result.get("data", {}).get("bookings", [])
+        session["booking_replies"] = result.get("data", {}).get(
+            "supplier_replies", []
+        )
+        session["stage"] = (
+            "booking_complete" if result["status"] == "success" else "booking_attention"
+        )
+        self._sessions.save(session)
+        return self._response(session, result["message"], [self._trace(result)])
+
+    def _build_proposal(
+        self, session: dict[str, Any], services: list[str]
+    ) -> dict[str, Any]:
+        requirements = session["requirements"]
+        total = requirements.get("vendor_budget_cents") or requirements[
+            "budget_limit_cents"
+        ]
+        base, remainder = divmod(total, len(services))
+        allocations = {
+            service: base + (1 if index < remainder else 0)
+            for index, service in enumerate(services)
+        }
+        return {
+            "event_id": session["event_id"],
+            "proposal_id": "P-" + uuid4().hex[:12].upper(),
+            "summary": f"{requirements['event_type']} in {requirements['location']}",
+            "required_services": list(services),
+            "service_budget_cents": allocations,
+            "status": "Draft",
+        }
+
     def _find_vendors(
         self, event_id: str, requirements: dict[str, Any]
     ) -> list[dict[str, Any]]:
@@ -147,38 +329,65 @@ class PlannerWorkflowService:
                     "event_date": requirements["event_date"],
                     "guest_count": requirements["guest_count"],
                     "location": requirements["location"],
-                    "target_vendor_budget_cents": requirements.get("vendor_budget_cents"),
-                    "customer_preferences": requirements.get("customer_preferences", ""),
+                    "target_vendor_budget_cents": requirements.get(
+                        "vendor_budget_cents"
+                    ),
+                    "customer_preferences": requirements.get(
+                        "customer_preferences", ""
+                    ),
                 }
-            )
-            result["requested_service"] = (
-                service_type if service_type != "any" else "available vendor"
             )
             results.append(result)
         return results
+
+    @staticmethod
+    def _clear_after_requirements(session: dict[str, Any]) -> None:
+        session.update(
+            proposal=None,
+            vendor_recommendations=[],
+            vendor_quotations=[],
+            supplier_replies=[],
+            selected_quotation_ids=[],
+            budget=None,
+            customer_quotation=None,
+            approval=None,
+            deposit=None,
+            bookings=[],
+            booking_replies=[],
+        )
+
+    def _require_session(self, event_id: str) -> dict[str, Any]:
+        session = self._sessions.get(event_id)
+        if session is None:
+            raise KeyError("event not found")
+        return session
 
     def _response(
         self,
         session: dict[str, Any],
         reply: str,
         trace: list[dict[str, Any]],
-        vendor_results: list[dict[str, Any]],
-        planner_data: dict[str, Any] | None = None,
+        *,
+        decision_summary: list[str] | None = None,
     ) -> dict[str, Any]:
-        requirements = session.get("requirements", {})
-        progress = (planner_data or {}).get(
-            "progress",
-            {"completed": 0, "total": 6, "missing_fields": []},
-        )
         return {
             "event_id": session["event_id"],
             "reply": reply,
             "stage": session.get("stage", "requirements"),
-            "requirements": requirements,
-            "progress": progress,
-            "decision_summary": (planner_data or {}).get("decision_summary", []),
+            "requirements": session.get("requirements", {}),
+            "progress": session.get("progress", {}),
+            "decision_summary": decision_summary or [],
+            "proposal": session.get("proposal"),
             "vendor_recommendations": session.get("vendor_recommendations", []),
-            "vendor_results": vendor_results,
+            "vendor_quotations": session.get("vendor_quotations", []),
+            "supplier_replies": session.get("supplier_replies", []),
+            "selected_quotation_ids": session.get("selected_quotation_ids", []),
+            "budget": session.get("budget"),
+            "customer_quotation": session.get("customer_quotation"),
+            "approval": session.get("approval"),
+            "deposit": session.get("deposit"),
+            "bookings": session.get("bookings", []),
+            "booking_replies": session.get("booking_replies", []),
             "agent_trace": trace,
             "llm_mode": self._llm_mode,
         }
@@ -186,7 +395,7 @@ class PlannerWorkflowService:
     @staticmethod
     def _trace(result: dict[str, Any]) -> dict[str, Any]:
         return {
-            "agent": result.get("agent", "unknown"),
+            "agent": result.get("agent", "workflow"),
             "status": result.get("status", "error"),
             "message": result.get("message", "No message"),
             "timestamp": result.get("timestamp"),

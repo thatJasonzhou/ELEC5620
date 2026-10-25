@@ -229,3 +229,66 @@ def test_planner_rejects_vendor_budget_above_total_budget() -> None:
 
     assert result["status"] == "error"
     assert "must not exceed" in result["message"]
+
+
+def test_planner_corrects_dollars_returned_as_cents_by_model() -> None:
+    llm = MockLLMClient(
+        json.dumps(
+            {
+                "reply": "Budget updated.",
+                "updates": {
+                    "budget_limit_cents": 30_000,
+                    "vendor_budget_cents": 21_000,
+                },
+                "decision_summary": ["Updated the budget"],
+            }
+        )
+    )
+
+    result = EventPlannerAgent(llm).handle(
+        {
+            "event_id": "EV-5",
+            "message": "Change my budget to $30000.",
+            "current_date": "2026-10-24",
+            "timezone": "Australia/Sydney",
+            "saved_requirements": {},
+            "history": [],
+        }
+    )
+
+    requirements = result["data"]["requirements"]
+    assert requirements["budget_limit_cents"] == 3_000_000
+    assert requirements["vendor_budget_cents"] == 2_100_000
+
+
+def test_planner_rescales_saved_vendor_budget_when_total_budget_changes() -> None:
+    llm = MockLLMClient(
+        json.dumps(
+            {
+                "reply": "Budget updated.",
+                "updates": {
+                    "budget_limit_cents": 30_000,
+                    "vendor_budget_cents": None,
+                },
+                "decision_summary": ["Updated the budget"],
+            }
+        )
+    )
+
+    result = EventPlannerAgent(llm).handle(
+        {
+            "event_id": "EV-6",
+            "message": "Change my budget to 30,000 AUD.",
+            "current_date": "2026-10-24",
+            "timezone": "Australia/Sydney",
+            "saved_requirements": {
+                "budget_limit_cents": 50_000,
+                "vendor_budget_cents": 35_000,
+            },
+            "history": [],
+        }
+    )
+
+    requirements = result["data"]["requirements"]
+    assert requirements["budget_limit_cents"] == 3_000_000
+    assert requirements["vendor_budget_cents"] == 2_100_000
