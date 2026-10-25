@@ -168,3 +168,10 @@ Safe transport diagnostics now appear in failed service data.llm_error and
 progress events (code/status only). Optional retry_failed_llm=True retries only
 transient failed model jobs once after the phase drains; successes and supplier
 enquiries are retained. It defaults to False. The CLI exposes --retry-failed.
+
+The shared CLI also opts into compact_llm=True: a small candidate table and
+index/short-reason response, with full public snapshots backfilled/validated by
+code. Agent default remains False for legacy injected clients. Compact mode
+returns empty basis_codes and still validates identity, coverage and prices.
+Use CampusQwenClient.from_env(max_output_tokens=256) with compact module callers;
+the CLI's --max-output-tokens controls this cap (0 omits it). Truncated output fails.

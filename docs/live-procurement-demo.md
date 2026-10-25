@@ -116,3 +116,53 @@ guaranteed latency improvement. A second failure still blocks complete selection
 Progress may add retrying and terminal events, but never dumps nested snapshots
 unless --verbose is requested. Compare school-server results before choosing a
 presentation setting; neither three-way nor two-way stability is assumed.
+
+## Shorter model requests and answers
+
+The shared-data CLI now defaults to a compact model protocol (independent of
+terminal --verbose). The model sees a small candidate table, shared event context
+and the customer preferences. It returns only
+`{"ranked":[[candidate_index,"short reason"],...]}`.
+Reasons are requested in at most six words and validated to at most 120 characters.
+Code maps indices back to the original immutable supplier/quotation snapshots,
+then reuses identity/fact and phase-count validation. Invalid, repeated, missing,
+boolean or out-of-range indices fail; extra output fields cannot override prices.
+Compact mode emits no model-selected superlative basis codes (the existing
+basis_codes field remains an empty list). Short prose remains AI-generated,
+not fully fact-verified.
+
+Catalogue names, price/rating/capacity and relevant preferences are retained.
+Supplier notes/estimate references remain available at comparison. Internal batch,
+event, proposal and quote IDs are not needed for the ranking task. Supplier/offer
+references are additionally supplied when the preferences mention them.
+
+On the same default photography fixture, shortlist input dropped from 3,337 to
+977 characters; comparison input from 2,749 to 1,173 characters. The offline
+three-item response fixture shrank from 444 to 135 characters. These are
+character measurements, not tokens or measured Live speed gains.
+Jason's separate "reply OK" Live baseline took 0.74s; this shows a fast response
+was possible then, but does not prove other runs never queued.
+
+CLI Live calls set max_tokens=256 by default. Use --max-output-tokens 512 to
+increase the cap or 0 to omit it and use the server default. A server-reported
+finish_reason=length is an explicit response_format failure, even if partial
+text looks like JSON; it is never released as a successful partial ranking.
+No unsupported thinking-mode switch is sent, and the underlying school model
+behind the alias remains unknown.
+
+Module integration opts in explicitly:
+
+```python
+procurement = VendorProcurementManagerAgent(
+    llm=CampusQwenClient.from_env(max_output_tokens=256),
+    vendor_service=vendor_service,
+    quotation_service=quotation_service,
+    llm_concurrency=2,
+    compact_llm=True,
+    retry_failed_llm=True,
+)
+```
+
+Agent compact_llm defaults to False and Campus token cap defaults to None so
+existing injected clients/prompts stay compatible. The shared-data example
+opts in by default. No public Procurement reply shape or supplier reply seam changes.

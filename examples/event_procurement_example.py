@@ -36,7 +36,17 @@ def mock_compare(messages):
     """Offline model fixture, ranking supplied facts rather than inventing IDs."""
     text = messages[-1]["content"]
     if text.startswith("{"):
-        candidates = json.loads(text)["candidates"]
+        payload = json.loads(text)
+        if "candidate_rows" in payload:
+            columns = payload["columns"]
+            rows = [dict(zip(columns, row)) for row in payload["candidate_rows"]]
+            if payload["stage"] == "shortlist":
+                rows = sorted(rows, key=lambda row: -row["rating"])
+            else:
+                rows = sorted(rows, key=lambda row: (row["price_cents"], -row["rating"]))
+            return json.dumps({"ranked": [[row["i"], "MOCK price and rating comparison"]
+                                         for row in rows[:payload["count"]]]})
+        candidates = payload["candidates"]
         candidates = sorted(candidates, key=lambda c: (c["total_price_cents"], -c["rating"]))
     else:
         marker = "Candidates (facts, already verified by code):\n"

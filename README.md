@@ -597,3 +597,10 @@ bounded failed-only recovery with `--concurrency 2 --retry-failed`. Progress now
 shows safe timeout/network/HTTP error categories. This retains successful model
 work and mock supplier replies within the run; actual school-server stability
 still needs measurement. See the live demo guide for retry limits.
+
+The shared CLI now uses shorter indexed candidate prompts and short model reasons,
+with IDs/prices backfilled and validated by code. It caps Live output at 256 tokens;
+--max-output-tokens 512 increases the cap and 0 leaves it to the server.
+Module callers opt in with compact_llm=True and
+CampusQwenClient.from_env(max_output_tokens=256). Terminal --verbose only changes
+printed detail, not model prompt length.

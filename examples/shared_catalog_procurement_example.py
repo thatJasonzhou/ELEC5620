@@ -28,11 +28,12 @@ def catalog_service_types():
     return sorted({o.service_type for vendor in catalog.catalog for o in vendor.service_offerings})
 
 
-def build_agent(*, live=False, llm_concurrency=1, progress_callback=None, retry_failed_llm=False):
+def build_agent(*, live=False, llm_concurrency=1, progress_callback=None,
+                retry_failed_llm=False, compact_llm=True, max_output_tokens=256):
     return VendorProcurementManagerAgent(
-        llm=CampusQwenClient.from_env() if live else MockLLMClient(mock_compare),
+        llm=CampusQwenClient.from_env(max_output_tokens=max_output_tokens) if live else MockLLMClient(mock_compare),
         llm_concurrency=llm_concurrency, progress_callback=progress_callback,
-        retry_failed_llm=retry_failed_llm,
+        retry_failed_llm=retry_failed_llm, compact_llm=compact_llm,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),
         quotation_service=MockVendorQuotationService.from_json_file(
             ROOT / "data/mock_vendor_quotations.json"),
@@ -90,7 +91,11 @@ def main():
                         help="Print complete diagnostic JSON snapshots instead of the short summary.")
     parser.add_argument("--retry-failed", action="store_true",
                         help="After a phase drains, retry only transient failed LLM jobs once, serially.")
+    parser.add_argument("--max-output-tokens", type=int, default=256,
+                        help="Maximum generated tokens per Live request (default 256; 0 uses server default).")
     args = parser.parse_args()
+    if args.max_output_tokens < 0:
+        parser.error("--max-output-tokens must be nonnegative.")
     if args.services is not None and (len(args.services) > 5 or len(set(args.services)) != len(args.services)):
         parser.error("--services requires 1-5 distinct categories.")
     announced_stages = set()
@@ -115,13 +120,15 @@ def main():
 
     started = monotonic()
     result = build_agent(live=args.live, llm_concurrency=args.concurrency,
-                         progress_callback=report, retry_failed_llm=args.retry_failed).procure_services(
+                         progress_callback=report, retry_failed_llm=args.retry_failed,
+                         max_output_tokens=args.max_output_tokens or None).procure_services(
         event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
     summary = {
         "llm_mode": "live" if args.live else "mock", "supplier_source": "mock",
         "llm_concurrency": args.concurrency, "retry_failed_llm": args.retry_failed,
+        "compact_llm": True, "max_output_tokens": args.max_output_tokens or None,
         "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],
         "enquiry_count": sum(len(r["enquiries"]) for r in rounds),

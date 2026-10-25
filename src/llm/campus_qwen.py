@@ -61,6 +61,7 @@ class CampusQwenClient(LLMClient):
         model: str,
         *,
         timeout_seconds: float = 60.0,
+        max_output_tokens: int | None = None,
     ) -> None:
         self._base_url = self._validate_base_url(base_url)
         if not isinstance(api_key, str) or not api_key:
@@ -70,9 +71,12 @@ class CampusQwenClient(LLMClient):
         self._api_key = api_key
         self._model = model.strip()
         self._timeout = self._validate_timeout(timeout_seconds)
+        if max_output_tokens is not None and (type(max_output_tokens) is not int or max_output_tokens <= 0):
+            raise LLMError("max_output_tokens must be a positive integer or None", code="configuration")
+        self._max_output_tokens = max_output_tokens
 
     @classmethod
-    def from_env(cls) -> "CampusQwenClient":
+    def from_env(cls, *, max_output_tokens: int | None = None) -> "CampusQwenClient":
         """Build a client from environment variables.
 
         Only the three ELEC5620_LLM_* variables are read at runtime.
@@ -94,12 +98,14 @@ class CampusQwenClient(LLMClient):
             base_url=os.environ[_ENV_BASE_URL],
             api_key=os.environ[_ENV_API_KEY],
             model=os.environ[_ENV_MODEL],
+            max_output_tokens=max_output_tokens,
         )
 
     def complete(self, messages: list[dict[str, str]]) -> str:
-        body = json.dumps(
-            {"model": self._model, "messages": messages}
-        ).encode("utf-8")
+        payload = {"model": self._model, "messages": messages}
+        if self._max_output_tokens is not None:
+            payload["max_tokens"] = self._max_output_tokens
+        body = json.dumps(payload).encode("utf-8")
         try:
             request = urllib.request.Request(
                 self._base_url,
@@ -241,6 +247,9 @@ class CampusQwenClient(LLMClient):
             raise LLMError(
                 "LLM response is missing choices[0].message.content", code="response_format"
             ) from None
+        if data["choices"][0].get("finish_reason") == "length":
+            raise LLMError("LLM output limit reached; response may be truncated. Increase max_output_tokens or disable its limit.",
+                           code="response_format")
         if not isinstance(content, str) or not content.strip():
             raise LLMError("LLM response content is empty or not a string", code="response_format")
         return content
