@@ -32,10 +32,11 @@ Scope notes:
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Callable
 
 from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
+from src.llm.batch import complete_jobs
 from src.services.vendor_procurement_service import VendorProcurementService
 from src.services.vendor_quotation_service import MockVendorQuotationService, NoQuotationScenarioError
 from src.services.vendor_booking_service import VendorBookingService
@@ -112,6 +113,8 @@ class VendorProcurementManagerAgent(AIAgent):
         booking_service: VendorBookingService | None = None,
         *,
         record_service: ProcurementRecordService | None = None,
+        llm_concurrency: int = 1,
+        progress_callback: Callable[[dict], None] | None = None,
     ) -> None:
         super().__init__(llm)
         if not isinstance(vendor_service, VendorProcurementService):
@@ -127,6 +130,12 @@ class VendorProcurementManagerAgent(AIAgent):
         self._booking_service = booking_service
         if record_service is not None and not isinstance(record_service, ProcurementRecordService):
             raise TypeError("record_service must be a ProcurementRecordService instance")
+        if type(llm_concurrency) is not int or not 1 <= llm_concurrency <= 5:
+            raise ValueError("llm_concurrency must be an integer from 1 to 5")
+        if progress_callback is not None and not callable(progress_callback):
+            raise TypeError("progress_callback must be callable or None")
+        self._llm_concurrency = llm_concurrency
+        self._progress_callback = progress_callback
         self._record_service = record_service
         self._enquiry_service = VendorEnquiryService(vendor_service, record_service=record_service)
 
@@ -579,8 +588,8 @@ class VendorProcurementManagerAgent(AIAgent):
         return recommendations, None
 
     # Procurement shortlist workflow (KAN-36). Legacy entry points remain compatible.
-    def prepare_enquiries(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Recommend up to three candidates and create process-local mock enquiries."""
+    def _shortlist_plan(self, request: dict[str, Any]):
+        """Prepare snapshots and prompts on the caller thread."""
         event_id = request.get("event_id") if isinstance(request, dict) else None
         try:
             context = self._enquiry_service.validate_request(request)
@@ -608,18 +617,40 @@ class VendorProcurementManagerAgent(AIAgent):
                 f"hard limit: {context['budget_is_hard_limit']}. Use estimates only for initial fit; "
                 "the later comparison checks received prices."
             )
-            raw = self.llm.complete(messages)
-            recs, problem = self._validate_recommendations(raw, candidates)
+            return context, candidates, messages
+        except (ValueError, TypeError, KeyError, OSError, RuntimeError):
+            return self.envelope(event_id, "error", "Cannot prepare supplier enquiries.")
+
+    def _finish_shortlist(self, plan, completion):
+        context, candidates, _ = plan
+        event_id = context["event_id"]
+        if completion.failed:
+            return self.envelope(event_id, "error", "Shortlist LLM call failed; no enquiries created.")
+        expected = min(3, len(candidates))
+        try:
+            recs, problem = self._validate_recommendations(completion.text, candidates)
             if problem or len(recs) != expected:
                 return self.envelope(event_id, "error", "Invalid shortlist: " + (problem or "incomplete ranking"))
             current = self._enquiry_service.create_round(context, recs)
-        except LLMError:
-            return self.envelope(event_id, "error", "Shortlist LLM call failed; no enquiries created.")
         except (ValueError, TypeError, KeyError, OSError, RuntimeError):
             return self.envelope(event_id, "error", "Cannot prepare supplier enquiries.")
         return self.envelope(event_id, "success",
                              "MOCK enquiries prepared; supplier replies are pending. No bookings made.",
                              {**current, "recommendations": recs})
+
+    def _complete_plans(self, plans, stage):
+        return complete_jobs(
+            self.llm,
+            [(plan[0]["context"]["service_type"] if stage == "comparison"
+              else plan[0]["service_type"], plan[2]) for plan in plans],
+            max_workers=self._llm_concurrency, stage=stage, progress=self._progress_callback)
+
+    def prepare_enquiries(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Recommend up to three candidates and create process-local mock enquiries."""
+        plan = self._shortlist_plan(request)
+        if isinstance(plan, dict):
+            return plan
+        return self._finish_shortlist(plan, self._complete_plans([plan], "shortlist")[0])
 
     def submit_quotation_reply(self, request: dict[str, Any]) -> dict[str, Any]:
         """Simulator input seam for a future supplier form; never invokes an LLM."""
@@ -649,7 +680,7 @@ class VendorProcurementManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
         return self.envelope(event_id, "success", "MOCK enquiry snapshot.", current)
 
-    def compare_quotations(self, request: dict[str, Any]) -> dict[str, Any]:
+    def _comparison_plan(self, request: dict[str, Any]):
         """Re-rank received quotes; selection is a proposal, never an approval."""
         event_id = request.get("event_id") if isinstance(request, dict) else None
         if not isinstance(request, dict):
@@ -693,11 +724,15 @@ class VendorProcurementManagerAgent(AIAgent):
                 },
             }, ensure_ascii=False)},
         ]
-        try:
-            raw = self.llm.complete(messages)
-        except LLMError:
+        return data, candidates, messages
+
+    def _finish_comparison(self, plan, completion):
+        data, candidates, _ = plan
+        event_id = data["context"]["event_id"]
+        current = data
+        if completion.failed:
             return self.envelope(event_id, "error", "Quotation comparison LLM call failed; no selection.", data)
-        recs, problem = self._validate_recommendations(raw, candidates)
+        recs, problem = self._validate_recommendations(completion.text, candidates)
         if problem or len(recs) != len(candidates):
             return self.envelope(event_id, "error",
                                  "Invalid quotation comparison: " + (problem or "incomplete ranking"), data)
@@ -721,6 +756,13 @@ class VendorProcurementManagerAgent(AIAgent):
                              "MOCK quotations re-ranked using supplier amounts; proposed selection requires Financial review "
                              "and normal approval/deposit/booking gates. AI reasons are not fully fact-verified.", data)
 
+    def compare_quotations(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Re-rank received quotes; selection is a proposal, never an approval."""
+        plan = self._comparison_plan(request)
+        if isinstance(plan, dict):
+            return plan
+        return self._finish_comparison(plan, self._complete_plans([plan], "comparison")[0])
+
     def prepare_event_enquiries(self, request: dict[str, Any]) -> dict[str, Any]:
         """Prepare all 1-5 service shortlists; future supplier UI starts here."""
         event_id = request.get("event_id") if isinstance(request, dict) else None
@@ -735,14 +777,28 @@ class VendorProcurementManagerAgent(AIAgent):
         except (ValueError, TypeError, KeyError) as exc:
             return self.envelope(event_id, "needs_input", str(exc))
         prepared = []
-        for context in contexts:
-            result = self.prepare_enquiries(context)
-            prepared.append(result)
-            if result["status"] != "success":
-                return self.envelope(event_id, result["status"],
-                                     "Could not prepare every service; no complete procurement selection.",
-                                     {"service_results": prepared, "selection_complete": False,
-                                      "quotations": [], "selected_quotations": [], "selected_quotation_ids": []})
+        if self._llm_concurrency == 1:
+            for context in contexts:
+                result = self.prepare_enquiries(context)
+                prepared.append(result)
+                if result["status"] != "success":
+                    break
+        else:
+            plans = [self._shortlist_plan(context) for context in contexts]
+            failures = [plan for plan in plans if isinstance(plan, dict)]
+            if failures:
+                prepared = failures
+            else:
+                completions = self._complete_plans(plans, "shortlist")
+                # Round creation and optional storage remain on this thread.
+                prepared = [self._finish_shortlist(plan, completion)
+                            for plan, completion in zip(plans, completions)]
+        if any(r["status"] != "success" for r in prepared):
+            status = next(r["status"] for r in prepared if r["status"] != "success")
+            return self.envelope(event_id, status,
+                                 "Could not prepare every service; no complete procurement selection.",
+                                 {"service_results": prepared, "selection_complete": False,
+                                  "quotations": [], "selected_quotations": [], "selected_quotation_ids": []})
         batch = self._enquiry_service.create_batch(
             event_id, request["proposal_id"], [r["data"]["round_id"] for r in prepared])
         return self.envelope(event_id, "success", "Prepared enquiries for all requested services.", batch)
@@ -802,11 +858,19 @@ class VendorProcurementManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
         if any(r["awaiting_replies"] for r in batch["service_rounds"]):
             return self.envelope(event_id, "blocked", "Waiting for all requested services; no complete selection.", batch)
-        results = []
-        for current in batch["service_rounds"]:
-            result = self.compare_quotations({
-                "event_id": event_id, "proposal_id": batch["proposal_id"], "round_id": current["round_id"]})
-            results.append({"service_type": current["context"]["service_type"], **result})
+        lookups = [
+            {"event_id": event_id, "proposal_id": batch["proposal_id"], "round_id": r["round_id"]}
+            for r in batch["service_rounds"]]
+        if self._llm_concurrency == 1:
+            compared = [self.compare_quotations(lookup) for lookup in lookups]
+        else:
+            plans = [self._comparison_plan(lookup) for lookup in lookups]
+            valid = [plan for plan in plans if not isinstance(plan, dict)]
+            completions = iter(self._complete_plans(valid, "comparison"))
+            compared = [plan if isinstance(plan, dict) else self._finish_comparison(plan, next(completions))
+                        for plan in plans]
+        results = [{"service_type": current["context"]["service_type"], **result}
+                   for current, result in zip(batch["service_rounds"], compared)]
         batch["service_results"] = results
         batch["candidate_quotations"] = [q for r in batch["service_rounds"] for q in r["quotations"]]
         if any(r["status"] != "success" for r in results):

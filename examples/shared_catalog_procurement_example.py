@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+from time import monotonic
 from pathlib import Path
 
 from examples.event_procurement_example import SERVICE_TYPES, mock_compare
@@ -26,9 +28,10 @@ def catalog_service_types():
     return sorted({o.service_type for vendor in catalog.catalog for o in vendor.service_offerings})
 
 
-def build_agent(*, live=False):
+def build_agent(*, live=False, llm_concurrency=1, progress_callback=None):
     return VendorProcurementManagerAgent(
         llm=CampusQwenClient.from_env() if live else MockLLMClient(mock_compare),
+        llm_concurrency=llm_concurrency, progress_callback=progress_callback,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),
         quotation_service=MockVendorQuotationService.from_json_file(
             ROOT / "data/mock_vendor_quotations.json"),
@@ -54,15 +57,26 @@ def main():
     parser.add_argument("--guests", type=int, choices=(50, 80), default=50)
     parser.add_argument("--services", nargs="+", choices=catalog_service_types(),
                         help="Choose 1-5 services from the shared catalogue; defaults to the original five.")
+    parser.add_argument("--concurrency", type=int, choices=range(1, 6), default=3,
+                        help="Maximum simultaneous LLM calls per stage (default 3; use 1 for serial).")
     args = parser.parse_args()
     if args.services is not None and (len(args.services) > 5 or len(set(args.services)) != len(args.services)):
         parser.error("--services requires 1-5 distinct categories.")
-    result = build_agent(live=args.live).procure_services(
+    def report(event):
+        duration = (f" ({event['elapsed_seconds']:.1f}s)"
+                    if "elapsed_seconds" in event else "")
+        print(f"[{event['stage']}] {event['service_type']}: {event['state']}{duration}",
+              file=sys.stderr, flush=True)
+
+    started = monotonic()
+    result = build_agent(live=args.live, llm_concurrency=args.concurrency,
+                         progress_callback=report).procure_services(
         event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
     print(json.dumps({
         "llm_mode": "live" if args.live else "mock", "supplier_source": "mock",
+        "llm_concurrency": args.concurrency, "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],
         "enquiry_count": sum(len(r["enquiries"]) for r in rounds),
         "selection_complete": data.get("selection_complete", False),

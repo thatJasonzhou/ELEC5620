@@ -151,3 +151,14 @@ the catalogue category count does not raise the activity service limit. Use Sydn
 and 50 / 80 guests for complete reply coverage. The new
 `python -m examples.shared_catalog_procurement_example` uses these shared files;
 its `--live` switch changes the LLM only. See [supplier demo data](supplier-demo-data.md).
+
+## Optional bounded LLM concurrency (KAN-40)
+
+Pass `llm_concurrency=3` (integer 1-5) and optionally `progress_callback=callable`
+when constructing the Agent to overlap LLM requests within each activity phase.
+Agent default is 1; shared-data CLI default is 3 and accepts `--concurrency`.
+Only model calls run in worker threads, while input snapshots, state writes,
+SQLite and output validation remain sequential. Request ordering and complete-selection
+gates are preserved. The same Agent must still receive external requests serially.
+See [live Procurement demo](live-procurement-demo.md) for fresh-download setup,
+progress events, client requirements and performance measurement.

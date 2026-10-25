@@ -737,3 +737,16 @@ approval/deposit/booking gates remain unchanged. See docs/shortlisted-quotations
 - 保存后重新读取，仍能获得该活动的数据。
 - 至少验证一次超预算：返回 `blocked`，不继续预订或生成执行计划。
 - 所有固定结果、模拟外部回复都有标记，后续按同一接口替换。
+
+### 5.13 Procurement LLM concurrency (KAN-40)
+
+Optional constructor keywords: `llm_concurrency=1` (integer 1-5) and
+`progress_callback=None` (callable event observer). The activity-level shortlist
+and quotation-comparison phases can overlap only their LLM complete calls;
+all snapshots, enquiry mutations, SQLite persistence and result validation remain
+on the caller thread. Service results preserve request order. Existing request/envelope
+and complete-selection semantics are unchanged. External requests remain serialized.
+Progress events contain `stage`, `service_type`, `state` and terminal
+`elapsed_seconds`; they do not contain prompts, credentials or model responses.
+The example CLI opts into concurrency 3 and emits progress on stderr and JSON on stdout.
+See `docs/live-procurement-demo.md` for full observer/client requirements.

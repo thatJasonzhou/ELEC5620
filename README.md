@@ -579,3 +579,14 @@ add `--live` after configuring the school LLM to use real model decisions with s
 Choose 1-5 catalogue categories using `--services videography lighting entertainment transport event_staff`;
 the activity maximum remains five even though ten categories are available.
 See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs and rejection scenario.
+
+## Live Procurement concurrency (KAN-40)
+
+For a fresh-download live demonstration, run
+`py -3 -m examples.shared_catalog_procurement_example --live --concurrency 3`
+after setting the school environment variables. The CLI shows per-service progress
+and total elapsed time; default concurrency is 3, adjustable from 1 to 5.
+Module callers opt in with `VendorProcurementManagerAgent(..., llm_concurrency=3)`;
+the Agent default remains serial for compatibility. Only LLM requests overlap;
+state, storage and validation remain on the caller thread.
+See [live demo setup](docs/live-procurement-demo.md). No prerecorded model results are used.
