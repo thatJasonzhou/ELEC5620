@@ -141,3 +141,11 @@ There is no enquiry timeout or automatic next-batch fallback yet. Requests must
 be serialized; supplier login, concurrent UI writes, service-time windows,
 negotiation, automatic replacement and durable enquiry recovery are outside this update.
 The team still owns current proposal/approval authority.
+
+## Shared catalogue expansion (KAN-39)
+
+The default shared JSON files now provide five distinct suppliers for each of photography,
+catering, venue, sound and decoration. Use Sydney / Melbourne, 2026-12-16 / 2026-12-17,
+and 50 / 80 guests for complete reply coverage. The new
+`python -m examples.shared_catalog_procurement_example` uses these shared files;
+its `--live` switch changes the LLM only. See [supplier demo data](supplier-demo-data.md).

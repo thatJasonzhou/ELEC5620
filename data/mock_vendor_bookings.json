@@ -9,6 +9,1806 @@
       "status": "confirmed",
       "reason": "MOCK: supplier explicitly confirms this final booking request.",
       "supplier_confirmation_id": "MOCK-SUPPLIER-CONF-001"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O1-20261216-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O1-20261216-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O1-20261217-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O1-20261217-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O2-20261216-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O2-20261216-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O2-20261217-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-001-O2-20261217-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-001-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O1-20261216-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O1-20261216-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O1-20261217-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O1-20261217-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O2-20261216-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O2-20261216-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O2-20261217-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-002-O2-20261217-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-002-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O1-20261216-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O1-20261216-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O1-20261217-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O1-20261217-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O2-20261216-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O2-20261216-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O2-20261217-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-001-O2-20261217-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-001-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O1-20261216-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O1-20261216-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O1-20261217-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O1-20261217-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O2-20261216-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O2-20261216-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O2-20261217-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-002-O2-20261217-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-002-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O1-20261216-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O1-20261216-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O1-20261217-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O1-20261217-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O2-20261216-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O2-20261216-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O2-20261217-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-003-O2-20261217-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-003-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O1-20261216-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O1-20261216-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O1-20261217-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O1-20261217-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O2-20261216-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O2-20261216-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O2-20261217-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-004-O2-20261217-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-004-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-005-O1-20261216-50",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-005-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-005-O1-20261216-80",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-005-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-005-O2-20261216-50",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-005-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-CAT-005-O2-20261216-80",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-CAT-005-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O1-20261216-50",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O1-20261216-80",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O1-20261217-50",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O1-20261217-80",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O2-20261216-50",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O2-20261216-80",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O2-20261217-50",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-003-O2-20261217-80",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-003-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O1-20261216-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O1-20261216-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O1-20261217-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O1-20261217-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O2-20261216-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O2-20261216-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O2-20261217-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-004-O2-20261217-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-004-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-005-O1-20261216-50",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-005-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-005-O1-20261216-80",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-005-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-005-O2-20261216-50",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-005-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-PHOTO-005-O2-20261216-80",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-PHOTO-005-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O1-20261216-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O1-20261216-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O1-20261217-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O1-20261217-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O2-20261216-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O2-20261216-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O2-20261217-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-001-O2-20261217-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-001-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O1-20261216-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O1-20261216-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O1-20261217-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O1-20261217-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O2-20261216-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O2-20261216-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O2-20261217-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-002-O2-20261217-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-002-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O1-20261216-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O1-20261216-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O1-20261217-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O1-20261217-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O2-20261216-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O2-20261216-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O2-20261217-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-003-O2-20261217-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-003-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O1-20261216-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O1-20261216-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O1-20261217-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O1-20261217-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O2-20261216-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O2-20261216-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O2-20261217-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-004-O2-20261217-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-004-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-005-O1-20261216-50",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-005-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-005-O1-20261216-80",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-005-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-005-O2-20261216-50",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-005-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-VENUE-005-O2-20261216-80",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-VENUE-005-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O1-20261216-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O1-20261216-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O1-20261217-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O1-20261217-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O2-20261216-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O2-20261216-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O2-20261217-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-001-O2-20261217-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-001-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O1-20261216-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O1-20261216-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O1-20261217-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O1-20261217-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O2-20261216-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O2-20261216-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O2-20261217-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-002-O2-20261217-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-002-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O1-20261216-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O1-20261216-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O1-20261217-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O1-20261217-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O2-20261216-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O2-20261216-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O2-20261217-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-003-O2-20261217-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-003-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O1-20261216-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O1-20261216-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O1-20261217-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O1-20261217-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O2-20261216-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O2-20261216-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O2-20261217-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-004-O2-20261217-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-004-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-005-O1-20261216-50",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-005-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-005-O1-20261216-80",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-005-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-005-O2-20261216-50",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-005-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-SOUND-005-O2-20261216-80",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-SOUND-005-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O1-20261216-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O1-20261216-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O1-20261217-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O1-20261217-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O2-20261216-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O2-20261216-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O2-20261217-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-001-O2-20261217-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-001-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O1-20261216-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O1-20261216-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O1-20261217-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O1-20261217-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O2-20261216-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O2-20261216-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O2-20261217-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-002-O2-20261217-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-002-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O1-20261216-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O1-20261216-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O1-20261217-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O1-20261217-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O2-20261216-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O2-20261216-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O2-20261217-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-003-O2-20261217-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-003-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O1-20261216-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O1-20261216-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O1-20261217-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O1-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O1-20261217-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O1-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O2-20261216-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O2-20261216-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O2-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O2-20261217-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O2-20261217-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-004-O2-20261217-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-004-O2-20261217-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-005-O1-20261216-50",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-005-O1-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-005-O1-20261216-80",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-005-O1-20261216-80"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-005-O2-20261216-50",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-005-O2-20261216-50"
+    },
+    {
+      "scenario_id": "MOCK-BOOK-EXP-V-DECOR-005-O2-20261216-80",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "status": "confirmed",
+      "reason": "MOCK: supplier confirms final booking after the existing approval and deposit gates.",
+      "supplier_confirmation_id": "MOCK-CONF-EXP-V-DECOR-005-O2-20261216-80"
     }
   ]
 }
