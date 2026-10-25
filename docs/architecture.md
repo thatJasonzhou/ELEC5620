@@ -128,3 +128,20 @@ Budget's transient selected quote snapshots implement its existing aggregation;
 they are not database persistence. KAN-29 separately persists the FIN-01 handoff
 through FinancialRecordService. Internal `Calculated` string denotes a
 calculation record only, not customer approval or an added UML status transition.
+
+## KAN-36 opt-in shortlisted supplier enquiries (2026-10-25)
+
+User authorized the additive recommendation -> shortlisted enquiry -> quotation
+comparison workflow while team integration continues. VendorEnquiryService is an
+internal Stage 2 helper owning process-local rounds, immutable final mock replies,
+and optional accepted-quote persistence through ProcurementRecordService.
+VendorProcurementManagerAgent retains AIAgent inheritance and all existing entry
+point signatures/contracts. No Stage 1 entity, Service interface or relationship
+is changed, and no Agent calls another Agent.
+
+The LLM ranks an exactly bounded shortlist and later compares accepted quotes.
+Supplier facts arrive through an explicitly mock input seam and are not generated
+by the procurement LLM. Deterministic validation controls identities, amounts,
+pending states, hard service limits and ranked coverage. Financial still owns
+whole-event calculation; original approval/deposit/booking gates remain intact.
+See docs/shortlisted-quotations.md for integration boundaries and recovery limits.

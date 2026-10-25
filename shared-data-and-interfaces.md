@@ -671,6 +671,37 @@ or closes events. Financial reports financial conditions only. Operations execut
 closure after its own checks. STUB tests demonstrate Financial/persistence behavior;
 real scope integration and actual closure end-to-end acceptance remain dependencies.
 
+### 5.12 Opt-in shortlisted enquiries (KAN-36)
+
+Additive Procurement Python entry points: prepare_enquiries,
+submit_quotation_reply, get_enquiry_round and compare_quotations.
+Existing handle/request_quotations/confirm_bookings contracts remain unchanged.
+See docs/shortlisted-quotations.md for request/reply examples.
+
+prepare_enquiries accepts existing one-service requirements plus proposal_id,
+optional service_budget_cents and budget_is_hard_limit=false. It creates exactly
+min(3, eligible candidate count) mock pending enquiries tied to a stored round.
+submit_quotation_reply binds event/proposal/round/enquiry and accepts only explicit
+mock=true supplier input. accepted requires integer AUD quoted_total_cents;
+pending/rejected carry no accepted amount. Terminal replies are immutable.
+
+compare_quotations blocks while any reply is pending, then ranks every accepted
+quote that satisfies hard service limits. Soft service targets permit over-target
+candidates. All amounts follow the existing GST-inclusive integer-cents convention.
+data.quotations retains all accepted snapshots in the existing handoff shape;
+data.quotation_ranking contains comparative reasons and received quote prices.
+data.selected_quotation_ids and data.selected_quotations contain one proposed
+selection for this service. Supervisor aggregates selected snapshots across
+services for Financial. Do not total same-service alternatives as purchases.
+Selection neither approves the customer proposal nor confirms supplier booking.
+
+Rounds and pending replies are process-local. Accepted quote snapshots optionally
+use the existing record_service; rankings are not persisted. No HTTP route, UI,
+supplier authentication, enquiry recovery, time-window scheduling or automatic
+next-batch enquiry is introduced. Caller must share a backend Agent instance and
+supply current proposal/approval context. Changed requirements/final replies need
+a new round and fresh downstream review.
+
 ## 6. 公共定义放在哪里
 
 建议统一放在 `src/shared/schemas.py`，供各模块导入使用；具体目录若已有约定，沿用现有目录。共享数据由 SQLite 保存，模块经对应 Service 读取和更新。

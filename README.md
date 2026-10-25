@@ -559,3 +559,11 @@ py -3 -m pytest tests/unit/ tests/integration/ tests/e2e/ -q
 | `src/services/financial_record_service.py` | KAN-29 财务快照与订金执行日志 |
 | `examples/financial_persistence_example.py` | 离线保存、重建 Service、恢复和重复付款保护演示 |
 | `tests/unit/test_financial_records.py` / `test_financial_persistence.py` | 存储与财务工作流故障、冲突和恢复测试 |
+
+## Opt-in shortlisted supplier quotation demo (KAN-36)
+
+Run `python -m examples.shortlisted_quotation_example` for recommendation -> top-three
+mock enquiries -> received-price comparison. Supplier replies are structured simulated
+input; there is no supplier UI yet. Existing integration entry points are unchanged.
+See [shortlisted quotation interface](docs/shortlisted-quotations.md) before connecting
+Financial or a supplier form.
