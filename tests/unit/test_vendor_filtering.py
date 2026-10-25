@@ -189,7 +189,7 @@ class TestDeterministicOrdering:
 class TestSchemaLoading:
     def test_catalog_loaded_from_json(self, service: VendorProcurementService):
         catalog = service.catalog
-        assert len(catalog) == 25
+        assert len(catalog) == 50
         first: Vendor = next(v for v in catalog if v.vendor_id == "V-CAT-001")
         offering: VendorServiceOffering = first.service_offerings[0]
         assert offering.total_price_cents == 1850000
