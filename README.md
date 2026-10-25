@@ -569,3 +569,13 @@ received-price comparison -> one proposed supplier per service. The updated
 The team pulls this update and connects its own orchestration locally.
 See [Procurement interface](docs/shortlisted-quotations.md) for the input/output
 contract and the supplier reply seam reusable by a later supplier UI.
+
+## Shared supplier catalogue (KAN-39)
+
+The default JSON catalogue now has ten service categories, five suppliers per category (50 suppliers, 100 city-specific offerings).
+Use Sydney or Melbourne, 2026-12-16 / 2026-12-17, and 50 / 80 guests for matched quotation and booking presets.
+Run `py -3 -m examples.shared_catalog_procurement_example` for the full shared-data Mock flow;
+add `--live` after configuring the school LLM to use real model decisions with simulated supplier replies.
+Choose 1-5 catalogue categories using `--services videography lighting entertainment transport event_staff`;
+the activity maximum remains five even though ten categories are available.
+See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs and rejection scenario.
