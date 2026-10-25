@@ -163,3 +163,8 @@ SQLite and output validation remain sequential. Request ordering and complete-se
 gates are preserved. The same Agent must still receive external requests serially.
 See [live Procurement demo](live-procurement-demo.md) for fresh-download setup,
 progress events, client requirements and performance measurement.
+
+Safe transport diagnostics now appear in failed service data.llm_error and
+progress events (code/status only). Optional retry_failed_llm=True retries only
+transient failed model jobs once after the phase drains; successes and supplier
+enquiries are retained. It defaults to False. The CLI exposes --retry-failed.

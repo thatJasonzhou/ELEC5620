@@ -129,17 +129,18 @@ class CampusQwenClient(LLMClient):
             if exc.code in (401, 403):
                 raise LLMError(
                     f"LLM authentication failed (HTTP {exc.code}); "
-                    "check the API key and endpoint configuration."
+                    "check the API key and endpoint configuration.",
+                    code="authentication", http_status=exc.code,
                 ) from None
             raise LLMError(
-                f"LLM request failed with HTTP {exc.code}: "
-                f"{exc.reason or 'no reason given'}"
+                f"LLM request failed with HTTP {exc.code}.",
+                code="http_error", http_status=exc.code,
             ) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             # Transient network fault: retry once.
             return self._retry_after_network_fault(request, exc)
         except UnicodeDecodeError:
-            raise LLMError("LLM response is not valid UTF-8") from None
+            raise LLMError("LLM response is not valid UTF-8", code="response_format") from None
         except ValueError:
             # Invalid URL during send — impossible after __init__
             # validation, kept as a safety net.
@@ -153,16 +154,16 @@ class CampusQwenClient(LLMClient):
             return self._open_and_read(request)
         except urllib.error.HTTPError as exc:
             raise LLMError(
-                f"LLM request failed with HTTP {exc.code} on retry: "
-                f"{exc.reason or 'no reason given'}"
+                f"LLM request failed with HTTP {exc.code} on retry.",
+                code="authentication" if exc.code in (401, 403) else
+                     "rate_limit" if exc.code == 429 else "http_error",
+                http_status=exc.code, retryable=exc.code in _RETRYABLE_STATUS,
             ) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            raise LLMError(
-                "LLM request still failing on retry (network fault)."
-            ) from None
+            raise self._network_error(exc, "LLM request still failing on retry (network fault).") from None
         except UnicodeDecodeError:
             raise LLMError(
-                "LLM response is not valid UTF-8 (on retry)."
+                "LLM response is not valid UTF-8 (on retry).", code="response_format"
             ) from None
         except ValueError:
             raise LLMError(
@@ -181,24 +182,31 @@ class CampusQwenClient(LLMClient):
         except urllib.error.HTTPError as exc:
             raise LLMError(
                 f"LLM request failed with HTTP {exc.code} on retry "
-                "after network fault."
+                "after network fault.",
+                code="authentication" if exc.code in (401, 403) else
+                     "rate_limit" if exc.code == 429 else "http_error",
+                http_status=exc.code, retryable=exc.code in _RETRYABLE_STATUS,
             ) from None
-        except (urllib.error.URLError, TimeoutError, OSError):
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
             # Generic message on purpose: raw exception text (e.g. a
             # URLError's repr) can embed the endpoint URL, which may
             # itself carry credentials.
-            raise LLMError(
-                "LLM request failed after retry (network fault)."
-            ) from None
+            raise self._network_error(exc, "LLM request failed after retry (network fault).") from None
         except UnicodeDecodeError:
             raise LLMError(
-                "LLM response is not valid UTF-8 (after retry)."
+                "LLM response is not valid UTF-8 (after retry).", code="response_format"
             ) from None
         except ValueError:
             raise LLMError(
                 "LLM request could not be sent after retry: invalid "
                 "endpoint URL."
             ) from None
+
+    @staticmethod
+    def _network_error(exc, message):
+        timed_out = isinstance(exc, TimeoutError) or (
+            isinstance(exc, urllib.error.URLError) and isinstance(exc.reason, TimeoutError))
+        return LLMError(message, code="timeout" if timed_out else "network", retryable=True)
 
     def _open_and_read(self, request: urllib.request.Request) -> str:
         """Open the request and return the response body as UTF-8 text.
@@ -226,15 +234,15 @@ class CampusQwenClient(LLMClient):
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
-            raise LLMError("LLM response is not valid JSON") from None
+            raise LLMError("LLM response is not valid JSON", code="response_format") from None
         try:
             content = data["choices"][0]["message"]["content"]
         except (TypeError, KeyError, IndexError):
             raise LLMError(
-                "LLM response is missing choices[0].message.content"
+                "LLM response is missing choices[0].message.content", code="response_format"
             ) from None
         if not isinstance(content, str) or not content.strip():
-            raise LLMError("LLM response content is empty or not a string")
+            raise LLMError("LLM response content is empty or not a string", code="response_format")
         return content
 
     @staticmethod

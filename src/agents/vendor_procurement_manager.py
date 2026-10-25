@@ -114,6 +114,7 @@ class VendorProcurementManagerAgent(AIAgent):
         *,
         record_service: ProcurementRecordService | None = None,
         llm_concurrency: int = 1,
+        retry_failed_llm: bool = False,
         progress_callback: Callable[[dict], None] | None = None,
     ) -> None:
         super().__init__(llm)
@@ -134,6 +135,9 @@ class VendorProcurementManagerAgent(AIAgent):
             raise ValueError("llm_concurrency must be an integer from 1 to 5")
         if progress_callback is not None and not callable(progress_callback):
             raise TypeError("progress_callback must be callable or None")
+        if type(retry_failed_llm) is not bool:
+            raise TypeError("retry_failed_llm must be bool")
+        self._retry_failed_llm = retry_failed_llm
         self._llm_concurrency = llm_concurrency
         self._progress_callback = progress_callback
         self._record_service = record_service
@@ -625,7 +629,8 @@ class VendorProcurementManagerAgent(AIAgent):
         context, candidates, _ = plan
         event_id = context["event_id"]
         if completion.failed:
-            return self.envelope(event_id, "error", "Shortlist LLM call failed; no enquiries created.")
+            return self.envelope(event_id, "error", "Shortlist LLM call failed; no enquiries created.",
+                                 {"llm_error": self._completion_error(completion)})
         expected = min(3, len(candidates))
         try:
             recs, problem = self._validate_recommendations(completion.text, candidates)
@@ -638,12 +643,18 @@ class VendorProcurementManagerAgent(AIAgent):
                              "MOCK enquiries prepared; supplier replies are pending. No bookings made.",
                              {**current, "recommendations": recs})
 
+    @staticmethod
+    def _completion_error(completion):
+        return {"code": completion.error_code, "http_status": completion.http_status,
+                "retryable": completion.retryable, "attempts": completion.attempts}
+
     def _complete_plans(self, plans, stage):
         return complete_jobs(
             self.llm,
             [(plan[0]["context"]["service_type"] if stage == "comparison"
               else plan[0]["service_type"], plan[2]) for plan in plans],
-            max_workers=self._llm_concurrency, stage=stage, progress=self._progress_callback)
+            max_workers=self._llm_concurrency, stage=stage,
+            retry_failed=self._retry_failed_llm, progress=self._progress_callback)
 
     def prepare_enquiries(self, request: dict[str, Any]) -> dict[str, Any]:
         """Recommend up to three candidates and create process-local mock enquiries."""
@@ -731,6 +742,7 @@ class VendorProcurementManagerAgent(AIAgent):
         event_id = data["context"]["event_id"]
         current = data
         if completion.failed:
+            data["llm_error"] = self._completion_error(completion)
             return self.envelope(event_id, "error", "Quotation comparison LLM call failed; no selection.", data)
         recs, problem = self._validate_recommendations(completion.text, candidates)
         if problem or len(recs) != len(candidates):
@@ -780,18 +792,20 @@ class VendorProcurementManagerAgent(AIAgent):
         if self._llm_concurrency == 1:
             for context in contexts:
                 result = self.prepare_enquiries(context)
-                prepared.append(result)
+                prepared.append({"service_type": context["service_type"], **result})
                 if result["status"] != "success":
                     break
         else:
             plans = [self._shortlist_plan(context) for context in contexts]
-            failures = [plan for plan in plans if isinstance(plan, dict)]
+            failures = [{"service_type": context["service_type"], **plan}
+                        for context, plan in zip(contexts, plans) if isinstance(plan, dict)]
             if failures:
                 prepared = failures
             else:
                 completions = self._complete_plans(plans, "shortlist")
                 # Round creation and optional storage remain on this thread.
-                prepared = [self._finish_shortlist(plan, completion)
+                prepared = [{"service_type": plan[0]["service_type"],
+                             **self._finish_shortlist(plan, completion)}
                             for plan, completion in zip(plans, completions)]
         if any(r["status"] != "success" for r in prepared):
             status = next(r["status"] for r in prepared if r["status"] != "success")

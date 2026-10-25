@@ -87,3 +87,32 @@ stable limit before presentation. Each run is fresh and may choose different sup
 Offline tests prove overlap with synchronization barriers, enforce a three-worker cap,
 verify caller-thread state/SQLite writes and serial/parallel selection parity.
 They do not claim a measured live school-server speedup.
+
+## Diagnosing intermittent failures under load
+
+A real three-way run completed shortlisting but two comparison calls failed
+after about 61 seconds (90.08 seconds total). This is compatible with timeout,
+network or proxy/server faults, but duration alone does not identify the cause.
+Progress and failed service snapshots now expose a safe error code
+(timeout, network, authentication, rate_limit, http_error, response_format,
+or llm_error), plus an HTTP status where known. Raw exception reasons/URLs,
+response bodies and credentials are not copied into these diagnostics.
+
+Try a lower limit and optionally enable one bounded recovery pass:
+
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --retry-failed
+```
+
+The corresponding Agent keyword is `retry_failed_llm=True` (default False).
+Only explicitly transient failed model jobs are retried once, serially, after
+the phase's first pass has fully drained. Successful jobs and supplier enquiries
+are not repeated. Authentication/configuration/unknown failures and invalid
+model rankings are not retried by this recovery feature. The existing Campus
+transport already retries once internally; enabling recovery permits at most
+two client calls (up to four HTTP attempts) per transiently failing job.
+This may improve completion reliability at the cost of extra waiting, not a
+guaranteed latency improvement. A second failure still blocks complete selection.
+Progress may add retrying and terminal events, but never dumps nested snapshots
+unless --verbose is requested. Compare school-server results before choosing a
+presentation setting; neither three-way nor two-way stability is assumed.

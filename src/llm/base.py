@@ -17,7 +17,16 @@ class LLMError(Exception):
     """Raised when an LLM call cannot be completed.
 
     Messages must never contain API keys or other secrets.
+    Structured diagnostics use a closed code set and never copy exception text.
     """
+
+    def __init__(self, message="", *, code="llm_error", http_status=None, retryable=False):
+        super().__init__(message)
+        allowed = {"llm_error", "configuration", "authentication", "http_error",
+                   "rate_limit", "timeout", "network", "response_format"}
+        self.code = code if isinstance(code, str) and code in allowed else "llm_error"
+        self.http_status = http_status if type(http_status) is int and 400 <= http_status <= 599 else None
+        self.retryable = retryable is True and self.code in {"timeout", "network", "rate_limit", "http_error"}
 
 
 class LLMClient(ABC):

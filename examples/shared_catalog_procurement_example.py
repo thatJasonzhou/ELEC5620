@@ -28,10 +28,11 @@ def catalog_service_types():
     return sorted({o.service_type for vendor in catalog.catalog for o in vendor.service_offerings})
 
 
-def build_agent(*, live=False, llm_concurrency=1, progress_callback=None):
+def build_agent(*, live=False, llm_concurrency=1, progress_callback=None, retry_failed_llm=False):
     return VendorProcurementManagerAgent(
         llm=CampusQwenClient.from_env() if live else MockLLMClient(mock_compare),
         llm_concurrency=llm_concurrency, progress_callback=progress_callback,
+        retry_failed_llm=retry_failed_llm,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),
         quotation_service=MockVendorQuotationService.from_json_file(
             ROOT / "data/mock_vendor_quotations.json"),
@@ -65,7 +66,12 @@ def format_summary(summary):
         for item in summary["service_results"]:
             if item["status"] != "success":
                 reason = " ".join(item["message"].split())[:160]
-                lines.append(f"{item['service_type']}: {item['status']} - {reason}")
+                error = (item.get("data") or {}).get("llm_error") or {}
+                detail = error.get("code", "")
+                if error.get("http_status") is not None:
+                    detail += f" HTTP {error['http_status']}"
+                label = f" [{detail}]" if detail else ""
+                lines.append(f"{item.get('service_type', 'service')}: {item['status']}{label} - {reason}")
     return "\n".join(lines)
 
 
@@ -82,6 +88,8 @@ def main():
                         help="Maximum simultaneous LLM calls per stage (default 3; use 1 for serial).")
     parser.add_argument("--verbose", action="store_true",
                         help="Print complete diagnostic JSON snapshots instead of the short summary.")
+    parser.add_argument("--retry-failed", action="store_true",
+                        help="After a phase drains, retry only transient failed LLM jobs once, serially.")
     args = parser.parse_args()
     if args.services is not None and (len(args.services) > 5 or len(set(args.services)) != len(args.services)):
         parser.error("--services requires 1-5 distinct categories.")
@@ -96,18 +104,25 @@ def main():
             return
         duration = (f" ({event['elapsed_seconds']:.1f}s)"
                     if "elapsed_seconds" in event else "")
-        print(f"[{event['stage']}] {event['service_type']}: {event['state']}{duration}",
+        detail = ""
+        if event.get("error_code"):
+            detail = f" [{event['error_code']}"
+            if event.get("http_status") is not None:
+                detail += f" HTTP {event['http_status']}"
+            detail += "]"
+        print(f"[{event['stage']}] {event['service_type']}: {event['state']}{duration}{detail}",
               file=sys.stderr, flush=True)
 
     started = monotonic()
     result = build_agent(live=args.live, llm_concurrency=args.concurrency,
-                         progress_callback=report).procure_services(
+                         progress_callback=report, retry_failed_llm=args.retry_failed).procure_services(
         event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
     summary = {
         "llm_mode": "live" if args.live else "mock", "supplier_source": "mock",
-        "llm_concurrency": args.concurrency, "elapsed_seconds": round(monotonic() - started, 2),
+        "llm_concurrency": args.concurrency, "retry_failed_llm": args.retry_failed,
+        "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],
         "enquiry_count": sum(len(r["enquiries"]) for r in rounds),
         "selection_complete": data.get("selection_complete", False),

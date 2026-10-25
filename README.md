@@ -591,3 +591,9 @@ Module callers opt in with `VendorProcurementManagerAgent(..., llm_concurrency=3
 the Agent default remains serial for compatibility. Only LLM requests overlap;
 state, storage and validation remain on the caller thread.
 See [live demo setup](docs/live-procurement-demo.md). No prerecorded model results are used.
+
+If comparison calls fail under load, measure a lower concurrency and enable
+bounded failed-only recovery with `--concurrency 2 --retry-failed`. Progress now
+shows safe timeout/network/HTTP error categories. This retains successful model
+work and mock supplier replies within the run; actual school-server stability
+still needs measurement. See the live demo guide for retry limits.

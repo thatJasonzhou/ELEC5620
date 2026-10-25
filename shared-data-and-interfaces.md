@@ -751,3 +751,12 @@ Progress events contain `stage`, `service_type`, `state` and terminal
 The example CLI opts into concurrency 3, emits bounded progress on stderr and a
 short status/selected-supplier summary on stdout. Add --verbose for full diagnostic JSON.
 See `docs/live-procurement-demo.md` for full observer/client requirements.
+
+Optional retry_failed_llm=False enables one serial recovery pass for only
+explicitly transient failed model jobs after all first-pass jobs finish.
+Successful model jobs and supplier enquiries are not repeated. Invalid rankings
+and permanent/unknown failures are not recovered automatically. Failed service
+data.llm_error includes code, http_status, retryable and attempts; progress may
+add error_code, http_status, attempt and the retrying state. Diagnostics omit
+raw exception text, URLs, model response bodies and credentials. A second failure
+still prevents complete selection.

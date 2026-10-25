@@ -37,3 +37,14 @@ def test_default_output_is_bounded_and_has_no_nested_debug_snapshots():
     assert len(run.stderr.splitlines()) <= 12
     assert "service_results" not in run.stdout and "enquiry_id" not in run.stdout
     assert "quotation_id" not in run.stdout
+
+def test_cli_failed_only_recovery_flag_is_explicit_and_keeps_normal_success():
+    run = subprocess.run(
+        [sys.executable, "-m", "examples.shared_catalog_procurement_example",
+         "--concurrency", "2", "--retry-failed", "--verbose"],
+        cwd=ROOT, capture_output=True, text=True, timeout=20)
+    assert run.returncode == 0, run.stderr
+    result = json.loads(run.stdout)
+    assert result["status"] == "success" and result["retry_failed_llm"] is True
+    assert result["llm_concurrency"] == 2 and result["enquiry_count"] == 15
+    assert run.stderr.count(": received") == 10 and ": retrying" not in run.stderr
