@@ -578,12 +578,13 @@ class VendorProcurementManagerAgent(AIAgent):
             )
         return recommendations, None
 
-    # Opt-in shortlist workflow (KAN-36). Existing entry points above are unchanged.
+    # Procurement shortlist workflow (KAN-36). Legacy entry points remain compatible.
     def prepare_enquiries(self, request: dict[str, Any]) -> dict[str, Any]:
         """Recommend up to three candidates and create process-local mock enquiries."""
         event_id = request.get("event_id") if isinstance(request, dict) else None
         try:
             context = self._enquiry_service.validate_request(request)
+            self._enquiry_service.validate_service_slot(context)
         except ValueError as exc:
             return self.envelope(event_id, "needs_input", str(exc))
         event_id, params, errors = self._validate_request(request)
@@ -719,3 +720,119 @@ class VendorProcurementManagerAgent(AIAgent):
         return self.envelope(event_id, "success",
                              "MOCK quotations re-ranked using supplier amounts; proposed selection requires Financial review "
                              "and normal approval/deposit/booking gates. AI reasons are not fully fact-verified.", data)
+
+    def prepare_event_enquiries(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Prepare all 1-5 service shortlists; future supplier UI starts here."""
+        event_id = request.get("event_id") if isinstance(request, dict) else None
+        try:
+            contexts = self._enquiry_service.validate_event_request(request)
+            for context in contexts:
+                _, _, errors = self._validate_request(context)
+                if errors:
+                    raise ValueError(str(errors))
+                self._enquiry_service.validate_service_slot(context)
+            self._enquiry_service.validate_service_slots(contexts)
+        except (ValueError, TypeError, KeyError) as exc:
+            return self.envelope(event_id, "needs_input", str(exc))
+        prepared = []
+        for context in contexts:
+            result = self.prepare_enquiries(context)
+            prepared.append(result)
+            if result["status"] != "success":
+                return self.envelope(event_id, result["status"],
+                                     "Could not prepare every service; no complete procurement selection.",
+                                     {"service_results": prepared, "selection_complete": False,
+                                      "quotations": [], "selected_quotations": [], "selected_quotation_ids": []})
+        batch = self._enquiry_service.create_batch(
+            event_id, request["proposal_id"], [r["data"]["round_id"] for r in prepared])
+        return self.envelope(event_id, "success", "Prepared enquiries for all requested services.", batch)
+
+    def _event_enquiry_snapshot(self, request: Any) -> dict[str, Any]:
+        if not isinstance(request, dict):
+            raise ValueError("request must be an object")
+        return self._enquiry_service.get_batch(
+            request.get("event_id"), request.get("proposal_id"), request.get("batch_id"))
+
+    def request_event_quotations(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Mock provider adapter; future UI can submit replies directly instead."""
+        event_id = request.get("event_id") if isinstance(request, dict) else None
+        try:
+            batch = self._event_enquiry_snapshot(request)
+        except EnquiryConflict as exc:
+            return self.envelope(event_id, "blocked", str(exc))
+        except ValueError as exc:
+            return self.envelope(event_id, "needs_input", str(exc))
+        if self._quotation_service is None:
+            return self.envelope(event_id, "error", "Configure the mock quotation service or submit supplier UI replies.", batch)
+        for current in batch["service_rounds"]:
+            for enquiry in current["enquiries"]:
+                if enquiry["reply"]["status"] != "pending":
+                    continue  # Never resend a terminal supplier enquiry on retry.
+                expected = {n: enquiry["reply"][n] for n in
+                            ("event_id", "proposal_id", "vendor_id", "offering_id", "event_date", "guest_count")}
+                try:
+                    raw = self._quotation_service.request_quotation(**expected)
+                    reply = self._validate_quotation_reply(raw, expected)
+                except NoQuotationScenarioError:
+                    continue  # Unconfigured is pending, never acceptance.
+                except (ValueError, TypeError, KeyError, OSError, RuntimeError):
+                    return self.envelope(event_id, "error", "Invalid/failed mock supplier reply; inspect recorded partial replies.",
+                                         self._event_enquiry_snapshot(request))
+                result = self.submit_quotation_reply({
+                    **expected, "round_id": current["round_id"], "enquiry_id": enquiry["enquiry_id"],
+                    "mock": True, "status": reply["status"],
+                    "quoted_total_cents": reply["quoted_total_cents"], "reason": reply["reason"],
+                })
+                if result["status"] != "success":
+                    return self.envelope(event_id, result["status"], result["message"],
+                                         self._event_enquiry_snapshot(request))
+        batch = self._event_enquiry_snapshot(request)
+        pending = any(r["awaiting_replies"] for r in batch["service_rounds"])
+        return self.envelope(event_id, "blocked" if pending else "success",
+                             "Waiting for supplier replies." if pending else "Mock supplier replies collected.", batch)
+
+    def compare_event_quotations(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Compare every requested service and return at most five selected quotes."""
+        event_id = request.get("event_id") if isinstance(request, dict) else None
+        try:
+            batch = self._event_enquiry_snapshot(request)
+        except EnquiryConflict as exc:
+            return self.envelope(event_id, "blocked", str(exc))
+        except ValueError as exc:
+            return self.envelope(event_id, "needs_input", str(exc))
+        if any(r["awaiting_replies"] for r in batch["service_rounds"]):
+            return self.envelope(event_id, "blocked", "Waiting for all requested services; no complete selection.", batch)
+        results = []
+        for current in batch["service_rounds"]:
+            result = self.compare_quotations({
+                "event_id": event_id, "proposal_id": batch["proposal_id"], "round_id": current["round_id"]})
+            results.append({"service_type": current["context"]["service_type"], **result})
+        batch["service_results"] = results
+        batch["candidate_quotations"] = [q for r in batch["service_rounds"] for q in r["quotations"]]
+        if any(r["status"] != "success" for r in results):
+            status = "error" if any(r["status"] == "error" for r in results) else "blocked"
+            return self.envelope(event_id, status, "One or more services have no valid selection.", batch)
+        selected = [q for result in results for q in result["data"]["selected_quotations"]]
+        batch.update(quotations=selected, selected_quotations=selected,
+                     selected_quotation_ids=[q["quotation_id"] for q in selected], selection_complete=True)
+        return self.envelope(event_id, "success",
+                             "All services compared; selected supplier quotes are ready for Financial review. No bookings made.",
+                             batch)
+
+    def procure_services(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Procurement workflow: shortlist -> mock enquiry replies -> re-comparison.
+
+        Team orchestration may call this with the whole service list. No other
+        Agent, UI, approval, booking, or payment is invoked here.
+        """
+        if self._quotation_service is None:
+            event_id = request.get("event_id") if isinstance(request, dict) else None
+            return self.envelope(event_id, "error", "No mock quotation service configured.")
+        prepared = self.prepare_event_enquiries(request)
+        if prepared["status"] != "success":
+            return prepared
+        lookup = {n: prepared["data"][n] for n in ("event_id", "proposal_id", "batch_id")}
+        collected = self.request_event_quotations(lookup)
+        if collected["status"] != "success":
+            return collected
+        return self.compare_event_quotations(lookup)

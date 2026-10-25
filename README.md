@@ -560,10 +560,12 @@ py -3 -m pytest tests/unit/ tests/integration/ tests/e2e/ -q
 | `examples/financial_persistence_example.py` | 离线保存、重建 Service、恢复和重复付款保护演示 |
 | `tests/unit/test_financial_records.py` / `test_financial_persistence.py` | 存储与财务工作流故障、冲突和恢复测试 |
 
-## Opt-in shortlisted supplier quotation demo (KAN-36)
+## Procurement quotation workflow (KAN-36)
 
-Run `python -m examples.shortlisted_quotation_example` for recommendation -> top-three
-mock enquiries -> received-price comparison. Supplier replies are structured simulated
-input; there is no supplier UI yet. Existing integration entry points are unchanged.
-See [shortlisted quotation interface](docs/shortlisted-quotations.md) before connecting
-Financial or a supplier form.
+Run `python -m examples.event_procurement_example` for up to five services:
+requirements -> top-three shortlists -> simulated supplier quotation replies ->
+received-price comparison -> one proposed supplier per service. The updated
+`procure_services` module entry returns selected quotes ready for Financial.
+The team pulls this update and connects its own orchestration locally.
+See [Procurement interface](docs/shortlisted-quotations.md) for the input/output
+contract and the supplier reply seam reusable by a later supplier UI.

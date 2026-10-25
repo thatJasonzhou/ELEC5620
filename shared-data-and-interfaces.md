@@ -671,36 +671,50 @@ or closes events. Financial reports financial conditions only. Operations execut
 closure after its own checks. STUB tests demonstrate Financial/persistence behavior;
 real scope integration and actual closure end-to-end acceptance remain dependencies.
 
-### 5.12 Opt-in shortlisted enquiries (KAN-36)
+### 5.12 Procurement quotation workflow (KAN-36)
 
-Additive Procurement Python entry points: prepare_enquiries,
-submit_quotation_reply, get_enquiry_round and compare_quotations.
-Existing handle/request_quotations/confirm_bookings contracts remain unchanged.
-See docs/shortlisted-quotations.md for request/reply examples.
+Updated activity entry: VendorProcurementManagerAgent.procure_services(request).
+It receives event_id/proposal_id, shared service requirements, and a services
+list of 1-5 items (one per service_type). Each item supplies service_type and may
+override date/headcount/location/preferences/rating plus optional service_budget_cents
+and budget_is_hard_limit=false. Duplicate categories or more than five items are
+rejected before model/supplier calls; service items cannot change event/proposal.
 
-prepare_enquiries accepts existing one-service requirements plus proposal_id,
-optional service_budget_cents and budget_is_hard_limit=false. It creates exactly
-min(3, eligible candidate count) mock pending enquiries tied to a stored round.
-submit_quotation_reply binds event/proposal/round/enquiry and accepts only explicit
-mock=true supplier input. accepted requires integer AUD quoted_total_cents;
-pending/rejected carry no accepted amount. Terminal replies are immutable.
+For EACH service: recommend exactly min(3, eligible count) -> enquire ONLY those
+offerings through the configured mock quotation source -> compare accepted replies
+again using quoted amounts -> propose one supplier. At most 15 enquiry objects and
+five selected quotation snapshots per activity batch. Catalogue price/availability
+are preliminary, never accepted supplier replies. No matching mock preset stays
+pending. A soft service target permits over-target options; a hard cap excludes
+them before comparison. Whole-event costs remain Financial's responsibility.
 
-compare_quotations blocks while any reply is pending, then ranks every accepted
-quote that satisfies hard service limits. Soft service targets permit over-target
-candidates. All amounts follow the existing GST-inclusive integer-cents convention.
-data.quotations retains all accepted snapshots in the existing handoff shape;
-data.quotation_ranking contains comparative reasons and received quote prices.
-data.selected_quotation_ids and data.selected_quotations contain one proposed
-selection for this service. Supervisor aggregates selected snapshots across
-services for Financial. Do not total same-service alternatives as purchases.
-Selection neither approves the customer proposal nor confirms supplier booking.
+Activity data.service_rounds/service_results provide per-service shortlists,
+replies, ranking and reasons. data.candidate_quotations preserves accepted
+alternatives. On complete success selection_complete=true, data.quotations and
+data.selected_quotations contain ONLY the selected snapshots, with matching
+selected_quotation_ids; these use the existing GST-inclusive integer-cents quote
+shape. Any pending/unfulfillable/failed service prevents a complete handoff and
+leaves top-level selected lists empty. Never total same-service alternatives.
 
-Rounds and pending replies are process-local. Accepted quote snapshots optionally
-use the existing record_service; rankings are not persisted. No HTTP route, UI,
-supplier authentication, enquiry recovery, time-window scheduling or automatic
-next-batch enquiry is introduced. Caller must share a backend Agent instance and
-supply current proposal/approval context. Changed requirements/final replies need
-a new round and fresh downstream review.
+The future supplier UI seam is already usable:
+prepare_event_enquiries(full_request) -> submit_quotation_reply(form_input) ->
+compare_event_quotations(batch_reference). Current simulation uses
+request_event_quotations(batch_reference) between preparation and comparison.
+procure_services runs these same steps. No Procurement business logic needs to
+move into the future UI. Replies bind to stored event/proposal/round/enquiry;
+accepted needs integer quoted_total_cents, pending/rejected have no accepted amount.
+Terminal replies are immutable. A changed final quote needs a new round and review.
+
+Legacy handle/request_quotations/confirm_bookings contracts remain compatible.
+Single-service compare_quotations still returns ALL accepted candidates under
+data.quotations; its selected_quotations identifies only the proposed one.
+Team integration should use the ACTIVITY output for its complete Financial input.
+
+Batches and rounds are process-local in the current serialized prototype. Accepted
+quotes optionally use existing record_service storage; rankings/pending enquiry
+recovery, supplier UI/authentication, HTTP routes, time-window scheduling and
+automatic fallback are outside this module update. Existing Financial/customer
+approval/deposit/booking gates remain unchanged. See docs/shortlisted-quotations.md.
 
 ## 6. 公共定义放在哪里
 

@@ -1,4 +1,4 @@
-"""In-memory supplier enquiry rounds for the opt-in KAN-36 demo.
+"""Supplier enquiry rounds and five-service activity batches (KAN-36).
 
 A supplier simulator submits facts; the Agent only compares accepted replies.
 Rounds are process-local and serialized. They are not authenticated vendor sessions.
@@ -28,6 +28,7 @@ class VendorEnquiryService:
         self._vendors = vendors
         self._records = record_service
         self._rounds: dict[str, dict[str, Any]] = {}
+        self._batches: dict[str, dict[str, Any]] = {}
 
     @staticmethod
     def validate_request(request: Any) -> dict[str, Any]:
@@ -54,6 +55,7 @@ class VendorEnquiryService:
 
     def create_round(self, context: dict[str, Any],
                      recommendations: list[dict[str, Any]]) -> dict[str, Any]:
+        self.validate_service_slot(context)
         candidates = self._vendors.filter_vendors(
             service_type=context["service_type"], date=context["event_date"],
             guest_count=context["guest_count"], location=context["location"])
@@ -77,13 +79,13 @@ class VendorEnquiryService:
                     **{n: context[n] for n in ("event_id", "proposal_id", "event_date", "guest_count")},
                     "vendor_id": pair[0], "offering_id": pair[1],
                     "quotation_id": "MIQ-" + enquiry_id[4:],
-                    "scenario_id": "MANUAL-" + round_id[3:],
+                    "scenario_id": "MOCK-ROUND-" + round_id[3:],
                     "mock": True, "status": "pending", "available": None,
                     "quoted_total_cents": None, "reason": "MOCK: supplier has not replied.",
                 },
             })
         self._rounds[round_id] = {"round_id": round_id, "context": deepcopy(context),
-                                  "enquiries": enquiries}
+                                  "enquiries": enquiries, "recommendations": deepcopy(recommendations)}
         return self.get_round(context["event_id"], context["proposal_id"], round_id)
 
     def _get(self, event_id: str, proposal_id: str, round_id: str) -> dict[str, Any]:
@@ -91,7 +93,7 @@ class VendorEnquiryService:
             require_non_empty_str(value, name)
         current = self._rounds.get(round_id)
         if current is None:
-            raise EnquiryConflict("Unknown enquiry round; process-local demo rounds do not survive restart.")
+            raise EnquiryConflict("Unknown enquiry round; process-local enquiry rounds do not survive restart.")
         if any(current["context"][n] != value for n, value in
                (("event_id", event_id), ("proposal_id", proposal_id))):
             raise EnquiryConflict("Event/proposal does not match the stored enquiry.")
@@ -168,3 +170,76 @@ class VendorEnquiryService:
                 "over_target_cents": max(0, reply["quoted_total_cents"] - budget) if budget is not None else None,
             })
         return current, candidates
+
+    @staticmethod
+    def validate_event_request(request: Any) -> list[dict[str, Any]]:
+        """Validate the complete service list before any model or supplier call."""
+        if not isinstance(request, dict):
+            raise ValueError("request must be an object")
+        for field in ("event_id", "proposal_id"):
+            require_non_empty_str(request.get(field), field)
+        services = request.get("services")
+        if not isinstance(services, list) or not 1 <= len(services) <= 5:
+            raise ValueError("An activity requires 1-5 service items; none are silently truncated.")
+        contexts = []
+        seen_types: set[str] = set()
+        for item in services:
+            if not isinstance(item, dict):
+                raise ValueError("Each service item must be an object")
+            for field in ("event_id", "proposal_id"):
+                if field in item and item[field] != request[field]:
+                    raise ValueError("Service item cannot override " + field)
+            context = VendorEnquiryService.validate_request({**request, **item})
+            service_type = context["service_type"].strip().lower()
+            if service_type in seen_types:
+                raise ValueError("Use one service item per category; duplicate service_type: " + service_type)
+            seen_types.add(service_type)
+            contexts.append(context)
+        return contexts
+
+    def validate_service_slot(self, context: dict[str, Any]) -> None:
+        """Re-enquiries reuse a slot; a sixth category in this proposal is blocked."""
+        self.validate_service_slots([context])
+
+    def validate_service_slots(self, contexts: list[dict[str, Any]]) -> None:
+        """Check proposed categories together, including already prepared rounds."""
+        if not contexts:
+            raise ValueError("At least one service context is required.")
+        context = contexts[0]
+        if any(c["event_id"] != context["event_id"] or c["proposal_id"] != context["proposal_id"]
+               for c in contexts):
+            raise ValueError("Service contexts must belong to the same event and proposal.")
+        types = {r["context"]["service_type"].strip().lower() for r in self._rounds.values()
+                 if r["context"]["event_id"] == context["event_id"]
+                 and r["context"]["proposal_id"] == context["proposal_id"]}
+        types.update(c["service_type"].strip().lower() for c in contexts)
+        if len(types) > 5:
+            raise ValueError("An activity proposal supports at most five service categories.")
+
+    def create_batch(self, event_id: str, proposal_id: str, round_ids: list[str]) -> dict[str, Any]:
+        if not 1 <= len(round_ids) <= 5 or len(set(round_ids)) != len(round_ids):
+            raise ValueError("A batch requires 1-5 distinct service rounds.")
+        rounds = [self._get(event_id, proposal_id, r) for r in round_ids]
+        types = [r["context"]["service_type"].strip().lower() for r in rounds]
+        if len(set(types)) != len(types):
+            raise ValueError("A batch may not repeat a service category.")
+        batch_id = "EB-" + uuid4().hex
+        self._batches[batch_id] = {
+            "event_id": event_id, "proposal_id": proposal_id, "batch_id": batch_id,
+            "required_services": [r["context"]["service_type"] for r in rounds],
+            "round_ids": list(round_ids),
+        }
+        return self.get_batch(event_id, proposal_id, batch_id)
+
+    def get_batch(self, event_id: str, proposal_id: str, batch_id: str) -> dict[str, Any]:
+        for name, value in (("event_id", event_id), ("proposal_id", proposal_id), ("batch_id", batch_id)):
+            require_non_empty_str(value, name)
+        batch = self._batches.get(batch_id)
+        if batch is None or batch["event_id"] != event_id or batch["proposal_id"] != proposal_id:
+            raise EnquiryConflict("Unknown batch or mismatched event/proposal.")
+        result = deepcopy(batch)
+        result["service_rounds"] = [self.get_round(event_id, proposal_id, r) for r in batch["round_ids"]]
+        # Empty until ALL required services have a valid comparison.
+        result.update(quotations=[], selected_quotations=[], selected_quotation_ids=[],
+                      selection_complete=False)
+        return result
