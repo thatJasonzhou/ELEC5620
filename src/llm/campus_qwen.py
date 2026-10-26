@@ -62,6 +62,7 @@ class CampusQwenClient(LLMClient):
         *,
         timeout_seconds: float = 60.0,
         max_output_tokens: int | None = None,
+        enable_thinking: bool | None = None,
     ) -> None:
         self._base_url = self._validate_base_url(base_url)
         if not isinstance(api_key, str) or not api_key:
@@ -74,9 +75,13 @@ class CampusQwenClient(LLMClient):
         if max_output_tokens is not None and (type(max_output_tokens) is not int or max_output_tokens <= 0):
             raise LLMError("max_output_tokens must be a positive integer or None", code="configuration")
         self._max_output_tokens = max_output_tokens
+        if enable_thinking is not None and type(enable_thinking) is not bool:
+            raise LLMError('enable_thinking must be a boolean or None', code='configuration')
+        self._enable_thinking = enable_thinking
 
     @classmethod
-    def from_env(cls, *, max_output_tokens: int | None = None) -> "CampusQwenClient":
+    def from_env(cls, *, max_output_tokens: int | None = None,
+                 enable_thinking: bool | None = None) -> "CampusQwenClient":
         """Build a client from environment variables.
 
         Only the three ELEC5620_LLM_* variables are read at runtime.
@@ -99,12 +104,15 @@ class CampusQwenClient(LLMClient):
             api_key=os.environ[_ENV_API_KEY],
             model=os.environ[_ENV_MODEL],
             max_output_tokens=max_output_tokens,
+            enable_thinking=enable_thinking,
         )
 
     def complete(self, messages: list[dict[str, str]]) -> str:
         payload = {"model": self._model, "messages": messages}
         if self._max_output_tokens is not None:
             payload["max_tokens"] = self._max_output_tokens
+        if self._enable_thinking is not None:
+            payload['chat_template_kwargs'] = {'enable_thinking': self._enable_thinking}
         body = json.dumps(payload).encode("utf-8")
         try:
             request = urllib.request.Request(

@@ -49,7 +49,7 @@ def test_probe_reveals_internal_retry_without_printing_http_reason(monkeypatch, 
     out = capsys.readouterr().out
     assert raised.value.code == 1 and len(attempts) == 2
     assert "Attempt 1: HTTP 502" in out and "Attempt 2: HTTP 502" in out
-    assert "code=http_error" in out and len(out.splitlines()) == 6
+    assert "code=http_error" in out and len(out.splitlines()) == 7
     assert "PRIVATE" not in out and "private" not in out and "https://" not in out
     payload = json.loads(attempts[0].data)
     assert payload["max_tokens"] == 256

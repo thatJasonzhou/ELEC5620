@@ -29,9 +29,10 @@ def catalog_service_types():
 
 
 def build_agent(*, live=False, llm_concurrency=1, progress_callback=None,
-                retry_failed_llm=False, compact_llm=True, max_output_tokens=256):
+                retry_failed_llm=False, compact_llm=True, max_output_tokens=256,
+                enable_thinking=None):
     return VendorProcurementManagerAgent(
-        llm=CampusQwenClient.from_env(max_output_tokens=max_output_tokens) if live else MockLLMClient(mock_compare),
+        llm=CampusQwenClient.from_env(max_output_tokens=max_output_tokens, enable_thinking=enable_thinking) if live else MockLLMClient(mock_compare),
         llm_concurrency=llm_concurrency, progress_callback=progress_callback,
         retry_failed_llm=retry_failed_llm, compact_llm=compact_llm,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),
@@ -93,6 +94,8 @@ def main():
                         help="After a phase drains, retry only transient failed LLM jobs once, serially.")
     parser.add_argument("--max-output-tokens", type=int, default=256,
                         help="Maximum generated tokens per Live request (default 256; 0 uses server default).")
+    parser.add_argument('--disable-thinking', action='store_true',
+                        help='Request Qwen non-thinking mode; backend support must be verified.')
     args = parser.parse_args()
     if args.max_output_tokens < 0:
         parser.error("--max-output-tokens must be nonnegative.")
@@ -121,7 +124,8 @@ def main():
     started = monotonic()
     result = build_agent(live=args.live, llm_concurrency=args.concurrency,
                          progress_callback=report, retry_failed_llm=args.retry_failed,
-                         max_output_tokens=args.max_output_tokens or None).procure_services(
+                         max_output_tokens=args.max_output_tokens or None,
+                         enable_thinking=False if args.disable_thinking else None).procure_services(
         event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
@@ -129,6 +133,7 @@ def main():
         "llm_mode": "live" if args.live else "mock", "supplier_source": "mock",
         "llm_concurrency": args.concurrency, "retry_failed_llm": args.retry_failed,
         "compact_llm": True, "max_output_tokens": args.max_output_tokens or None,
+        "enable_thinking_requested": False if args.disable_thinking else None,
         "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],
         "enquiry_count": sum(len(r["enquiries"]) for r in rounds),

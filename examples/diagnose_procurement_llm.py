@@ -82,6 +82,8 @@ def main():
     parser.add_argument("--max-output-tokens", type=int, default=256,
                         help="Output cap for this single probe; 0 uses the server default.")
     parser.add_argument("--baseline", action="store_true", help="Probe Reply OK instead of the actual shortlist prompt.")
+    parser.add_argument('--disable-thinking', action='store_true',
+                        help='Request Qwen non-thinking mode; backend support must be verified.')
     args = parser.parse_args()
     if args.max_output_tokens < 0:
         parser.error("--max-output-tokens must be nonnegative.")
@@ -97,9 +99,11 @@ def main():
     chars = sum(len(message["content"]) for message in messages)
     print(f"Probe: {'baseline' if args.baseline else 'photography shortlist'} | input_chars={chars} | max_tokens={args.max_output_tokens or 'server_default'}", flush=True)
     start = monotonic()
+    print('Thinking: disabled_requested' if args.disable_thinking else 'Thinking: server_default', flush=True)
     client = None
     try:
-        client = DiagnosticCampusClient.from_env(max_output_tokens=args.max_output_tokens or None)
+        client = DiagnosticCampusClient.from_env(max_output_tokens=args.max_output_tokens or None,
+                                                  enable_thinking=False if args.disable_thinking else None)
         client.complete(messages)
     except LLMError as exc:
         metadata = getattr(client, "last_metadata", {})

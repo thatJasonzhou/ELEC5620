@@ -197,3 +197,41 @@ complete event. response_received means transport/content parsing succeeded;
 the ranking and procurement workflow are not validated by this probe. No Live
 supplier quotation or booking is requested. Main/Mock integration is unchanged;
 keep this investigation isolated until actual Live results are reviewed.
+
+## Diagnosed reasoning budget and opt-in non-thinking probe
+
+The single-request Live probe returned HTTP success in 2.98s, with 340 prompt
+tokens, 256 completion tokens, all 256 reported as reasoning_tokens,
+reasoning_chars=748, non-string content and finish=length. This establishes that
+this capped request exhausted its output budget on reasoning before a final
+answer. It does not prove every earlier slow request or HTTP 502 had that cause.
+
+Qwen's official vLLM documentation describes the request extension
+chat_template_kwargs={"enable_thinking": false}:
+https://qwen.readthedocs.io/en/stable/deployment/vllm.html#thinking-non-thinking-modes
+The extension is not standard OpenAI API and the school's backend/version/model
+behind the alias is not established. Backend acceptance/effect needs a Live test.
+
+```powershell
+py -3 -m examples.diagnose_procurement_llm --disable-thinking
+```
+
+This requests non-thinking mode while keeping the same prompt and 256-token cap.
+Check finish=stop, a final content string, and reasoning token/character statistics
+when supplied. Missing statistics mean unknown. HTTP 400/422 or continuing reasoning
+means support/effect needs further investigation. There is no silent retry with
+the option removed, no automatic Mock fallback and no extraction of reasoning
+text as the final ranking. Existing transport retry policy remains unchanged.
+
+Once supported, validate actual ranking and the full five-service workflow with:
+
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --disable-thinking
+```
+
+Module callers opt in with CampusQwenClient.from_env(enable_thinking=False).
+The default is None (no extension sent); True explicitly requests thinking.
+The CLI flag is also opt-in. Existing main/Mock integration remains isolated.
+No non-thinking Live speed, output correctness or five-service success is yet
+claimed. The previous statement about no thinking switch describes the earlier
+increment; this increment adds an explicit, documented experimental option.
