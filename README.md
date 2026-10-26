@@ -661,3 +661,20 @@ py -3 -m examples.catalog_estimate_example --budget-cents 50000
 ```
 
 See [the interface and Planner adapter](docs/catalog-budget-estimate.md).
+
+
+## Procurement reselection after Finance feedback (KAN-42)
+
+`VendorProcurementManagerAgent.reselect_after_finance(request)` accepts the
+existing over-budget FIN-01 envelope with the reviewed event/proposal and original
+batch IDs. It reuses stored supplier replies/preferences under a narrowed exact
+supplier allowance. One automatic attempt per proposal; repeated identical calls
+reuse the same result. New selections require fresh Finance review; infeasible
+minimums return a structured Planner-review gap.
+
+```powershell
+py -3 -m examples.finance_reselection_example
+```
+
+See [the feedback contract and workflow example](docs/finance-reselection.md).
+The offline demo uses explicit synthetic Mock model/supplier fixtures.

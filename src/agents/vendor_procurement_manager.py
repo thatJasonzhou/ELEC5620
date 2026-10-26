@@ -40,6 +40,7 @@ from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
 from src.llm.batch import Completion, complete_jobs
 from src.services.vendor_ranking_service import VendorRankingService
+from src.services.procurement_revision_service import ProcurementRevisionService, RevisionConflict
 from src.services.vendor_bundle_service import VendorBundleService
 from src.llm.bundle_selection import build_bundle_messages, read_bundle_selection
 from src.llm.service_group import complete_service_group
@@ -170,6 +171,7 @@ class VendorProcurementManagerAgent(AIAgent):
         self._progress_callback = progress_callback
         self._record_service = record_service
         self._enquiry_service = VendorEnquiryService(vendor_service, record_service=record_service)
+        self._revision_service = ProcurementRevisionService(self._enquiry_service)
 
     # ------------------------------------------------------------------
     # Entry point
@@ -1145,6 +1147,32 @@ class VendorProcurementManagerAgent(AIAgent):
         return self.envelope(event_id, "success",
                              "LLM proposed one supplier per service; Financial review and normal approval/booking gates remain. AI explanation is not fact-verified.",
                              batch)
+
+    def reselect_after_finance(self, request: dict[str, Any]) -> dict[str, Any]:
+        """One bounded joint choice using stored replies after a valid FIN-01 block.
+
+        The workflow supplies event, proposal, finance_result and the original
+        event_id/proposal_id/batch_id. It must send any new selection to Finance
+        again; this method performs no enquiries, approval, payment or booking.
+        """
+        event_id = request.get("event_id") if isinstance(request, dict) else None
+        if not self._joint_selection:
+            return self.envelope(event_id, "needs_input", "Financial reselection requires joint_selection=True.")
+        try:
+            prepared = self._revision_service.begin(request)
+        except (RevisionConflict, EnquiryConflict) as exc:
+            return self.envelope(event_id, "blocked", str(exc))
+        except (ValueError, TypeError, KeyError, AttributeError) as exc:
+            return self.envelope(event_id, "needs_input", str(exc))
+        if prepared["cached_result"] is not None:
+            return prepared["cached_result"]
+        try:
+            result = self._compare_joint_batch(prepared["batch"])
+        except (ValueError, TypeError, KeyError, OSError, RuntimeError):
+            result = self.envelope(event_id, "error",
+                                   "Financial reselection failed; manual review required.",
+                                   prepared["batch"])
+        return self._revision_service.finish(prepared, result)
 
     def procure_services(self, request: dict[str, Any]) -> dict[str, Any]:
         """Procurement workflow: shortlist -> mock enquiry replies -> re-comparison.

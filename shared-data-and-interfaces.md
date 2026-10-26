@@ -860,3 +860,27 @@ allowance to Procurement. No Agent calls, HTTP route, state writes or LLM calls
 are added here. The separate Planner branch still needs this integration.
 See [catalogue estimate contract](docs/catalog-budget-estimate.md) for examples,
 validation, current whole-event/date-only limits and the required_services adapter.
+
+
+## KAN-42: Procurement response to over-budget FIN-01
+
+`VendorProcurementManagerAgent.reselect_after_finance(request)` takes
+event_id/proposal_id/batch_id plus the exact reviewed event, proposal and complete
+finance_result envelope. Requires compact_llm=True and joint_selection=True.
+The existing Financial interface is reused without new mandatory fields.
+
+The Service validates the valid over-budget feedback's source/quote/budget
+fingerprints, stored identities, requirements and exact cost breakdown, then
+derives a supplier allowance using the shared Finance policy. Comparison reuses
+accepted replies and stored preferences without enquiries or altered requirements.
+
+The standard Procurement envelope adds financial_revision metadata,
+finance_review_required=true and next_action (finance_review / planner_review /
+manual_review). Infeasible cheapest bundles include fee-inclusive minimum cost
+and shortfall, with no selected quotation output or additional LLM call.
+Identical duplicate requests replay the same attempt result. One automatic
+attempt per event/proposal is process-local; restart/parallel replica guarantees
+are not claimed. Successful revisions require fresh FIN-01 validation and all
+existing downstream approval/payment/booking gates.
+
+See [the full feedback contract](docs/finance-reselection.md).
