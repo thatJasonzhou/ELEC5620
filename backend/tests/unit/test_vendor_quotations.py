@@ -350,14 +350,21 @@ class TestShippedScenarios:
 
 
 class TestRequestSpecificReplies:
-    @pytest.mark.parametrize("guests", [50, 80, 120, 299])
-    def test_same_date_reply_applies_after_catalogue_capacity_filter(self, service, guests):
+    def test_exact_guest_count_selects_supplier_reply(self, service):
         reply = service.request_quotation(**_request({
             "vendor_id": "V-CAT-001", "offering_id": "V-CAT-001-O1",
-            "guest_count": guests,
+            "guest_count": 120,
         }))
         assert reply["status"] == "accepted"
-        assert reply["guest_count"] == guests
+        assert reply["guest_count"] == 120
+
+    @pytest.mark.parametrize("guests", [1, 50, 80, 299])
+    def test_unconfigured_guest_count_is_not_accepted(self, service, guests):
+        with pytest.raises(ValueError, match="no mock vendor quotation scenario"):
+            service.request_quotation(**_request({
+                "vendor_id": "V-CAT-001", "offering_id": "V-CAT-001-O1",
+                "guest_count": guests,
+            }))
 
     @pytest.mark.parametrize("valid_date", ["2026-05-12", "2026-12-31"])
     def test_valid_unconfigured_dates_reach_scenario_lookup(self, service, valid_date):
@@ -392,7 +399,10 @@ class TestRequestSpecificReplies:
         assert len(set(ids)) == len(variants)
 
     def test_guest_count_changes_quotation_identity(self, service):
-        base = _request({"vendor_id": "V-CAT-001", "offering_id": "V-CAT-001-O1"})
+        base = _request({
+            "vendor_id": "V-CAT-001", "offering_id": "V-CAT-001-O1",
+            "event_date": "2026-12-16", "guest_count": 50,
+        })
         first = service.request_quotation(**base)
         second = service.request_quotation(**{**base, "guest_count": 80})
         assert first["quotation_id"] != second["quotation_id"]

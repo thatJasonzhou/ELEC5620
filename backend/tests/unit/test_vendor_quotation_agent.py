@@ -62,13 +62,15 @@ def test_no_confirmed_quotes_block(vendors, quotes, overrides, reply_status):
     assert env["message"] and agent.llm.calls == []
 
 
-def test_smaller_guest_count_uses_catalogue_capacity_not_exact_mock_count(vendors, quotes):
+def test_smaller_guest_count_requires_its_own_supplier_reply(vendors, quotes):
     agent = make_agent(vendors, quotes)
     env = agent.request_quotations({**REQUEST, "guest_count": 50})
-    assert env["status"] == "success"
-    quotation, = env["data"]["quotations"]
-    assert quotation["vendor_id"] == "V-CAT-001"
-    assert quotation["guest_count"] == 50
+    assert env["status"] == "blocked"
+    assert env["data"]["quotations"] == []
+    assert all(
+        item["status"] == "unconfigured"
+        for item in env["data"]["supplier_replies"]
+    )
 
 
 def test_pending_only_blocks(vendors, quotes):

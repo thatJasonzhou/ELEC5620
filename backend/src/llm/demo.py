@@ -13,6 +13,20 @@ from typing import Any
 from .base import LLMClient, LLMError
 
 
+_SERVICE_ALIASES = {
+    "photography": ("photography", "photographer", "photos"),
+    "catering": ("catering", "caterer", "food"),
+    "venue": ("venue", "function room", "event hall"),
+    "sound": ("sound", "audio", "pa system"),
+    "decoration": ("decoration", "decor", "event styling"),
+    "videography": ("videography", "videographer", "video"),
+    "lighting": ("lighting", "stage lights"),
+    "entertainment": ("entertainment", "performer", "dj"),
+    "transport": ("transport", "shuttle", "guest transfer"),
+    "event_staff": ("event staff", "staffing", "waitstaff"),
+}
+
+
 class DemoLLMClient(LLMClient):
     """Extract common demo phrases and rank verified vendor candidates."""
 
@@ -122,7 +136,14 @@ class DemoLLMClient(LLMClient):
         if total_budget and (updates["budget_limit_cents"] is not None or not saved_vendor_budget):
             updates["vendor_budget_cents"] = max(1, int(total_budget * 0.7))
 
-        services = [name for name in ("catering", "photography") if name in lower]
+        services = [
+            service_type
+            for service_type, aliases in _SERVICE_ALIASES.items()
+            if any(
+                re.search(rf"\b{re.escape(alias)}\b", lower)
+                for alias in aliases
+            )
+        ]
         no_services = bool(
             re.search(
                 r"(?:no|without|do not need|don't need)\s+(?:any\s+)?(?:extra\s+|additional\s+)?services?",

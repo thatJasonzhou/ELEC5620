@@ -75,6 +75,20 @@ class TestBaseAndEnvelope:
 
 
 class TestHappyPath:
+    def test_deterministic_fallback_uses_catalogue_facts_without_llm(self, service):
+        llm = MockLLMClient("not used")
+        agent = make_agent(service, llm)
+
+        env = agent.deterministic_fallback(dict(VALID_REQUEST))
+
+        assert env["status"] == "success"
+        assert env["data"]["fallback_used"] is True
+        assert [item["offering_id"] for item in env["data"]["recommendations"]] == [
+            "V-CAT-002-O1",
+            "V-CAT-001-O1",
+        ]
+        assert llm.calls == []
+
     def test_returns_two_ranked_recommendations(self, service):
         llm = MockLLMClient(HAPPY_RECS)
         agent = make_agent(service, llm)
@@ -406,3 +420,99 @@ class TestRequestShape:
         env = agent.handle("not a dict")  # type: ignore[arg-type]
         assert env["status"] == "error"
         assert env["event_id"] is None
+
+
+class TestReceivedQuotationComparison:
+    @staticmethod
+    def request() -> dict:
+        return {
+            "event_id": "EV-QUOTE-COMPARE",
+            "proposal_id": "P-QUOTE-COMPARE",
+            "service_type": "catering",
+            "event_date": "2026-12-05",
+            "guest_count": 120,
+            "location": "Melbourne",
+            "service_budget_cents": 700_000,
+            "quotations": [
+                {
+                    "quotation_id": "VQ-BAYSIDE",
+                    "vendor_id": "V-CAT-002",
+                    "offering_id": "V-CAT-002-O1",
+                    "vendor_name": "Bayside Bite Co",
+                    "service_type": "catering",
+                    "service_location": "Melbourne",
+                    "guest_capacity": 120,
+                    "rating": 4.2,
+                    "catalogue_estimate_cents": 620_000,
+                    "quoted_total_cents": 600_000,
+                    "available": True,
+                },
+                {
+                    "quotation_id": "VQ-GOLDEN",
+                    "vendor_id": "V-CAT-001",
+                    "offering_id": "V-CAT-001-O1",
+                    "vendor_name": "Golden Whisker Catering",
+                    "service_type": "catering",
+                    "service_location": "Melbourne",
+                    "guest_capacity": 300,
+                    "rating": 4.8,
+                    "catalogue_estimate_cents": 1_850_000,
+                    "quoted_total_cents": 800_000,
+                    "available": True,
+                },
+            ],
+        }
+
+    def test_ranks_every_supplier_quote_and_proposes_one(self, service):
+        llm = MockLLMClient(
+            json.dumps(
+                {
+                    "recommendations": [
+                        {
+                            "vendor_id": "V-CAT-002",
+                            "offering_id": "V-CAT-002-O1",
+                            "basis_codes": ["lowest_price", "within_budget"],
+                            "reason": "Within the service budget and lowest quote.",
+                        },
+                        {
+                            "vendor_id": "V-CAT-001",
+                            "offering_id": "V-CAT-001-O1",
+                            "basis_codes": ["highest_rating", "highest_capacity"],
+                            "reason": "Higher rated but above the service target.",
+                        },
+                    ]
+                }
+            )
+        )
+        result = make_agent(service, llm).compare_received_quotations(
+            self.request()
+        )
+
+        assert result["status"] == "success"
+        assert result["data"]["selection_complete"] is True
+        assert result["data"]["recommended_quotation_id"] == "VQ-BAYSIDE"
+        assert [
+            item["quotation_id"]
+            for item in result["data"]["quotation_ranking"]
+        ] == ["VQ-BAYSIDE", "VQ-GOLDEN"]
+        assert result["data"]["fallback_used"] is False
+        assert "supplier-entered quote" in llm.calls[0][0]["content"]
+
+    def test_invalid_model_output_uses_verified_fallback(self, service):
+        result = make_agent(
+            service, MockLLMClient("not json")
+        ).compare_received_quotations(self.request())
+
+        assert result["status"] == "success"
+        assert result["data"]["fallback_used"] is True
+        assert result["data"]["recommended_quotation_id"] == "VQ-BAYSIDE"
+
+    def test_rejected_supplier_reply_cannot_be_compared(self, service):
+        request = self.request()
+        request["quotations"][0]["available"] = False
+
+        result = make_agent(service, MockLLMClient(HAPPY_RECS)).compare_received_quotations(
+            request
+        )
+
+        assert result["status"] == "needs_input"

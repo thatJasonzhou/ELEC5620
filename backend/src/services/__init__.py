@@ -6,12 +6,14 @@ from src.services.vendor_quotation_service import MockVendorQuotationService
 from src.services.vendor_booking_service import MockVendorBookingService, VendorBookingService
 
 from src.services.procurement_record_service import ProcurementRecordService
+from src.services.supplier_portal_service import SupplierPortalService
 
 __all__ = [
     "FinancialWorkflowService",
     "MockVendorBookingService",
     "MockVendorQuotationService",
     "ProcurementRecordService",
+    "SupplierPortalService",
     "VendorBookingService",
     "VendorProcurementService",
 ]

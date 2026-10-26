@@ -72,7 +72,7 @@ Responsibilities:
 - Return null for an unchanged or unknown field.
 - Dates use YYYY-MM-DD, times use HH:MM, and budgets use integer AUD cents. For example, AUD 30,000, $30000 and 30000 dollars must all be returned as 3000000 cents, never 30000.
 - Services are an optional vendor filter, but the customer's preference must be confirmed once. If the customer names a service, return it in required_services and set services_confirmed to true. If the customer explicitly says no extra services are needed, return an empty required_services list and set services_confirmed to true. If services have not been discussed, return null for both fields.
-- Supported mock vendor services are catering and photography. Other requested services may still be recorded but can return no vendor match.
+- Supported vendor service values are catering, photography, venue, sound, decoration, videography, lighting, entertainment, transport and event_staff. Normalise ordinary phrases such as "event staff" to event_staff and return these exact lowercase values. An activity may use at most five distinct service categories.
 - When the total budget is known, propose vendor_budget_cents as the total amount available across all selected vendors. It must be positive and must not exceed budget_limit_cents. Recalculate it when the total budget changes. Do not ask the customer to provide this internal allocation.
 - Ask one concise follow-up question for the most important missing or ambiguous item.
 - Exact event date, start time and end time are required before vendor matching.
@@ -93,7 +93,7 @@ _FOLLOW_UPS = {
     "location": "Which city or venue area should the event be held in?",
     "guest_count": "Approximately how many guests will attend?",
     "budget": "What is your total budget in Australian dollars?",
-    "services": "Do you need any additional services, such as catering or photography? You can also say that no extra services are needed.",
+    "services": "Do you need any services, such as a venue, catering, photography or lighting? You can also say that no extra services are needed.",
 }
 
 
@@ -292,7 +292,12 @@ class EventPlannerAgent(AIAgent):
                 if not isinstance(value, list):
                     raise ValueError("required_services must be a list")
                 cleaned = [require_non_empty_str(item, "required_services item").strip().lower() for item in value]
-                result[field] = list(dict.fromkeys(cleaned))
+                unique_services = list(dict.fromkeys(cleaned))
+                if len(unique_services) > 5:
+                    raise ValueError(
+                        "required_services supports at most five service categories"
+                    )
+                result[field] = unique_services
                 services_were_updated = True
             elif field == "services_confirmed":
                 if not isinstance(value, bool):

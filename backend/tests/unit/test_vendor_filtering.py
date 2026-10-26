@@ -198,7 +198,25 @@ class TestDeterministicOrdering:
 class TestSchemaLoading:
     def test_catalog_loaded_from_json(self, service: VendorProcurementService):
         catalog = service.catalog
-        assert len(catalog) == 5
+        # 50 suppliers from the shared catalogue plus the existing Harbour
+        # Light supplier retained under its original stable ID.
+        assert len(catalog) == 51
+        assert {
+            offering.service_type
+            for vendor in catalog
+            for offering in vendor.service_offerings
+        } == {
+            "catering",
+            "decoration",
+            "entertainment",
+            "event_staff",
+            "lighting",
+            "photography",
+            "sound",
+            "transport",
+            "venue",
+            "videography",
+        }
         first: Vendor = next(v for v in catalog if v.vendor_id == "V-CAT-001")
         offering: VendorServiceOffering = first.service_offerings[0]
         assert offering.total_price_cents == 1850000

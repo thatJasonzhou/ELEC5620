@@ -19,6 +19,10 @@ from src.services.event_session_service import EventSessionService
 from src.services.financial_workflow_service import FinancialWorkflowService
 from src.services.planner_workflow_service import PlannerWorkflowService
 from src.services.procurement_record_service import ProcurementRecordService
+from src.services.supplier_portal_service import (
+    SupplierPortalService,
+    SupplierPortalStorageError,
+)
 from src.services.vendor_booking_service import (
     MockVendorBookingService,
     VendorBookingService,
@@ -40,6 +44,12 @@ class QuotationSelectionRequest(BaseModel):
     quotation_ids: list[str] = Field(min_length=1)
 
 
+class SupplierQuoteResponseRequest(BaseModel):
+    available: bool
+    quoted_total_cents: int | None = Field(default=None, ge=1)
+    message: str | None = Field(default=None, max_length=500)
+
+
 def build_workflow() -> PlannerWorkflowService:
     mode = os.getenv("PLANNER_LLM_MODE", "mock").strip().lower()
     if mode == "live":
@@ -52,6 +62,7 @@ def build_workflow() -> PlannerWorkflowService:
     vendor_service = VendorProcurementService.from_json_file(
         BACKEND_ROOT / "data" / "vendor_catalog.json"
     )
+    supplier_portal = SupplierPortalService.from_env(vendor_service)
     quotation_service = MockVendorQuotationService.from_json_file(
         BACKEND_ROOT / "data" / "mock_vendor_quotations.json"
     )
@@ -77,12 +88,16 @@ def build_workflow() -> PlannerWorkflowService:
             llm, FinancialWorkflowService(deposit_percent=deposit_percent)
         ),
         EventSessionService(),
+        supplier_portal=supplier_portal,
         timezone=os.getenv("APP_TIMEZONE", "Australia/Sydney"),
         llm_mode=mode,
     )
 
 
 workflow = build_workflow()
+supplier_portal = workflow.supplier_portal
+if supplier_portal is None:  # build_workflow always enables it for the HTTP API.
+    raise RuntimeError("Supplier portal is not configured")
 app = FastAPI(
     title="EventPilot API",
     version="0.1.0",
@@ -169,3 +184,42 @@ def pay_deposit(event_id: str) -> dict:
 @app.post("/api/events/{event_id}/bookings")
 def confirm_bookings(event_id: str) -> dict:
     return _run_event_action(workflow.confirm_bookings, event_id)
+
+
+@app.get("/api/vendors")
+def list_vendors() -> dict:
+    return {"vendors": supplier_portal.list_vendors()}
+
+
+@app.get("/api/vendor/rfqs")
+def list_vendor_quote_requests(vendor_id: str | None = None) -> dict:
+    try:
+        return {"requests": supplier_portal.list_quote_requests(vendor_id=vendor_id)}
+    except (ValueError, SupplierPortalStorageError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/vendor/rfqs/{request_id}/response")
+def respond_to_vendor_quote_request(
+    request_id: str, request: SupplierQuoteResponseRequest
+) -> dict:
+    try:
+        return supplier_portal.respond_to_quote_request(
+            request_id,
+            available=request.available,
+            quoted_total_cents=request.quoted_total_cents,
+            message=request.message,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, SupplierPortalStorageError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/vendor/reset")
+def reset_vendor_cases() -> dict:
+    try:
+        cleared = supplier_portal.clear_all_quote_requests()
+        return {"cleared_cases": cleared}
+    except SupplierPortalStorageError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

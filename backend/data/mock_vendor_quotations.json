@@ -5,8 +5,9 @@
       "vendor_id": "V-CAT-001",
       "offering_id": "V-CAT-001-O1",
       "event_date": "2026-12-05",
+      "guest_count": 120,
       "reply": "accepted",
-      "reason": "MOCK: Golden Whisker Catering confirms availability on 2026-12-05 in Melbourne.",
+      "reason": "MOCK: Golden Whisker Catering confirms capacity for 120 guests on 2026-12-05 in Melbourne.",
       "quoted_total_cents": 1850000
     },
     {
@@ -14,6 +15,7 @@
       "vendor_id": "V-PHOTO-001",
       "offering_id": "V-PHOTO-001-O2",
       "event_date": "2026-12-05",
+      "guest_count": 80,
       "reply": "rejected",
       "reason": "MOCK: Shutter & Frame Photography is already booked for another Sydney event on 2026-12-05."
     },
@@ -22,35 +24,4019 @@
       "vendor_id": "V-CAT-002",
       "offering_id": "V-CAT-002-O1",
       "event_date": "2026-12-05",
+      "guest_count": 120,
       "reply": "pending",
       "reason": "MOCK: Bayside Bite Co has not replied to this quotation request yet; the offer is unconfirmed."
     },
     {
-      "scenario_id": "MOCK-Q-ACCEPT-002",
+      "scenario_id": "MOCK-Q-LEGACY-V-PHOTO-001-O1-20261205-120",
       "vendor_id": "V-PHOTO-001",
       "offering_id": "V-PHOTO-001-O1",
       "event_date": "2026-12-05",
+      "guest_count": 120,
       "reply": "accepted",
-      "reason": "MOCK: Shutter & Frame Photography confirms availability for the Melbourne event.",
+      "reason": "MOCK: Shutter & Frame Photography confirms the Melbourne event.",
       "quoted_total_cents": 2400000
     },
     {
-      "scenario_id": "MOCK-Q-ACCEPT-003",
+      "scenario_id": "MOCK-Q-LEGACY-V-CAT-001-O2-20261205-50",
       "vendor_id": "V-CAT-001",
       "offering_id": "V-CAT-001-O2",
       "event_date": "2026-12-05",
+      "guest_count": 50,
       "reply": "accepted",
-      "reason": "MOCK: Golden Whisker Catering confirms availability for the Sydney event.",
+      "reason": "MOCK: Golden Whisker Catering confirms the Sydney event.",
       "quoted_total_cents": 980000
     },
     {
-      "scenario_id": "MOCK-Q-ACCEPT-004",
+      "scenario_id": "MOCK-Q-LEGACY-V-CAT-001-O2-20261205-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-05",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: Golden Whisker Catering confirms the Sydney event.",
+      "quoted_total_cents": 980000
+    },
+    {
+      "scenario_id": "MOCK-Q-LEGACY-V-PHOTO-003-O1-20261205-50",
       "vendor_id": "V-PHOTO-003",
       "offering_id": "V-PHOTO-003-O1",
       "event_date": "2026-12-05",
+      "guest_count": 50,
       "reply": "accepted",
-      "reason": "MOCK: Harbour Light Photography confirms availability for the Sydney event.",
+      "reason": "MOCK: Harbour Light Photography confirms the Sydney event.",
       "quoted_total_cents": 1350000
+    },
+    {
+      "scenario_id": "MOCK-Q-LEGACY-V-PHOTO-003-O1-20261205-80",
+      "vendor_id": "V-PHOTO-003",
+      "offering_id": "V-PHOTO-003-O1",
+      "event_date": "2026-12-05",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: Harbour Light Photography confirms the Sydney event.",
+      "quoted_total_cents": 1350000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O1-20261216-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1757500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O1-20261216-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1757500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O1-20261217-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1757500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O1-20261217-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1757500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O2-20261216-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 931000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O2-20261216-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 931000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O2-20261217-50",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 931000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-001-O2-20261217-80",
+      "vendor_id": "V-CAT-001",
+      "offering_id": "V-CAT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 931000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O1-20261216-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 775000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O1-20261216-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 775000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O1-20261217-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 775000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O1-20261217-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 775000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O2-20261216-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 475000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O2-20261216-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 475000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O2-20261217-50",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 475000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-002-O2-20261217-80",
+      "vendor_id": "V-CAT-002",
+      "offering_id": "V-CAT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 475000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O1-20261216-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 2280000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O1-20261216-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 2280000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O1-20261217-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 2280000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O1-20261217-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 2280000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O2-20261216-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1425000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O2-20261216-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1425000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O2-20261217-50",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1425000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-001-O2-20261217-80",
+      "vendor_id": "V-PHOTO-001",
+      "offering_id": "V-PHOTO-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1425000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O1-20261216-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O1-20261216-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O1-20261217-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O1-20261217-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 1112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O2-20261216-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 137500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O2-20261216-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 137500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O2-20261217-50",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 137500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-002-O2-20261217-80",
+      "vendor_id": "V-PHOTO-002",
+      "offering_id": "V-PHOTO-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 137500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O1-20261216-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 423000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O1-20261216-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 423000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O1-20261217-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 423000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O1-20261217-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 423000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O2-20261216-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 432400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O2-20261216-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 432400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O2-20261217-50",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 432400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-003-O2-20261217-80",
+      "vendor_id": "V-CAT-003",
+      "offering_id": "V-CAT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 432400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O1-20261216-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 546000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O1-20261216-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 546000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O1-20261217-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 546000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O1-20261217-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 546000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O2-20261216-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 556500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O2-20261216-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 556500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O2-20261217-50",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 556500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-004-O2-20261217-80",
+      "vendor_id": "V-CAT-004",
+      "offering_id": "V-CAT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 556500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O1-20261216-50",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 637000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O1-20261216-80",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 637000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O1-20261217-50",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O1-20261217-80",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O2-20261216-50",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 646800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O2-20261216-80",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 646800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O2-20261217-50",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-CAT-005-O2-20261217-80",
+      "vendor_id": "V-CAT-005",
+      "offering_id": "V-CAT-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O1-20261216-50",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O1-20261216-80",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O1-20261217-50",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O1-20261217-80",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O2-20261216-50",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O2-20261216-80",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O2-20261217-50",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-006-O2-20261217-80",
+      "vendor_id": "V-PHOTO-006",
+      "offering_id": "V-PHOTO-006-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O1-20261216-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O1-20261216-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O1-20261217-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O1-20261217-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O2-20261216-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O2-20261216-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O2-20261217-50",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-004-O2-20261217-80",
+      "vendor_id": "V-PHOTO-004",
+      "offering_id": "V-PHOTO-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O1-20261216-50",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 176400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O1-20261216-80",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 176400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O1-20261217-50",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O1-20261217-80",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O2-20261216-50",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 186200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O2-20261216-80",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 186200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O2-20261217-50",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-PHOTO-005-O2-20261217-80",
+      "vendor_id": "V-PHOTO-005",
+      "offering_id": "V-PHOTO-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O1-20261216-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 237500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O1-20261216-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 237500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O1-20261217-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 237500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O1-20261217-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 237500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O2-20261216-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 247000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O2-20261216-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 247000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O2-20261217-50",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 247000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-001-O2-20261217-80",
+      "vendor_id": "V-VENUE-001",
+      "offering_id": "V-VENUE-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 247000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O1-20261216-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 400000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O1-20261216-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 400000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O1-20261217-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 400000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O1-20261217-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 400000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O2-20261216-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 412500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O2-20261216-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 412500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O2-20261217-50",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 412500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-002-O2-20261217-80",
+      "vendor_id": "V-VENUE-002",
+      "offering_id": "V-VENUE-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 412500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O1-20261216-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 376000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O1-20261216-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 376000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O1-20261217-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 376000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O1-20261217-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 376000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O2-20261216-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 385400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O2-20261216-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 385400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O2-20261217-50",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 385400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-003-O2-20261217-80",
+      "vendor_id": "V-VENUE-003",
+      "offering_id": "V-VENUE-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 385400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O1-20261216-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 504000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O1-20261216-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 504000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O1-20261217-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 504000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O1-20261217-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 504000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O2-20261216-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 514500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O2-20261216-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 514500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O2-20261217-50",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 514500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-004-O2-20261217-80",
+      "vendor_id": "V-VENUE-004",
+      "offering_id": "V-VENUE-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 514500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O1-20261216-50",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 588000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O1-20261216-80",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 588000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O1-20261217-50",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O1-20261217-80",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O2-20261216-50",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 597800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O2-20261216-80",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 597800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O2-20261217-50",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VENUE-005-O2-20261217-80",
+      "vendor_id": "V-VENUE-005",
+      "offering_id": "V-VENUE-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O1-20261216-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O1-20261216-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O1-20261217-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O1-20261217-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O2-20261216-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O2-20261216-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O2-20261217-50",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-001-O2-20261217-80",
+      "vendor_id": "V-SOUND-001",
+      "offering_id": "V-SOUND-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O1-20261216-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 118750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O1-20261216-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 118750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O1-20261217-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 118750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O1-20261217-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 118750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O2-20261216-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O2-20261216-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O2-20261217-50",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-002-O2-20261217-80",
+      "vendor_id": "V-SOUND-002",
+      "offering_id": "V-SOUND-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O1-20261216-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 117500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O1-20261216-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 117500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O1-20261217-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 117500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O1-20261217-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 117500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O2-20261216-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 126900
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O2-20261216-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 126900
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O2-20261217-50",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 126900
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-003-O2-20261217-80",
+      "vendor_id": "V-SOUND-003",
+      "offering_id": "V-SOUND-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 126900
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O1-20261216-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 168000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O1-20261216-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 168000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O1-20261217-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 168000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O1-20261217-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 168000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O2-20261216-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O2-20261216-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O2-20261217-50",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-004-O2-20261217-80",
+      "vendor_id": "V-SOUND-004",
+      "offering_id": "V-SOUND-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O1-20261216-50",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 205800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O1-20261216-80",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 205800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O1-20261217-50",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O1-20261217-80",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O2-20261216-50",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 215600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O2-20261216-80",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 215600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O2-20261217-50",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-SOUND-005-O2-20261217-80",
+      "vendor_id": "V-SOUND-005",
+      "offering_id": "V-SOUND-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O1-20261216-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 57000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O1-20261216-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 57000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O1-20261217-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 57000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O1-20261217-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 57000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O2-20261216-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O2-20261216-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O2-20261217-50",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-001-O2-20261217-80",
+      "vendor_id": "V-DECOR-001",
+      "offering_id": "V-DECOR-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O1-20261216-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 100000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O1-20261216-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 100000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O1-20261217-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 100000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O1-20261217-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 100000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O2-20261216-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O2-20261216-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O2-20261217-50",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-002-O2-20261217-80",
+      "vendor_id": "V-DECOR-002",
+      "offering_id": "V-DECOR-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O1-20261216-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O1-20261216-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O1-20261217-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O1-20261217-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O2-20261216-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 108100
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O2-20261216-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 108100
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O2-20261217-50",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 108100
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-003-O2-20261217-80",
+      "vendor_id": "V-DECOR-003",
+      "offering_id": "V-DECOR-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 108100
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O1-20261216-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O1-20261216-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O1-20261217-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O1-20261217-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O2-20261216-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O2-20261216-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O2-20261217-50",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-004-O2-20261217-80",
+      "vendor_id": "V-DECOR-004",
+      "offering_id": "V-DECOR-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 157500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O1-20261216-50",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 176400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O1-20261216-80",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 176400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O1-20261217-50",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O1-20261217-80",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O2-20261216-50",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 186200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O2-20261216-80",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 186200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O2-20261217-50",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-DECOR-005-O2-20261217-80",
+      "vendor_id": "V-DECOR-005",
+      "offering_id": "V-DECOR-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O1-20261216-50",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O1-20261216-80",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O1-20261217-50",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O1-20261217-80",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O2-20261216-50",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O2-20261216-80",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O2-20261217-50",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-001-O2-20261217-80",
+      "vendor_id": "V-VIDEO-001",
+      "offering_id": "V-VIDEO-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O1-20261216-50",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 142500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O1-20261216-80",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 142500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O1-20261217-50",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 142500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O1-20261217-80",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 142500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O2-20261216-50",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O2-20261216-80",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O2-20261217-50",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-002-O2-20261217-80",
+      "vendor_id": "V-VIDEO-002",
+      "offering_id": "V-VIDEO-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O1-20261216-50",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 169200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O1-20261216-80",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 169200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O1-20261217-50",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 169200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O1-20261217-80",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 169200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O2-20261216-50",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O2-20261216-80",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O2-20261217-50",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-003-O2-20261217-80",
+      "vendor_id": "V-VIDEO-003",
+      "offering_id": "V-VIDEO-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 178600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O1-20261216-50",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O1-20261216-80",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O1-20261217-50",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O1-20261217-80",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O2-20261216-50",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 241500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O2-20261216-80",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 241500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O2-20261217-50",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 241500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-004-O2-20261217-80",
+      "vendor_id": "V-VIDEO-004",
+      "offering_id": "V-VIDEO-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 241500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O1-20261216-50",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 274400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O1-20261216-80",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 274400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O1-20261217-50",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O1-20261217-80",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O2-20261216-50",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 284200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O2-20261216-80",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 284200
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O2-20261217-50",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-VIDEO-005-O2-20261217-80",
+      "vendor_id": "V-VIDEO-005",
+      "offering_id": "V-VIDEO-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O1-20261216-50",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O1-20261216-80",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O1-20261217-50",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O1-20261217-80",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O2-20261216-50",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 93750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O2-20261216-80",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 93750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O2-20261217-50",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 93750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-001-O2-20261217-80",
+      "vendor_id": "V-LIGHT-001",
+      "offering_id": "V-LIGHT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 93750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O1-20261216-50",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O1-20261216-80",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O1-20261217-50",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O1-20261217-80",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O2-20261216-50",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 90250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O2-20261216-80",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 90250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O2-20261217-50",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 90250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-002-O2-20261217-80",
+      "vendor_id": "V-LIGHT-002",
+      "offering_id": "V-LIGHT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 90250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O1-20261216-50",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O1-20261216-80",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O1-20261217-50",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O1-20261217-80",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O2-20261216-50",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O2-20261216-80",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O2-20261217-50",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-003-O2-20261217-80",
+      "vendor_id": "V-LIGHT-003",
+      "offering_id": "V-LIGHT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O1-20261216-50",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O1-20261216-80",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O1-20261217-50",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O1-20261217-80",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 152250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O2-20261216-50",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O2-20261216-80",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O2-20261217-50",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-004-O2-20261217-80",
+      "vendor_id": "V-LIGHT-004",
+      "offering_id": "V-LIGHT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 162750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O1-20261216-50",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 181300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O1-20261216-80",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 181300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O1-20261217-50",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O1-20261217-80",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O2-20261216-50",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 191100
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O2-20261216-80",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 191100
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O2-20261217-50",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-LIGHT-005-O2-20261217-80",
+      "vendor_id": "V-LIGHT-005",
+      "offering_id": "V-LIGHT-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O1-20261216-50",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O1-20261216-80",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O1-20261217-50",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O1-20261217-80",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 112500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O2-20261216-50",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 125000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O2-20261216-80",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 125000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O2-20261217-50",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 125000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-001-O2-20261217-80",
+      "vendor_id": "V-ENT-001",
+      "offering_id": "V-ENT-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 125000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O1-20261216-50",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 114000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O1-20261216-80",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 114000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O1-20261217-50",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 114000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O1-20261217-80",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 114000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O2-20261216-50",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 123500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O2-20261216-80",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 123500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O2-20261217-50",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 123500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-002-O2-20261217-80",
+      "vendor_id": "V-ENT-002",
+      "offering_id": "V-ENT-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 123500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O1-20261216-50",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O1-20261216-80",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O1-20261217-50",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O1-20261217-80",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 150400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O2-20261216-50",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 159800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O2-20261216-80",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 159800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O2-20261217-50",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 159800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-003-O2-20261217-80",
+      "vendor_id": "V-ENT-003",
+      "offering_id": "V-ENT-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 159800
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O1-20261216-50",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 220500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O1-20261216-80",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 220500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O1-20261217-50",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 220500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O1-20261217-80",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 220500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O2-20261216-50",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O2-20261216-80",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O2-20261217-50",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-004-O2-20261217-80",
+      "vendor_id": "V-ENT-004",
+      "offering_id": "V-ENT-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 231000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O1-20261216-50",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 264600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O1-20261216-80",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 264600
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O1-20261217-50",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O1-20261217-80",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O2-20261216-50",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 274400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O2-20261216-80",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 274400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O2-20261217-50",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-ENT-005-O2-20261217-80",
+      "vendor_id": "V-ENT-005",
+      "offering_id": "V-ENT-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O1-20261216-50",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 68750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O1-20261216-80",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 68750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O1-20261217-50",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 68750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O1-20261217-80",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 68750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O2-20261216-50",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O2-20261216-80",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O2-20261217-50",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-001-O2-20261217-80",
+      "vendor_id": "V-TRANS-001",
+      "offering_id": "V-TRANS-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 81250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O1-20261216-50",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 71250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O1-20261216-80",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 71250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O1-20261217-50",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 71250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O1-20261217-80",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 71250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O2-20261216-50",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O2-20261216-80",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O2-20261217-50",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-002-O2-20261217-80",
+      "vendor_id": "V-TRANS-002",
+      "offering_id": "V-TRANS-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 80750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O1-20261216-50",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 94000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O1-20261216-80",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 94000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O1-20261217-50",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 94000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O1-20261217-80",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 94000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O2-20261216-50",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O2-20261216-80",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O2-20261217-50",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-003-O2-20261217-80",
+      "vendor_id": "V-TRANS-003",
+      "offering_id": "V-TRANS-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 103400
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O1-20261216-50",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 136500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O1-20261216-80",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 136500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O1-20261217-50",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 136500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O1-20261217-80",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 136500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O2-20261216-50",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O2-20261216-80",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O2-20261217-50",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-004-O2-20261217-80",
+      "vendor_id": "V-TRANS-004",
+      "offering_id": "V-TRANS-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 147000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O1-20261216-50",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 171500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O1-20261216-80",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 171500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O1-20261217-50",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O1-20261217-80",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O2-20261216-50",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 181300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O2-20261216-80",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 181300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O2-20261217-50",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-TRANS-005-O2-20261217-80",
+      "vendor_id": "V-TRANS-005",
+      "offering_id": "V-TRANS-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O1-20261216-50",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 62500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O1-20261216-80",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 62500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O1-20261217-50",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 62500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O1-20261217-80",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 62500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O2-20261216-50",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 75000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O2-20261216-80",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 75000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O2-20261217-50",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 75000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-001-O2-20261217-80",
+      "vendor_id": "V-STAFF-001",
+      "offering_id": "V-STAFF-001-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 75000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O1-20261216-50",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O1-20261216-80",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O1-20261217-50",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O1-20261217-80",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 66500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O2-20261216-50",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O2-20261216-80",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O2-20261217-50",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-002-O2-20261217-80",
+      "vendor_id": "V-STAFF-002",
+      "offering_id": "V-STAFF-002-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 76000
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O1-20261216-50",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O1-20261216-80",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O1-20261217-50",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O1-20261217-80",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 89300
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O2-20261216-50",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O2-20261216-80",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O2-20261217-50",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-003-O2-20261217-80",
+      "vendor_id": "V-STAFF-003",
+      "offering_id": "V-STAFF-003-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 98700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O1-20261216-50",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O1-20261216-80",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O1-20261217-50",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O1-20261217-80",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 131250
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O2-20261216-50",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 141750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O2-20261216-80",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 141750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O2-20261217-50",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 141750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-004-O2-20261217-80",
+      "vendor_id": "V-STAFF-004",
+      "offering_id": "V-STAFF-004-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 141750
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O1-20261216-50",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 161700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O1-20261216-80",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O1",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 161700
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O1-20261217-50",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O1-20261217-80",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O1",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O2-20261216-50",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 50,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 171500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O2-20261216-80",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O2",
+      "event_date": "2026-12-16",
+      "guest_count": 80,
+      "reply": "accepted",
+      "reason": "MOCK: supplier confirms the requested service and submits its event quote.",
+      "quoted_total_cents": 171500
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O2-20261217-50",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 50,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
+    },
+    {
+      "scenario_id": "MOCK-Q-EXP-V-STAFF-005-O2-20261217-80",
+      "vendor_id": "V-STAFF-005",
+      "offering_id": "V-STAFF-005-O2",
+      "event_date": "2026-12-17",
+      "guest_count": 80,
+      "reply": "rejected",
+      "reason": "MOCK: supplier declines this date after checking its team schedule."
     }
   ]
 }

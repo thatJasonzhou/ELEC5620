@@ -54,12 +54,7 @@ class NoBookingScenarioError(ValueError):
 
 
 class MockVendorBookingService:
-    """Preset final replies for catalogue-filtered offerings and dates.
-
-    Guest capacity is validated before this service is called. A scenario is
-    therefore keyed by supplier offering and date rather than an exact guest
-    count, while the returned confirmation still echoes the requested count.
-    """
+    """Preset final replies for exact supplier, date and guest-count requests."""
 
     def __init__(self, scenarios: list[dict[str, Any]]) -> None:
         if not isinstance(scenarios, list):
@@ -71,6 +66,9 @@ class MockVendorBookingService:
                 raise ValueError("booking scenario must be an object")
             item = {n: _text(raw.get(n), n) for n in ("scenario_id", "vendor_id", "offering_id", "reason")}
             item["event_date"] = require_valid_date(raw.get("event_date"), "event_date")
+            item["guest_count"] = require_int(
+                raw.get("guest_count"), "guest_count", minimum=0
+            )
             status = raw.get("status")
             if status not in ("confirmed", "rejected", "pending"):
                 raise ValueError("booking scenario status must be confirmed/rejected/pending")
@@ -88,7 +86,10 @@ class MockVendorBookingService:
 
     @staticmethod
     def _key(item):
-        return tuple(item[n] for n in ("vendor_id", "offering_id", "event_date"))
+        return tuple(
+            item[n]
+            for n in ("vendor_id", "offering_id", "event_date", "guest_count")
+        )
 
     @classmethod
     def from_json_file(cls, path: str | Path):

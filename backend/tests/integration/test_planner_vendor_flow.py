@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 from src.agents import (
     EventPlannerAgent,
     FinancialManagerAgent,
@@ -11,6 +9,7 @@ from src.llm import DemoLLMClient
 from src.services.event_session_service import EventSessionService
 from src.services.financial_workflow_service import FinancialWorkflowService
 from src.services.planner_workflow_service import PlannerWorkflowService
+from src.services.supplier_portal_service import SupplierPortalService
 from src.services.vendor_booking_service import (
     MockVendorBookingService,
     VendorBookingService,
@@ -178,3 +177,142 @@ def test_no_extra_services_still_runs_global_vendor_matching() -> None:
         "planning",
         "procurement",
     ]
+
+
+def test_customer_waits_for_interactive_supplier_quotes(tmp_path: Path) -> None:
+    llm = DemoLLMClient()
+    data = Path(__file__).resolve().parents[2] / "data"
+    vendor_service = VendorProcurementService.from_json_file(
+        data / "vendor_catalog.json"
+    )
+    portal = SupplierPortalService(tmp_path / "supplier.sqlite3", vendor_service)
+    procurement = VendorProcurementManagerAgent(
+        llm,
+        vendor_service,
+        MockVendorQuotationService.from_json_file(
+            data / "mock_vendor_quotations.json"
+        ),
+        VendorBookingService(
+            MockVendorBookingService.from_json_file(
+                data / "mock_vendor_bookings.json"
+            )
+        ),
+    )
+    workflow = PlannerWorkflowService(
+        EventPlannerAgent(llm),
+        procurement,
+        FinancialManagerAgent(llm, FinancialWorkflowService()),
+        EventSessionService(),
+        supplier_portal=portal,
+        llm_mode="mock",
+    )
+    proposal = workflow.handle_message(
+        event_id=None,
+        message=(
+            "I need a birthday party in Sydney on 5 December 2026 from 3 pm "
+            "to 8 pm for 50 guests, budget 30000 dollars, with catering and "
+            "photography."
+        ),
+    )
+
+    waiting = workflow.request_vendor_quotations(proposal["event_id"])
+    assert waiting["stage"] == "awaiting_vendor_quotes"
+    assert waiting["vendor_quotations"] == []
+    assert len(waiting["supplier_requests"]) >= 2
+
+    for request in waiting["supplier_requests"]:
+        portal.respond_to_quote_request(
+            request["request_id"],
+            available=True,
+            quoted_total_cents=request["catalogue_estimate_cents"],
+        )
+
+    refreshed = workflow.get_event(proposal["event_id"])
+    assert refreshed["stage"] == "quotation_review"
+    assert refreshed["quotation_comparison_complete"] is True
+    assert len(refreshed["recommended_quotation_ids"]) == 2
+    assert len(refreshed["vendor_quotations"]) == len(
+        waiting["supplier_requests"]
+    )
+    assert {
+        item["service_type"] for item in refreshed["vendor_quotations"]
+        if item["recommended"]
+    } == {"catering", "photography"}
+    assert all(
+        item["scenario_id"].startswith("RFQ-")
+        for item in refreshed["vendor_quotations"]
+    )
+
+
+def test_expanded_services_complete_the_interactive_booking_flow(
+    tmp_path: Path,
+) -> None:
+    llm = DemoLLMClient()
+    data = Path(__file__).resolve().parents[2] / "data"
+    vendor_service = VendorProcurementService.from_json_file(
+        data / "vendor_catalog.json"
+    )
+    portal = SupplierPortalService(tmp_path / "expanded.sqlite3", vendor_service)
+    workflow = PlannerWorkflowService(
+        EventPlannerAgent(llm),
+        VendorProcurementManagerAgent(
+            llm,
+            vendor_service,
+            MockVendorQuotationService.from_json_file(
+                data / "mock_vendor_quotations.json"
+            ),
+            VendorBookingService(
+                MockVendorBookingService.from_json_file(
+                    data / "mock_vendor_bookings.json"
+                )
+            ),
+        ),
+        FinancialManagerAgent(llm, FinancialWorkflowService()),
+        EventSessionService(),
+        supplier_portal=portal,
+        llm_mode="mock",
+    )
+    proposal = workflow.handle_message(
+        event_id=None,
+        message=(
+            "I need a conference in Sydney on 16 December 2026 from 9 am "
+            "to 5 pm for 50 guests, budget 100000 dollars, with a venue, "
+            "lighting and event staff."
+        ),
+    )
+
+    assert proposal["stage"] == "proposal"
+    assert proposal["requirements"]["required_services"] == [
+        "venue", "lighting", "event_staff"
+    ]
+    waiting = workflow.request_vendor_quotations(proposal["event_id"])
+    assert waiting["stage"] == "awaiting_vendor_quotes"
+    assert len(waiting["supplier_requests"]) == 9
+    assert {
+        item["service_type"] for item in waiting["supplier_requests"]
+    } == {"venue", "lighting", "event_staff"}
+
+    for request in waiting["supplier_requests"]:
+        portal.respond_to_quote_request(
+            request["request_id"],
+            available=True,
+            quoted_total_cents=request["catalogue_estimate_cents"],
+        )
+
+    compared = workflow.get_event(proposal["event_id"])
+    assert compared["stage"] == "quotation_review"
+    assert compared["quotation_comparison_complete"] is True
+    assert len(compared["recommended_quotation_ids"]) == 3
+    customer_quote = workflow.confirm_quotation_selection(
+        proposal["event_id"], compared["recommended_quotation_ids"]
+    )
+    assert customer_quote["stage"] == "quotation"
+    assert workflow.approve_customer_quotation(proposal["event_id"])[
+        "stage"
+    ] == "payment"
+    assert workflow.pay_deposit(proposal["event_id"])["stage"] == "booking"
+    booked = workflow.confirm_bookings(proposal["event_id"])
+    assert booked["stage"] == "booking_complete"
+    assert {item["service_type"] for item in booked["bookings"]} == {
+        "venue", "lighting", "event_staff"
+    }

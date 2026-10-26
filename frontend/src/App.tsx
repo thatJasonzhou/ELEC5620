@@ -18,6 +18,7 @@ import {
   approveQuotation,
   confirmBookings,
   confirmQuotationSelection,
+  getEvent,
   payDeposit,
   requestVendorQuotations,
   sendPlannerMessage,
@@ -79,7 +80,7 @@ function requirementValue(key: string, requirements: EventRequirements) {
 
 function activeJourneyIndex(stage: string) {
   if (stage === "proposal") return 1;
-  if (stage.startsWith("quotation_") || stage === "vendor_attention") return 2;
+  if (stage.startsWith("quotation_") || stage === "vendor_attention" || stage === "awaiting_vendor_quotes") return 2;
   if (stage === "quotation") return 3;
   if (stage === "payment" || stage.startsWith("booking")) return 4;
   if (stage === "operations") return 5;
@@ -115,6 +116,40 @@ export default function App() {
     const container = messagesRef.current;
     if (container) container.scrollTop = container.scrollHeight;
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (!eventId || stage !== "awaiting_vendor_quotes") return;
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const response = await getEvent(eventId);
+        if (cancelled) return;
+        setWorkflow(response);
+        if (response.stage !== "awaiting_vendor_quotes") {
+          setMessages((current) => [
+            ...current,
+            {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              text: response.stage === "quotation_review"
+                ? "The supplier replies are complete. Please compare and select one quotation for each service."
+                : "The suppliers have replied, but at least one service still needs attention.",
+            },
+          ]);
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(requestError instanceof Error ? requestError.message : "Unable to refresh supplier replies.");
+        }
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [eventId, stage]);
 
   function applyResponse(response: PlannerResponse) {
     setEventId(response.event_id);
@@ -247,6 +282,7 @@ export default function App() {
             <span className="agent-avatar"><Bot size={20} /></span>
             <div><strong>Event Planner Agent</strong><small><span className="online-dot" />Ready to help</small></div>
             <div className="header-actions">
+              <a className="supplier-portal-link" href="/?view=vendor" target="_blank" rel="noreferrer">Supplier portal</a>
               {workflow && <span className="mode-label">{workflow.llm_mode === "live" ? "LIVE AI" : "DEMO"}</span>}
               <button className="new-event-button" type="button" aria-label="Start a new event" title="New Event" onClick={startNewEvent} disabled={loading || acting}>
                 <Plus size={14} /><span>New Event</span>
@@ -378,9 +414,25 @@ function WorkflowWorkspace(props: WorkspaceProps) {
           </section>
         )}
 
+        {workflow?.stage === "awaiting_vendor_quotes" && (
+          <section className="work-card waiting-card">
+            <div className="work-card-heading"><div><small>PROCUREMENT</small><h2>Waiting for supplier replies</h2></div><span>LIVE INBOX</span></div>
+            <p className="work-note">Quote requests have been sent to the shortlisted suppliers. This page checks for new replies automatically.</p>
+            <div className="reply-progress-list">
+              {workflow.supplier_requests.map((request) => (
+                <div key={request.request_id}>
+                  <span className={`reply-status-dot ${request.status}`} />
+                  <span><strong>{request.vendor_name}</strong><small>{request.service_type} · {request.status === "pending" ? "Awaiting reply" : request.status}</small></span>
+                </div>
+              ))}
+            </div>
+            <a className="open-supplier-button" href="/?view=vendor" target="_blank" rel="noreferrer">Open supplier portal</a>
+          </section>
+        )}
+
         {(workflow?.stage === "quotation_review" || workflow?.stage === "quotation_attention") && (
           <section className="work-card">
-            <div className="work-card-heading"><div><small>PROCUREMENT</small><h2>Confirmed quotations</h2></div><span>MOCK</span></div>
+            <div className="work-card-heading"><div><small>PROCUREMENT</small><h2>Confirmed quotations</h2></div><span>SUPPLIER PORTAL</span></div>
             {services.map((service) => (
               <div className="quote-group" key={service}>
                 <h3>{service} <small>Budget {formatMoney(workflow.proposal?.service_budget_cents[service])}</small></h3>

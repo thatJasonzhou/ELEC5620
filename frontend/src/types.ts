@@ -67,6 +67,35 @@ export interface SupplierReply {
   quoted_total_cents?: number | null;
 }
 
+export interface SupplierQuoteRequest {
+  request_id: string;
+  event_id: string;
+  proposal_id: string;
+  vendor_id: string;
+  vendor_name: string;
+  offering_id: string;
+  service_type: string;
+  event_summary: string;
+  event_type: string;
+  event_date: string;
+  start_time: string;
+  end_time: string;
+  location: string;
+  guest_count: number;
+  service_budget_cents: number;
+  catalogue_estimate_cents: number;
+  status: "pending" | "quoted" | "declined";
+  created_at: string;
+  responded_at?: string | null;
+  response?: SupplierReply | null;
+}
+
+export interface VendorSummary {
+  vendor_id: string;
+  vendor_name: string;
+  service_types: string[];
+}
+
 export interface Budget {
   event_id: string;
   proposal_id: string;
@@ -147,6 +176,7 @@ export interface PlannerResponse {
   vendor_recommendations: VendorRecommendation[];
   vendor_quotations: VendorQuotation[];
   supplier_replies: SupplierReply[];
+  supplier_requests: SupplierQuoteRequest[];
   selected_quotation_ids: string[];
   budget: Budget | null;
   customer_quotation: CustomerQuotation | null;

@@ -22,7 +22,7 @@ def quote(qid="Q1", vendor="V-CAT-001", offering="V-CAT-001-O1", cents=1850000):
 def scenario(q=None, status="confirmed", confirmation="CONF1"):
     q = q or quote()
     return {"scenario_id": "MOCK-B-" + q["quotation_id"],
-            **{k: q[k] for k in ("vendor_id", "offering_id", "event_date")},
+            **{k: q[k] for k in ("vendor_id", "offering_id", "event_date", "guest_count")},
             "status": status, "reason": "MOCK final supplier reply: " + status,
             "supplier_confirmation_id": confirmation if status == "confirmed" else None}
 
@@ -63,10 +63,21 @@ def test_identical_retries_reuse_booking_without_supplier_call():
     assert second["status"] == "success" and len(supplier.calls) == 1
 
 
-def test_smaller_guest_count_uses_same_capacity_validated_booking_scenario():
+def test_booking_scenario_is_specific_to_guest_count():
     smaller = quote()
     smaller["guest_count"] = 50
     booking = VendorBookingService(MockVendorBookingService([scenario()]))
+    result = booking.confirm_bookings(request([smaller]))
+    assert result["status"] == "blocked"
+    assert result["data"]["bookings"] == []
+
+
+def test_exact_guest_count_booking_scenario_can_confirm():
+    smaller = quote()
+    smaller["guest_count"] = 50
+    booking = VendorBookingService(
+        MockVendorBookingService([scenario(smaller)])
+    )
     result = booking.confirm_bookings(request([smaller]))
     assert result["status"] == "success"
     assert result["data"]["bookings"][0]["guest_count"] == 50

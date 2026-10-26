@@ -149,7 +149,7 @@ def test_planner_asks_once_when_services_have_not_been_discussed() -> None:
     assert result["status"] == "needs_input"
     assert result["data"]["progress"]["completed"] == 5
     assert result["data"]["progress"]["missing_fields"] == ["services"]
-    assert "additional services" in result["message"]
+    assert "Do you need any services" in result["message"]
 
 
 def test_planner_accepts_confirmed_empty_service_preference() -> None:

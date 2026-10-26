@@ -12,9 +12,26 @@
           "rating": 4.8,
           "total_price_cents": 1850000,
           "availability": [
-            {"date": "2026-12-05", "available": true},
-            {"date": "2026-12-06", "available": true},
-            {"date": "2026-12-07", "available": true}
+            {
+              "date": "2026-12-05",
+              "available": true
+            },
+            {
+              "date": "2026-12-06",
+              "available": true
+            },
+            {
+              "date": "2026-12-07",
+              "available": true
+            },
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
           ]
         },
         {
@@ -25,9 +42,26 @@
           "rating": 4.5,
           "total_price_cents": 980000,
           "availability": [
-            {"date": "2026-12-05", "available": true},
-            {"date": "2026-12-06", "available": false},
-            {"date": "2026-12-07", "available": true}
+            {
+              "date": "2026-12-05",
+              "available": true
+            },
+            {
+              "date": "2026-12-06",
+              "available": false
+            },
+            {
+              "date": "2026-12-07",
+              "available": true
+            },
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
           ]
         }
       ]
@@ -44,8 +78,40 @@
           "rating": 4.2,
           "total_price_cents": 620000,
           "availability": [
-            {"date": "2026-12-05", "available": true},
-            {"date": "2026-12-07", "available": true}
+            {
+              "date": "2026-12-05",
+              "available": true
+            },
+            {
+              "date": "2026-12-07",
+              "available": true
+            },
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-CAT-002-O2",
+          "service_type": "catering",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 380000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
           ]
         }
       ]
@@ -62,9 +128,26 @@
           "rating": 4.9,
           "total_price_cents": 2400000,
           "availability": [
-            {"date": "2026-12-05", "available": true},
-            {"date": "2026-12-06", "available": true},
-            {"date": "2026-12-07", "available": true}
+            {
+              "date": "2026-12-05",
+              "available": true
+            },
+            {
+              "date": "2026-12-06",
+              "available": true
+            },
+            {
+              "date": "2026-12-07",
+              "available": true
+            },
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
           ]
         },
         {
@@ -75,7 +158,18 @@
           "rating": 4.6,
           "total_price_cents": 1500000,
           "availability": [
-            {"date": "2026-12-05", "available": true}
+            {
+              "date": "2026-12-05",
+              "available": true
+            },
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
           ]
         }
       ]
@@ -92,8 +186,166 @@
           "rating": 3.9,
           "total_price_cents": 890000,
           "availability": [
-            {"date": "2026-12-06", "available": true},
-            {"date": "2026-12-07", "available": false}
+            {
+              "date": "2026-12-06",
+              "available": true
+            },
+            {
+              "date": "2026-12-07",
+              "available": false
+            },
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-PHOTO-002-O2",
+          "service_type": "photography",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 110000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-CAT-003",
+      "name": "Garden Table Catering",
+      "service_offerings": [
+        {
+          "offering_id": "V-CAT-003-O1",
+          "service_type": "catering",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 450000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-CAT-003-O2",
+          "service_type": "catering",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 460000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-CAT-004",
+      "name": "Harbour Feast Kitchen",
+      "service_offerings": [
+        {
+          "offering_id": "V-CAT-004-O1",
+          "service_type": "catering",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 520000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-CAT-004-O2",
+          "service_type": "catering",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 530000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-CAT-005",
+      "name": "Gather & Graze Events",
+      "service_offerings": [
+        {
+          "offering_id": "V-CAT-005-O1",
+          "service_type": "catering",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 650000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-CAT-005-O2",
+          "service_type": "catering",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 660000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
           ]
         }
       ]
@@ -110,8 +362,1820 @@
           "rating": 4.4,
           "total_price_cents": 1350000,
           "availability": [
-            {"date": "2026-12-05", "available": true},
-            {"date": "2026-12-06", "available": true}
+            {
+              "date": "2026-12-05",
+              "available": true
+            },
+            {
+              "date": "2026-12-06",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-PHOTO-006",
+      "name": "Candid Day Photography",
+      "service_offerings": [
+        {
+          "offering_id": "V-PHOTO-006-O1",
+          "service_type": "photography",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 95000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-PHOTO-006-O2",
+          "service_type": "photography",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 105000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-PHOTO-004",
+      "name": "Silverlight Event Studio",
+      "service_offerings": [
+        {
+          "offering_id": "V-PHOTO-004-O1",
+          "service_type": "photography",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 140000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-PHOTO-004-O2",
+          "service_type": "photography",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 150000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-PHOTO-005",
+      "name": "Evergreen Moments",
+      "service_offerings": [
+        {
+          "offering_id": "V-PHOTO-005-O1",
+          "service_type": "photography",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 180000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-PHOTO-005-O2",
+          "service_type": "photography",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 190000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VENUE-001",
+      "name": "Harbourview Event Rooms",
+      "service_offerings": [
+        {
+          "offering_id": "V-VENUE-001-O1",
+          "service_type": "venue",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 250000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VENUE-001-O2",
+          "service_type": "venue",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 260000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VENUE-002",
+      "name": "Garden Pavilion Events",
+      "service_offerings": [
+        {
+          "offering_id": "V-VENUE-002-O1",
+          "service_type": "venue",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 320000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VENUE-002-O2",
+          "service_type": "venue",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 330000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VENUE-003",
+      "name": "Urban Loft Venues",
+      "service_offerings": [
+        {
+          "offering_id": "V-VENUE-003-O1",
+          "service_type": "venue",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 400000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VENUE-003-O2",
+          "service_type": "venue",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 410000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VENUE-004",
+      "name": "Riverside Function House",
+      "service_offerings": [
+        {
+          "offering_id": "V-VENUE-004-O1",
+          "service_type": "venue",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 480000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VENUE-004-O2",
+          "service_type": "venue",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 490000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VENUE-005",
+      "name": "Lantern Hall",
+      "service_offerings": [
+        {
+          "offering_id": "V-VENUE-005-O1",
+          "service_type": "venue",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 600000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VENUE-005-O2",
+          "service_type": "venue",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 610000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-SOUND-001",
+      "name": "Clearwave Event Audio",
+      "service_offerings": [
+        {
+          "offering_id": "V-SOUND-001-O1",
+          "service_type": "sound",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 70000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-SOUND-001-O2",
+          "service_type": "sound",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 80000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-SOUND-002",
+      "name": "Stagecraft Sound Hire",
+      "service_offerings": [
+        {
+          "offering_id": "V-SOUND-002-O1",
+          "service_type": "sound",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 95000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-SOUND-002-O2",
+          "service_type": "sound",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 105000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-SOUND-003",
+      "name": "Echo Lane Production",
+      "service_offerings": [
+        {
+          "offering_id": "V-SOUND-003-O1",
+          "service_type": "sound",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 125000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-SOUND-003-O2",
+          "service_type": "sound",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 135000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-SOUND-004",
+      "name": "Pulse Event Systems",
+      "service_offerings": [
+        {
+          "offering_id": "V-SOUND-004-O1",
+          "service_type": "sound",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 160000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-SOUND-004-O2",
+          "service_type": "sound",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 170000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-SOUND-005",
+      "name": "Bluebird Audio",
+      "service_offerings": [
+        {
+          "offering_id": "V-SOUND-005-O1",
+          "service_type": "sound",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 210000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-SOUND-005-O2",
+          "service_type": "sound",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 220000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-DECOR-001",
+      "name": "Bloom & Ribbon Events",
+      "service_offerings": [
+        {
+          "offering_id": "V-DECOR-001-O1",
+          "service_type": "decoration",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 60000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-DECOR-001-O2",
+          "service_type": "decoration",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 70000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-DECOR-002",
+      "name": "Paper Lantern Styling",
+      "service_offerings": [
+        {
+          "offering_id": "V-DECOR-002-O1",
+          "service_type": "decoration",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 80000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-DECOR-002-O2",
+          "service_type": "decoration",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.1,
+          "total_price_cents": 90000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-DECOR-003",
+      "name": "Greenleaf Event Design",
+      "service_offerings": [
+        {
+          "offering_id": "V-DECOR-003-O1",
+          "service_type": "decoration",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 105000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-DECOR-003-O2",
+          "service_type": "decoration",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 115000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-DECOR-004",
+      "name": "Velvet Table Studio",
+      "service_offerings": [
+        {
+          "offering_id": "V-DECOR-004-O1",
+          "service_type": "decoration",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 140000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-DECOR-004-O2",
+          "service_type": "decoration",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 150000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-DECOR-005",
+      "name": "Bright Occasion Decor",
+      "service_offerings": [
+        {
+          "offering_id": "V-DECOR-005-O1",
+          "service_type": "decoration",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 180000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-DECOR-005-O2",
+          "service_type": "decoration",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 190000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VIDEO-001",
+      "name": "Motion Story Films",
+      "service_offerings": [
+        {
+          "offering_id": "V-VIDEO-001-O1",
+          "service_type": "videography",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 120000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VIDEO-001-O2",
+          "service_type": "videography",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 130000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VIDEO-002",
+      "name": "Frameflow Event Video",
+      "service_offerings": [
+        {
+          "offering_id": "V-VIDEO-002-O1",
+          "service_type": "videography",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 150000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VIDEO-002-O2",
+          "service_type": "videography",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 160000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VIDEO-003",
+      "name": "Cinematic Day Studio",
+      "service_offerings": [
+        {
+          "offering_id": "V-VIDEO-003-O1",
+          "service_type": "videography",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 180000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VIDEO-003-O2",
+          "service_type": "videography",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 190000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VIDEO-004",
+      "name": "Reel Moments Production",
+      "service_offerings": [
+        {
+          "offering_id": "V-VIDEO-004-O1",
+          "service_type": "videography",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 220000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VIDEO-004-O2",
+          "service_type": "videography",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 230000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-VIDEO-005",
+      "name": "Vista Event Films",
+      "service_offerings": [
+        {
+          "offering_id": "V-VIDEO-005-O1",
+          "service_type": "videography",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 280000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-VIDEO-005-O2",
+          "service_type": "videography",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 290000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-LIGHT-001",
+      "name": "Glowline Event Lighting",
+      "service_offerings": [
+        {
+          "offering_id": "V-LIGHT-001-O1",
+          "service_type": "lighting",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 65000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-LIGHT-001-O2",
+          "service_type": "lighting",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 75000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-LIGHT-002",
+      "name": "Prism Stage Lights",
+      "service_offerings": [
+        {
+          "offering_id": "V-LIGHT-002-O1",
+          "service_type": "lighting",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 85000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-LIGHT-002-O2",
+          "service_type": "lighting",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 95000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-LIGHT-003",
+      "name": "Lumen Event Hire",
+      "service_offerings": [
+        {
+          "offering_id": "V-LIGHT-003-O1",
+          "service_type": "lighting",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 110000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-LIGHT-003-O2",
+          "service_type": "lighting",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 120000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-LIGHT-004",
+      "name": "Spotlight Scene Design",
+      "service_offerings": [
+        {
+          "offering_id": "V-LIGHT-004-O1",
+          "service_type": "lighting",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 145000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-LIGHT-004-O2",
+          "service_type": "lighting",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 155000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-LIGHT-005",
+      "name": "Radiant Room Lighting",
+      "service_offerings": [
+        {
+          "offering_id": "V-LIGHT-005-O1",
+          "service_type": "lighting",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 185000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-LIGHT-005-O2",
+          "service_type": "lighting",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 195000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-ENT-001",
+      "name": "Encore Event Performers",
+      "service_offerings": [
+        {
+          "offering_id": "V-ENT-001-O1",
+          "service_type": "entertainment",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 90000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-ENT-001-O2",
+          "service_type": "entertainment",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 100000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-ENT-002",
+      "name": "Junction Live Entertainment",
+      "service_offerings": [
+        {
+          "offering_id": "V-ENT-002-O1",
+          "service_type": "entertainment",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 120000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-ENT-002-O2",
+          "service_type": "entertainment",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 130000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-ENT-003",
+      "name": "Blue Note Event Acts",
+      "service_offerings": [
+        {
+          "offering_id": "V-ENT-003-O1",
+          "service_type": "entertainment",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 160000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-ENT-003-O2",
+          "service_type": "entertainment",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 170000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-ENT-004",
+      "name": "Brightstage Talent",
+      "service_offerings": [
+        {
+          "offering_id": "V-ENT-004-O1",
+          "service_type": "entertainment",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 210000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-ENT-004-O2",
+          "service_type": "entertainment",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 220000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-ENT-005",
+      "name": "Celebration Live Co",
+      "service_offerings": [
+        {
+          "offering_id": "V-ENT-005-O1",
+          "service_type": "entertainment",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 270000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-ENT-005-O2",
+          "service_type": "entertainment",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 280000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-TRANS-001",
+      "name": "Citylink Event Transfers",
+      "service_offerings": [
+        {
+          "offering_id": "V-TRANS-001-O1",
+          "service_type": "transport",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 55000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-TRANS-001-O2",
+          "service_type": "transport",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 65000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-TRANS-002",
+      "name": "Harbour Ride Events",
+      "service_offerings": [
+        {
+          "offering_id": "V-TRANS-002-O1",
+          "service_type": "transport",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 75000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-TRANS-002-O2",
+          "service_type": "transport",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 85000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-TRANS-003",
+      "name": "Gather Shuttle Co",
+      "service_offerings": [
+        {
+          "offering_id": "V-TRANS-003-O1",
+          "service_type": "transport",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 100000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-TRANS-003-O2",
+          "service_type": "transport",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 110000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-TRANS-004",
+      "name": "Metro Guest Transport",
+      "service_offerings": [
+        {
+          "offering_id": "V-TRANS-004-O1",
+          "service_type": "transport",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 130000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-TRANS-004-O2",
+          "service_type": "transport",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 140000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-TRANS-005",
+      "name": "Summit Event Coaches",
+      "service_offerings": [
+        {
+          "offering_id": "V-TRANS-005-O1",
+          "service_type": "transport",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 175000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-TRANS-005-O2",
+          "service_type": "transport",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 185000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-STAFF-001",
+      "name": "Welcome Crew Events",
+      "service_offerings": [
+        {
+          "offering_id": "V-STAFF-001-O1",
+          "service_type": "event_staff",
+          "service_location": "Sydney",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 50000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-STAFF-001-O2",
+          "service_type": "event_staff",
+          "service_location": "Melbourne",
+          "guest_capacity": 100,
+          "rating": 4.2,
+          "total_price_cents": 60000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-STAFF-002",
+      "name": "Eventhands Staffing",
+      "service_offerings": [
+        {
+          "offering_id": "V-STAFF-002-O1",
+          "service_type": "event_staff",
+          "service_location": "Sydney",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 70000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-STAFF-002-O2",
+          "service_type": "event_staff",
+          "service_location": "Melbourne",
+          "guest_capacity": 150,
+          "rating": 4.5,
+          "total_price_cents": 80000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-STAFF-003",
+      "name": "Frontline Event Hosts",
+      "service_offerings": [
+        {
+          "offering_id": "V-STAFF-003-O1",
+          "service_type": "event_staff",
+          "service_location": "Sydney",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 95000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-STAFF-003-O2",
+          "service_type": "event_staff",
+          "service_location": "Melbourne",
+          "guest_capacity": 180,
+          "rating": 4.7,
+          "total_price_cents": 105000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-STAFF-004",
+      "name": "Gather Support Team",
+      "service_offerings": [
+        {
+          "offering_id": "V-STAFF-004-O1",
+          "service_type": "event_staff",
+          "service_location": "Sydney",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 125000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-STAFF-004-O2",
+          "service_type": "event_staff",
+          "service_location": "Melbourne",
+          "guest_capacity": 250,
+          "rating": 4.9,
+          "total_price_cents": 135000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor_id": "V-STAFF-005",
+      "name": "Polished Event Crew",
+      "service_offerings": [
+        {
+          "offering_id": "V-STAFF-005-O1",
+          "service_type": "event_staff",
+          "service_location": "Sydney",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 165000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
+          ]
+        },
+        {
+          "offering_id": "V-STAFF-005-O2",
+          "service_type": "event_staff",
+          "service_location": "Melbourne",
+          "guest_capacity": 400,
+          "rating": 4.6,
+          "total_price_cents": 175000,
+          "availability": [
+            {
+              "date": "2026-12-16",
+              "available": true
+            },
+            {
+              "date": "2026-12-17",
+              "available": true
+            }
           ]
         }
       ]
