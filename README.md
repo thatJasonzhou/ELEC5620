@@ -645,3 +645,19 @@ restart/retry without duplicate effects. Missing approval, unpaid deposits,
 changed quotes, failed payments and declined bookings are covered by regression
 checks. This verifies module handoff, not fresh Live reasoning or Planner/UI
 integration. Business code and default Mock/Live behavior are unchanged.
+
+
+## Planner budget precheck (KAN-41)
+
+Use `VendorProcurementService.estimate_event(request)` to estimate 1-5 services
+from the shared catalogue before enquiries or LLM calls. It returns per-service
+price ranges, complete costs under the shared Finance policy, an exact supplier
+allowance and either within_budget_estimate, over_budget_estimate or no_candidates.
+Estimates never constitute quotations or Financial approval.
+
+```powershell
+py -3 -m examples.catalog_estimate_example
+py -3 -m examples.catalog_estimate_example --budget-cents 50000
+```
+
+See [the interface and Planner adapter](docs/catalog-budget-estimate.md).

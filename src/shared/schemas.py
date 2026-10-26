@@ -382,11 +382,13 @@ class Budget:
                      for q in self._selected_quotations)
         if type(self.tax_amount_cents) is not int or self.tax_amount_cents != 0:
             raise ValueError("tax_amount_cents must be the approved zero placeholder")
-        fee = (vendor + 5) // 10
-        self.vendor_cost_cents = vendor
-        self.service_fee_cents = fee
-        self.contingency_amount_cents = fee
-        self.customer_price_cents = vendor + fee + fee
+        from src.shared.costing import calculate_event_costs
+
+        costs = calculate_event_costs(vendor)
+        self.vendor_cost_cents = costs["vendor_cost_cents"]
+        self.service_fee_cents = costs["service_fee_cents"]
+        self.contingency_amount_cents = costs["contingency_amount_cents"]
+        self.customer_price_cents = costs["customer_price_cents"]
         return self.customer_price_cents
 
     def approve(self) -> None:

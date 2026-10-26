@@ -838,3 +838,25 @@ The fixed priority fixture succeeded in four consecutive school runs at 17.59s,
 19.55s, 28.78s and 12.19s (one client LLM call each, supplier total AUD9,310).
 This is measured evidence for that fixture, not guaranteed latency/reliability
 for every request. Keep supplier subtotal review separate from Financial approval.
+
+
+## KAN-41: read-only Planner catalogue estimate
+
+`VendorProcurementService.estimate_event(request)` accepts event_date, location,
+guest_count, budget_limit_cents and 1-5 unique services objects, using existing
+Procurement field names. No event/proposal IDs are required before planning.
+Optional global/per-service min_rating and an additional supplier ceiling apply.
+
+Returns JSON-compatible Service data with status:
+`within_budget_estimate`, `over_budget_estimate` or `no_candidates`.
+Includes per-service catalogue ranges/counts, complete `minimum_costs`, effective
+`supplier_budget_limit_cents`, customer/supplier shortfalls and missing services.
+Missing categories yield null complete costs/shortfalls, never a partial total.
+
+`estimate_only=true`, `finance_review_required=true` and
+`preferences_evaluated=false` distinguish evidence from final choice/approval.
+The workflow handles the result before creating enquiries and passes the derived
+allowance to Procurement. No Agent calls, HTTP route, state writes or LLM calls
+are added here. The separate Planner branch still needs this integration.
+See [catalogue estimate contract](docs/catalog-budget-estimate.md) for examples,
+validation, current whole-event/date-only limits and the required_services adapter.
