@@ -579,3 +579,55 @@ add `--live` after configuring the school LLM to use real model decisions with s
 Choose 1-5 catalogue categories using `--services videography lighting entertainment transport event_staff`;
 the activity maximum remains five even though ten categories are available.
 See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs and rejection scenario.
+
+## Live Procurement performance (KAN-40)
+
+Earlier policy baseline: `py -3 -m examples.shared_catalog_procurement_example --live --policy-ranking`.
+The LLM chooses a comparison policy once per activity; code uses fixed, visible
+price/rating/capacity rules to rank estimates and later actual supplier quotes.
+The model does not directly rank suppliers in this mode. Normal five-service
+success uses one client LLM call, 15 enquiries and five selections. The selected
+policy/formula/weights are recorded; unsupported preferences ask for clarification.
+Existing Mock defaults are unchanged. Jason measured this policy baseline at 1.34s and 1.00s.
+See the Live demo guide for scoring, limits and module usage.
+
+Earlier direct-ranking comparison (has encountered school HTTP 502 failures):
+
+Set the existing school environment variables, then start with:
+`py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --services photography`.
+Omit --services photography for the complete five-service run. Default output
+stays short and includes elapsed time and client LLM call count; --verbose
+prints full snapshots.
+
+Ordinary Live execution now asks the model for local ranking labels only, such
+as A B C. ConciseRankingClient preserves candidate facts/preferences, validates
+count/uniqueness/membership and restores the existing compact response. The
+model chooses rankings; code fills prices/IDs and factual price/rating reasons.
+The shared Mock builder and Agent constructor defaults are unchanged. Module
+callers opt in by wrapping CampusQwenClient with ConciseRankingClient and using
+compact_llm=True. No new run flag, output cap or thinking extension is required.
+
+The successful original five-service run took 137.14s. A minimal three-quote
+Live control took 4.64s, but full concise-workflow latency is not yet measured.
+Experimental --batch-services failed on the school endpoint with HTTP 502 after
+60.59s; it remains opt-in and is not the current demonstration path.
+
+The maximum-five rule, top-three enquiries, supplier reply stage, received-price
+comparison and Financial/approval/deposit/booking gates remain. Live uses fresh
+school calls, without cached rankings or automatic Mock fallback. Only LLM jobs
+may overlap; state/storage stay on the caller thread. See [Live demo guide](docs/live-procurement-demo.md).
+
+### Joint supplier selection trial (KAN-40)
+
+Code prepares diverse top-three enquiries; after simulated replies, one LLM call
+selects the whole supplier bundle against Planner-provided priorities and budgets.
+
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json --max-output-tokens 4096
+```
+
+Single-service targets are soft unless explicitly hard. Exact supplier subtotals
+are code-checked; full-event affordability remains Financial's responsibility.
+Existing Mock/API defaults are unchanged. For this priority fixture, Jason measured
+four consecutive school successes at 17.59s, 19.55s, 28.78s and 12.19s with the
+4096-token cap, all selecting the same AUD9,310 supplier bundle. See [Live demo guide](docs/live-procurement-demo.md).

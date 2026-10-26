@@ -737,3 +737,104 @@ approval/deposit/booking gates remain unchanged. See docs/shortlisted-quotations
 - 保存后重新读取，仍能获得该活动的数据。
 - 至少验证一次超预算：返回 `blocked`，不继续预订或生成执行计划。
 - 所有固定结果、模拟外部回复都有标记，后续按同一接口替换。
+
+### 5.13 Procurement LLM concurrency (KAN-40)
+
+Optional constructor keywords: `llm_concurrency=1` (integer 1-5) and
+`progress_callback=None` (callable event observer). The activity-level shortlist
+and quotation-comparison phases can overlap only their LLM complete calls;
+all snapshots, enquiry mutations, SQLite persistence and result validation remain
+on the caller thread. Service results preserve request order. Existing request/envelope
+and complete-selection semantics are unchanged. External requests remain serialized.
+Progress events contain `stage`, `service_type`, `state` and terminal
+`elapsed_seconds`; they do not contain prompts, credentials or model responses.
+The example CLI opts into concurrency 3, emits bounded progress on stderr and a
+short status/selected-supplier summary on stdout. Add --verbose for full diagnostic JSON.
+See `docs/live-procurement-demo.md` for full observer/client requirements.
+
+Optional retry_failed_llm=False enables one serial recovery pass for only
+explicitly transient failed model jobs after all first-pass jobs finish.
+Successful model jobs and supplier enquiries are not repeated. Invalid rankings
+and permanent/unknown failures are not recovered automatically. Failed service
+data.llm_error includes code, http_status, retryable and attempts; progress may
+add error_code, http_status, attempt and the retrying state. Diagnostics omit
+raw exception text, URLs, model response bodies and credentials. A second failure
+still prevents complete selection.
+
+Opt-in compact_llm=True changes only the model-side protocol to an indexed
+candidate table and {"ranked":[[index, short_reason],...]} response. Shared-data CLI
+enables it by default; legacy Agent callers opt in. Public JSON shapes stay the
+same, facts come from stored snapshots and compact basis_codes are empty.
+Indices, exact phase coverage and short reasons are validated. CampusQwenClient
+accepts optional max_output_tokens (default None); the shared CLI also defaults
+to server settings (--max-output-tokens 0). Server finish_reason=length is an error,
+never a partial successful selection.
+
+Grouped Procurement optimization (opt-in): `batch_services=True` together with
+`compact_llm=True` combines all service rankings into one LLM request per phase.
+The staged prepare -> supplier reply -> comparison API and output contracts stay
+the same; five-service events normally require two client LLM calls rather than
+ten. One-service events keep their two existing calls. The shared-catalogue CLI
+selects it with `--batch-services`; its default token cap is now server default
+(`--max-output-tokens 0`). The module defaults remain individual-service based.
+Missing/invalid service rankings block a complete selection. Actual school Live
+latency remains to be measured. See docs/live-procurement-demo.md for current run
+commands; historical 256-token and thinking-switch experiments are not demo defaults.
+
+Ordinary shared-data Live execution now uses ConciseRankingClient around
+CampusQwenClient for individual compact requests. It requests labels only,
+validates them and restores original indices with factual price/rating reasons.
+Module callers can use the same wrapper with compact_llm=True; no Agent/public
+reply contract changes. Default Mock execution is unchanged. --batch-services
+remains experimental (school run failed with HTTP 502 in 60.59s); current Live
+validation uses --live --concurrency 2 without grouping or thinking controls.
+
+Policy trial: `VendorProcurementManagerAgent(..., compact_llm=True, policy_ranking=True)`
+uses the raw LLM once per whole-activity preparation to select a supported policy.
+VendorRankingService then ranks both estimates and received quote amounts. Context
+ranking_policy and activity ranking_policies expose policy code, fixed weights,
+formula and version. Existing rounds pin the decision; comparison and reply UI
+calls do not reselect it. New activities/preparations make fresh decisions.
+Use procure_services/prepare_event_enquiries for one call across up to five services.
+Unsupported preferences return needs_input; invalid/API errors do not silently
+fall back. This mode covers price/rating/capacity policies and cannot be combined
+with batch_services. --policy-ranking selects it in the shared example. Default
+Mock and Agent behavior are unchanged. Jason measured policy-mode successes at 1.34s and 1.00s;
+this classifies policies rather than directly choosing suppliers.
+
+Joint-selection trial (opt-in): compact_llm=True, joint_selection=True with a raw
+CampusQwenClient. Code shortlists cheap/high-rating/balanced offerings without an
+estimate-price cutoff. After supplier replies, one LLM call chooses one quote
+per service jointly. Use the activity-level APIs; modes cannot be combined.
+Optional event-level budget_limit_cents is the overall budget; optional
+supplier_budget_limit_cents is an explicit supplier allowance from the caller.
+Both are nonnegative integer AUD cents, stored with event customer_preferences
+in batch selection_context. Service items cannot override event-level limits.
+service_budget_cents stays soft unless budget_is_hard_limit=true; accepted quote
+filters enforce explicit hard service limits. Later lookup fields do not replace
+the stored constraints. Procurement checks a necessary supplier-subtotal ceiling
+(minimum of supplied limits), not final Financial affordability.
+
+Selected-only quotations / selected_quotations and quotation IDs retain their
+existing handoff meaning. In this mode, service_results[].data.quotation_ranking
+contains the chosen item only, with ranking_scope="selected_only"; eligible
+unselected IDs appear as unranked_quotation_ids. No complete alternatives ranking
+is claimed. Activity bundle_recommendation_reason is model-authored, not
+fact-verified. budget_summary exposes exact supplier totals, effective ceiling,
+feasibility and finance_review_required=true. Pending/missing replies,
+malformed/model errors and over-ceiling choices block complete selection.
+An explicit subsequent comparison makes another fresh call; it does not resend
+terminal supplier enquiries. Default Mock/Agent behavior is unchanged.
+
+Recommended measured Procurement configuration: CampusQwenClient.from_env(
+max_output_tokens=4096), compact_llm=True, joint_selection=True. Code precomputes
+budget-feasible combinations; the LLM still chooses the supplier bundle itself.
+Batch comparison_support exposes the cheapest baseline, upgrade allowance,
+feasible choice codes/count and globally budget-excluded IDs; per-service
+budget_excluded_quotation_ids distinguishes those from unranked eligible options.
+The model may return a per-service index code or the earlier integer-list fixture;
+these are internal protocols, and selected quote handoff shapes stay unchanged.
+The fixed priority fixture succeeded in four consecutive school runs at 17.59s,
+19.55s, 28.78s and 12.19s (one client LLM call each, supplier total AUD9,310).
+This is measured evidence for that fixture, not guaranteed latency/reliability
+for every request. Keep supplier subtotal review separate from Financial approval.

@@ -1,0 +1,33 @@
+{
+  "event_id": "EV-SOUND-PRIORITY-DEMO",
+  "proposal_id": "P-SOUND-PRIORITY-DEMO",
+  "event_date": "2026-12-16",
+  "location": "Sydney",
+  "guest_count": 50,
+  "budget_limit_cents": 1200000,
+  "supplier_budget_limit_cents": 1100000,
+  "customer_preferences": "Sound quality is the main priority: choose the highest-rated sound supplier that fits the whole supplier ceiling. For photography, catering, venue and decoration, choose their cheapest eligible accepted quotations. Allocations are flexible; do not spend spare funds just to reach them.",
+  "services": [
+    {
+      "service_type": "photography",
+      "service_budget_cents": 100000
+    },
+    {
+      "service_type": "catering",
+      "service_budget_cents": 500000
+    },
+    {
+      "service_type": "venue",
+      "service_budget_cents": 300000
+    },
+    {
+      "service_type": "sound",
+      "service_budget_cents": 100000,
+      "customer_preferences": "Prefer the highest rating for sound when the complete supplier bundle is affordable. The sound allocation is a flexible target, not a hard cap."
+    },
+    {
+      "service_type": "decoration",
+      "service_budget_cents": 100000
+    }
+  ]
+}

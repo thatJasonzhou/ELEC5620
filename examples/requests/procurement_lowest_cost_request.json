@@ -1,0 +1,32 @@
+{
+  "event_id": "EV-LOWEST-COST-DEMO",
+  "proposal_id": "P-LOWEST-COST-DEMO",
+  "event_date": "2026-12-16",
+  "location": "Sydney",
+  "guest_count": 50,
+  "budget_limit_cents": 1200000,
+  "supplier_budget_limit_cents": 1100000,
+  "customer_preferences": "Minimise the combined supplier quotation total after eligibility and explicit hard limits. All service types have equal priority; use rating only to break equal-price ties. Service allocations are flexible reference amounts, not spending targets.",
+  "services": [
+    {
+      "service_type": "photography",
+      "service_budget_cents": 100000
+    },
+    {
+      "service_type": "catering",
+      "service_budget_cents": 500000
+    },
+    {
+      "service_type": "venue",
+      "service_budget_cents": 300000
+    },
+    {
+      "service_type": "sound",
+      "service_budget_cents": 100000
+    },
+    {
+      "service_type": "decoration",
+      "service_budget_cents": 100000
+    }
+  ]
+}

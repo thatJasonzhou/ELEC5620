@@ -151,3 +151,30 @@ the catalogue category count does not raise the activity service limit. Use Sydn
 and 50 / 80 guests for complete reply coverage. The new
 `python -m examples.shared_catalog_procurement_example` uses these shared files;
 its `--live` switch changes the LLM only. See [supplier demo data](supplier-demo-data.md).
+
+## Optional bounded LLM concurrency (KAN-40)
+
+Pass `llm_concurrency=3` (integer 1-5) and optionally `progress_callback=callable`
+when constructing the Agent to overlap LLM requests within each activity phase.
+Agent default is 1; shared-data CLI default is 3 and accepts `--concurrency`.
+The CLI prints a short summary by default; add `--verbose` for complete diagnostic JSON.
+Only model calls run in worker threads, while input snapshots, state writes,
+SQLite and output validation remain sequential. Request ordering and complete-selection
+gates are preserved. The same Agent must still receive external requests serially.
+See [live Procurement demo](live-procurement-demo.md) for fresh-download setup,
+progress events, client requirements and performance measurement.
+
+Safe transport diagnostics now appear in failed service data.llm_error and
+progress events (code/status only). Optional retry_failed_llm=True retries only
+transient failed model jobs once after the phase drains; successes and supplier
+enquiries are retained. It defaults to False. The CLI exposes --retry-failed.
+
+The shared CLI also opts into compact_llm=True: a small candidate table and
+index/short-reason response, with full public snapshots backfilled/validated by
+code. Agent default remains False for legacy injected clients. Compact mode
+returns empty basis_codes and still validates identity, coverage and prices.
+Use CampusQwenClient.from_env() with compact module callers. The CLI defaults to
+server output settings; --max-output-tokens optionally sets a cap (0 omits it).
+Truncated output fails. Optional batch_services=True (requires compact_llm=True)
+groups all services into one model call per phase; --batch-services selects this
+in the shared-data CLI. Supplier replies still separate the two phases.

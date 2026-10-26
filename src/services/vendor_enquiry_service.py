@@ -216,7 +216,8 @@ class VendorEnquiryService:
         if len(types) > 5:
             raise ValueError("An activity proposal supports at most five service categories.")
 
-    def create_batch(self, event_id: str, proposal_id: str, round_ids: list[str]) -> dict[str, Any]:
+    def create_batch(self, event_id: str, proposal_id: str, round_ids: list[str], *,
+                     selection_context: dict[str, Any] | None = None) -> dict[str, Any]:
         if not 1 <= len(round_ids) <= 5 or len(set(round_ids)) != len(round_ids):
             raise ValueError("A batch requires 1-5 distinct service rounds.")
         rounds = [self._get(event_id, proposal_id, r) for r in round_ids]
@@ -229,6 +230,8 @@ class VendorEnquiryService:
             "required_services": [r["context"]["service_type"] for r in rounds],
             "round_ids": list(round_ids),
         }
+        if selection_context is not None:
+            self._batches[batch_id]["selection_context"] = deepcopy(selection_context)
         return self.get_batch(event_id, proposal_id, batch_id)
 
     def get_batch(self, event_id: str, proposal_id: str, batch_id: str) -> dict[str, Any]:
