@@ -780,3 +780,11 @@ selects it with `--batch-services`; its default token cap is now server default
 Missing/invalid service rankings block a complete selection. Actual school Live
 latency remains to be measured. See docs/live-procurement-demo.md for current run
 commands; historical 256-token and thinking-switch experiments are not demo defaults.
+
+Ordinary shared-data Live execution now uses ConciseRankingClient around
+CampusQwenClient for individual compact requests. It requests labels only,
+validates them and restores original indices with factual price/rating reasons.
+Module callers can use the same wrapper with compact_llm=True; no Agent/public
+reply contract changes. Default Mock execution is unchanged. --batch-services
+remains experimental (school run failed with HTTP 502 in 60.59s); current Live
+validation uses --live --concurrency 2 without grouping or thinking controls.

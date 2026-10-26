@@ -582,27 +582,26 @@ See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs an
 
 ## Live Procurement performance (KAN-40)
 
-The shared-data CLI uses compact indexed prompts and returns a short summary,
-including elapsed time and client LLM call count. Full JSON requires --verbose.
-Set the existing school environment variables before selecting --live.
+Set the existing school environment variables, then start with:
+`py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --services photography`.
+Omit --services photography for the complete five-service run. Default output
+stays short and includes elapsed time and client LLM call count; --verbose
+prints full snapshots.
 
-- Existing individual-service mode: `py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2`.
-- New opt-in grouped mode: `py -3 -m examples.shared_catalog_procurement_example --live --batch-services`.
+Ordinary Live execution now asks the model for local ranking labels only, such
+as A B C. ConciseRankingClient preserves candidate facts/preferences, validates
+count/uniqueness/membership and restores the existing compact response. The
+model chooses rankings; code fills prices/IDs and factual price/rating reasons.
+The shared Mock builder and Agent constructor defaults are unchanged. Module
+callers opt in by wrapping CampusQwenClient with ConciseRankingClient and using
+compact_llm=True. No new run flag, output cap or thinking extension is required.
 
-Grouping ranks each service independently but combines all shortlists into one
-model request and all received-quote comparisons into a second. The supplier
-reply stage remains between them. Code validates every requested service and
-maps IDs/prices from stored facts. Existing approval/deposit/booking gates remain.
-Default CLI output budget uses the server setting; no thinking extension is sent.
-The school gateway rejected the attempted hard-switch extension, and the prompt
-soft switch did not prevent reasoning. Neither is used by the grouped mode.
+The successful original five-service run took 137.14s. A minimal three-quote
+Live control took 4.64s, but full concise-workflow latency is not yet measured.
+Experimental --batch-services failed on the school endpoint with HTTP 502 after
+60.59s; it remains opt-in and is not the current demonstration path.
 
-Module callers opt in with `compact_llm=True, batch_services=True`; defaults
-retain individual-service execution. Unbatched concurrency and opt-in bounded
-transient recovery remain available. Enquiry/state/storage work stays on the
-caller thread. Supplier replies remain Mock; --live uses fresh school model
-calls, with no prerecorded rankings or automatic Mock fallback.
-
-The 137.14s successful baseline used ten model calls. Grouped execution uses two
-for a normal complete event, but actual school Live speed/correctness still needs
-measurement. See [live demo setup and comparison](docs/live-procurement-demo.md).
+The maximum-five rule, top-three enquiries, supplier reply stage, received-price
+comparison and Financial/approval/deposit/booking gates remain. Live uses fresh
+school calls, without cached rankings or automatic Mock fallback. Only LLM jobs
+may overlap; state/storage stay on the caller thread. See [Live demo guide](docs/live-procurement-demo.md).

@@ -1,111 +1,91 @@
 # Fresh-download Live Procurement demo (KAN-40)
 
-The school demonstration runs freshly downloaded code and makes actual school
-LLM requests. Supplier quotation replies remain simulated data. No saved model
+The demonstration runs freshly downloaded code and makes actual school LLM
+requests. Supplier quotation replies remain simulated data. No cached model
 rankings or automatic Mock fallback are used.
 
-## Run and compare
+## Current Live comparison
 
-Install requirements and set the three existing process environment variables:
-ELEC5620_LLM_BASE_URL (full chat-completions URL), ELEC5620_LLM_MODEL and
-ELEC5620_LLM_API_KEY. Keep the key outside the repository. The computer must be
-able to reach the school API. OpenCode configuration is not loaded automatically.
+Install requirements and set ELEC5620_LLM_BASE_URL (full chat-completions URL),
+ELEC5620_LLM_MODEL and ELEC5620_LLM_API_KEY in the process environment. The key
+stays outside the repository. The machine must reach the school API; OpenCode
+configuration is not loaded automatically.
 
-Existing individual-service execution, with at most two requests in parallel:
-
-```powershell
-py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2
-```
-
-New opt-in grouped execution:
+Start with a single service and its two complete business phases:
 
 ```powershell
-py -3 -m examples.shared_catalog_procurement_example --live --batch-services
+py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --services photography
 ```
 
-Grouping sends all requested service shortlists in one model request, collects
-supplier replies normally, then compares all requested services in a second
-request. Each service is ranked independently, with up to three enquiries and
-one proposed selection. The event still accepts 1-5 distinct service categories.
-A single service retains its existing two-request protocol. The concurrency flag
-controls individual-service execution; grouped execution has one request per phase.
+Once successful, omit --services photography to measure the full five-service
+workflow. Ordinary Live execution uses ConciseRankingClient when compact_llm=True
+and batch_services=False. It asks the model to return local labels such as A B C,
+validates them, then restores the existing compact factual response. No extra
+run switch is needed. Shared Mock execution and Agent defaults are unchanged.
 
-The CLI's default output cap is now 0, meaning no max_tokens override is sent.
-This restores the original successful transport setting: the later 256-token
-cap was exhausted by reasoning before an answer. An explicit
---max-output-tokens value is still available, but it limits the complete generated
-output, including reasoning reported by the school service. Do not use
---disable-thinking for this school endpoint: the gateway rejected its extension.
-The /no_think prompt probe also did not prevent reasoning. Neither control is
-part of this optimization.
+The model still chooses supplier order. The adapter retains price, rating,
+capacity, name, referenced IDs, budgets/preferences, previous estimate references
+and supplier notes. Common notes appear once. Code supplies price/rating facts as
+recommendation reasons; these are factual summaries, not model-authored explanations.
+Exact label count, uniqueness and membership are checked before the existing
+identity/coverage/amount validation. Invalid replies fail without a Mock fallback.
 
-Normal output stays short: phase progress, status, total elapsed time, client LLM
-call count, enquiry/selection counts, and five supplier/price rows. Internal HTTP
-transport retries are not included in the client-call count. Add --verbose only
-for full snapshots. A received progress event means text arrived, before ranking
-validation. CLI exits nonzero when no complete valid selection is produced.
+Default CLI output budget uses server settings (--max-output-tokens 0 sends no
+max_tokens override). No thinking extension or /no_think instruction is used by
+this path. Normal output includes phase progress, status, total elapsed time,
+client LLM call count and supplier prices. Internal HTTP retries are separate
+from the client-call count. --verbose prints full snapshots. CLI exits nonzero
+if a complete valid selection is not produced.
 
-Omit --live to run the explicit offline Mock. Without --batch-services the
-existing Mock execution remains individual-service based. The feature branch
-is isolated from teammates' main/Mock integration until Live validation and merge.
+## Evidence and limits
 
-## Why group the requests
+- Original successful five-service Live run: 137.14s, ten client calls.
+- Reconstructed two-worker schedule from those rounded logs: 50.8s shortlist plus
+  86.4s comparison, totaling 137.2s. This accounts for almost all elapsed time but
+  does not separate server inference, queueing or internal transport retries.
+- Minimal real three-quote control: 4.64s, ranking A B C. This establishes that a
+  small actual ranking can complete quickly, not that all workflow calls will.
+- Same full photography shortlist input: 977 -> 652 characters after the concise
+  adapter. It retains five candidates, so it is larger than the three-quote control.
+- The complete concise Live workflow has not yet been measured on the school API.
+  Ten small client calls remain; no full-event latency guarantee is made.
 
-Jason's successful individual-service Live run took 137.14s. Reconstructing the
-two-worker schedule from its rounded request durations gives:
+Experimental --batch-services combines all services in one request per phase.
+Its school test failed at shortlisting with HTTP 502 after 60.59s and no enquiries.
+It remains opt-in for comparison, but is not the current demonstration path.
+The gateway explicitly rejected chat_template_kwargs as extra_forbidden; the
+/no_think soft prompt also did not prevent reasoning. Neither is an optimization
+prerequisite or a recommended demo setting. The 256-token cap experiment exhausted
+its entire budget on reasoning; it is not the CLI default.
 
-- Shortlisting: 50.8s.
-- Quotation comparison: 86.4s.
-- Total: 137.2s, close to the observed total within log rounding.
-
-This attributes almost all observed elapsed time to the ten client LLM jobs and
-their scheduling. It does not distinguish server inference, queueing or internal
-transport retries within each job. Increasing concurrency previously produced
-some 61s failures, so raising concurrency alone is not assumed reliable.
-
-On the same offline five-service shared-catalogue fixture:
-
-| Protocol | Model calls | Total input characters |
-|---|---:|---:|
-| Original full prompts | 10 | 30,190 |
-| Compact individual prompts | 10 | 10,670 |
-| Compact grouped prompts | 2 | 6,294 |
-
-These are call and character counts, not measured Live speedups. One grouped
-request can take longer than one individual request. The Live event must succeed
-and its elapsed time must be measured before choosing this mode for demonstration.
-
-## Module integration and validation
-
-Existing constructor defaults preserve individual-service execution. Opt in with:
+## Module integration
 
 ```python
+from src.llm.concise_ranking import ConciseRankingClient
+
 agent = VendorProcurementManagerAgent(
-    llm=CampusQwenClient.from_env(),
+    llm=ConciseRankingClient(CampusQwenClient.from_env()),
     vendor_service=vendor_service,
     quotation_service=quotation_service,
     compact_llm=True,
-    batch_services=True,
+    llm_concurrency=2,
 )
 ```
 
-Grouping requires compact_llm=True. Dates, city, guest count, preferences and
-phase instructions are shared only when equal. Candidate indices are local to
-each service. The grouped response must name every requested service exactly
-once; original per-service identity, index, coverage, reason and price validation
-then applies. IDs and amounts come from stored facts. Compact basis_codes remain
-empty; AI reasons are not fully fact-verified.
+The wrapper accepts individual compact table requests. Grouped requests use the
+earlier JSON protocol without this wrapper. Existing injected module clients and
+Agent defaults are unaffected. No public Procurement reply shape changes.
 
-All enquiry creation, reply submission and SQLite writes stay on the caller
-thread. Second-phase prompts are constructed only after supplier replies arrive.
-Pending replies, invalid/missing rankings and failed model requests block complete
-Financial handoff. Existing approval/deposit/booking gates remain. On comparison
-failure, accepted replies remain available for an explicit comparison retry.
-A grouped failure can affect all services in that phase; there is no automatic
-split into smaller requests or switch to Mock.
-
-Optional --retry-failed retains its existing bounded transient-only recovery:
-once after the phase drains, with successful jobs and supplier enquiries retained.
-Permanent failures and invalid rankings are not retried. The Campus client has
-its own one-HTTP-retry policy; recovery may increase total waiting time.
+Activities still accept 1-5 distinct services. First-phase shortlists create at
+most three enquiries per service; supplier replies arrive before second-phase
+prompts are built. Quote comparisons use received amounts. Pending replies,
+invalid rankings and failed calls block complete Financial handoff. Existing
+approval/deposit/booking gates remain. Comparison can resume from accepted quotes
+without re-enquiry. All enquiry/state/SQLite writes stay on the caller thread.
 External requests to a shared Agent instance must still be serialized.
+
+Optional --retry-failed retains bounded transient-only recovery after the phase
+drains. Successful jobs and supplier enquiries are retained; permanent failures
+and invalid rankings are not retried. The Campus transport also retries once,
+so recovery can increase waiting time. Main/Mock integration remains isolated
+until explicit merge and actual Live verification.

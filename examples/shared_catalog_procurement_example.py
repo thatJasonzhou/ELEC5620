@@ -16,6 +16,7 @@ from pathlib import Path
 from examples.event_procurement_example import SERVICE_TYPES, mock_compare
 from src.agents.vendor_procurement_manager import VendorProcurementManagerAgent
 from src.llm import CampusQwenClient, MockLLMClient
+from src.llm.concise_ranking import ConciseRankingClient
 from src.services.vendor_procurement_service import VendorProcurementService
 from src.services.vendor_quotation_service import MockVendorQuotationService
 
@@ -44,8 +45,14 @@ def mock_service_group_compare(messages):
 def build_agent(*, live=False, llm_concurrency=1, progress_callback=None,
                 retry_failed_llm=False, compact_llm=True, max_output_tokens=None,
                 enable_thinking=None, batch_services=False):
+    if live:
+        llm = CampusQwenClient.from_env(max_output_tokens=max_output_tokens, enable_thinking=enable_thinking)
+        if compact_llm and not batch_services:
+            llm = ConciseRankingClient(llm)
+    else:
+        llm = MockLLMClient(mock_service_group_compare if batch_services else mock_compare)
     return VendorProcurementManagerAgent(
-        llm=CampusQwenClient.from_env(max_output_tokens=max_output_tokens, enable_thinking=enable_thinking) if live else MockLLMClient(mock_service_group_compare if batch_services else mock_compare),
+        llm=llm,
         llm_concurrency=llm_concurrency, progress_callback=progress_callback,
         retry_failed_llm=retry_failed_llm, compact_llm=compact_llm, batch_services=batch_services,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),

@@ -65,7 +65,7 @@ def test_full_live_cli_passes_explicit_setting_to_all_ten_model_calls(monkeypatc
         payload = json.loads(request.data)
         requests.append(payload)
         return json.dumps({'choices': [{'finish_reason': 'stop',
-                          'message': {'content': mock_compare(payload['messages'])}}]})
+                          'message': {'content': mock_compare(payload['messages']) if payload['messages'][-1]['content'].startswith('{') else 'A B C'}}]})
     monkeypatch.setattr(CampusQwenClient, '_open_and_read', transport)
     monkeypatch.setattr('sys.argv', ['demo', '--live', '--concurrency', '2', '--disable-thinking', '--verbose'])
     demo.main()
