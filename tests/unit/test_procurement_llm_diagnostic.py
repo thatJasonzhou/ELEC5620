@@ -82,3 +82,34 @@ def test_uncapped_baseline_sends_only_ok_prompt(monkeypatch, capsys):
     assert "max_tokens" not in captured[0]
     assert captured[0]["messages"] == [{"role": "user", "content": "Reply with exactly OK."}]
     assert "response_received" in capsys.readouterr().out
+
+
+def test_no_think_prompt_uses_no_extension_and_preserves_fixture(monkeypatch, capsys):
+    from examples.shared_catalog_procurement_example import build_agent, event_request
+    requests = []
+    agent = build_agent()
+    agent.prepare_event_enquiries(event_request(services=['photography']))
+    original = [dict(message) for message in agent.llm.calls[0]]
+    monkeypatch.setattr(probe, 'build_agent', lambda: agent)
+    monkeypatch.setattr(probe.DiagnosticCampusClient, 'from_env', classmethod(
+        lambda cls, **kw: cls('https://test.example/chat', 'test-key', 'test', **kw)))
+    def transport(self, request):
+        requests.append(json.loads(request.data))
+        return '{"choices":[{"finish_reason":"stop","message":{"content":"OK"}}]}'
+    monkeypatch.setattr(CampusQwenClient, '_open_and_read', transport)
+    monkeypatch.setattr('sys.argv', ['probe', '--no-think-prompt'])
+    probe.main()
+    assert set(requests[0]) == {'model', 'messages', 'max_tokens'}
+    assert requests[0]['max_tokens'] == 256
+    assert requests[0]['messages'][:-1] == original[:-1]
+    assert requests[0]['messages'][-1]['content'] == original[-1]['content'] + '\n/no_think'
+    assert agent.llm.calls[0] == original
+    assert 'Thinking: prompt_no_think_requested' in capsys.readouterr().out
+
+
+def test_thinking_controls_are_mutually_exclusive(monkeypatch, capsys):
+    monkeypatch.setattr('sys.argv', ['probe', '--disable-thinking', '--no-think-prompt'])
+    with pytest.raises(SystemExit) as raised:
+        probe.main()
+    assert raised.value.code == 2
+    assert 'Choose only one thinking control' in capsys.readouterr().err

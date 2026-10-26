@@ -84,7 +84,11 @@ def main():
     parser.add_argument("--baseline", action="store_true", help="Probe Reply OK instead of the actual shortlist prompt.")
     parser.add_argument('--disable-thinking', action='store_true',
                         help='Request Qwen non-thinking mode; backend support must be verified.')
+    parser.add_argument('--no-think-prompt', action='store_true',
+                        help='Append Qwen /no_think to the prompt without sending an API extension.')
     args = parser.parse_args()
+    if args.no_think_prompt and args.disable_thinking:
+        parser.error('Choose only one thinking control.')
     if args.max_output_tokens < 0:
         parser.error("--max-output-tokens must be nonnegative.")
     if args.baseline:
@@ -96,10 +100,15 @@ def main():
         if prepared["status"] != "success":
             raise RuntimeError("Offline shortlist fixture could not be prepared")
         messages = agent.llm.calls[0]
-    chars = sum(len(message["content"]) for message in messages)
+    if args.no_think_prompt:
+        messages = [dict(message) for message in messages]
+        messages[-1]['content'] += '\n/no_think'
+    chars = sum(len(message['content']) for message in messages)
     print(f"Probe: {'baseline' if args.baseline else 'photography shortlist'} | input_chars={chars} | max_tokens={args.max_output_tokens or 'server_default'}", flush=True)
     start = monotonic()
-    print('Thinking: disabled_requested' if args.disable_thinking else 'Thinking: server_default', flush=True)
+    thinking = 'prompt_no_think_requested' if args.no_think_prompt else (
+        'disabled_requested' if args.disable_thinking else 'server_default')
+    print(f'Thinking: {thinking}', flush=True)
     client = None
     try:
         client = DiagnosticCampusClient.from_env(max_output_tokens=args.max_output_tokens or None,

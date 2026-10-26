@@ -235,3 +235,28 @@ The CLI flag is also opt-in. Existing main/Mock integration remains isolated.
 No non-thinking Live speed, output correctness or five-service success is yet
 claimed. The previous statement about no thinking switch describes the earlier
 increment; this increment adds an explicit, documented experimental option.
+
+## School rejects the hard-switch extension: prompt-only probe
+
+The --disable-thinking probe returned HTTP 422 in 0.06s. The request was rejected;
+no successful generation or hard-switch support is established. The exact 422
+validation fields were not returned by the diagnostic, so the specific rejected
+field is inferred from the newly added extension, not yet proven from the body.
+Do not use that flag for the school demo until backend support is clarified.
+
+Qwen also documents the /no_think soft instruction in a user or system message:
+https://qwen.readthedocs.io/en/stable/getting_started/quickstart.html
+A separate explicit diagnostic option appends this instruction to a copied last
+message, without sending chat_template_kwargs or other extra API fields:
+
+```powershell
+py -3 -m examples.diagnose_procurement_llm --no-think-prompt
+```
+
+The output cap stays 256. This probes whether the model follows the instruction;
+it is not a guaranteed server-level disable. Inspect finish, final content and
+reasoning metadata. The diagnostic still does not validate a business ranking.
+The original --disable-thinking option is retained as an explicit hard-switch
+probe, and cannot be combined with --no-think-prompt. There is no automatic
+fallback between the two methods. Production/Mock code is unchanged by this
+increment; prompt-only mode is confined to the diagnostic pending Live evidence.
