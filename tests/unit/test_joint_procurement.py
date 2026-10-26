@@ -131,14 +131,15 @@ def test_malformed_decision_never_returns_a_financial_selection(reply):
 
 
 def test_overall_ceiling_is_enforced_without_silently_replacing_llm_choice():
-    agent, supplier, request = fixture(services=("photography",), reply=choose_vendors("A"))
-    request["budget_limit_cents"] = 100000
+    agent, supplier, request = fixture(
+        services=("photography", "catering"), reply=choose_vendors("A", "A"))
+    request["budget_limit_cents"] = 360000
     result = agent.procure_services(request)
     assert result["status"] == "blocked" and len(agent.llm.calls) == 1
     assert not result["data"]["selection_complete"] and result["data"]["quotations"] == []
     assert result["data"]["proposed_quotation_ids"]
-    assert result["data"]["budget_summary"]["proposed_supplier_total_cents"] == 130000
-    assert len(supplier.calls) == 3
+    assert result["data"]["budget_summary"]["proposed_supplier_total_cents"] == 390000
+    assert len(supplier.calls) == 6
 
 
 def test_no_feasible_combination_does_not_call_model():
@@ -224,3 +225,54 @@ def test_live_builder_sends_one_supported_http_request_for_all_actual_quotes(mon
     result = build_agent(live=True, joint_selection=True).procure_services(event_request())
     assert result["status"] == "success" and len(sent) == 1
     assert len(result["data"]["quotations"]) == 5
+
+
+def test_precomputed_combinations_preserve_all_feasible_supplier_choices():
+    from itertools import product
+    from src.services.vendor_bundle_service import VendorBundleService
+    agent, _, request = fixture(services=("photography", "catering"))
+    request["supplier_budget_limit_cents"] = 360000
+    prepared = agent.prepare_event_enquiries(request)
+    ref = lookup(prepared)
+    agent.request_event_quotations(ref)
+    plans = [agent._comparison_plan({
+        **ref, "round_id": r["round_id"]}) for r in prepared["data"]["service_rounds"]]
+    original = [p[1] for p in plans]
+    expected = {
+        tuple(c["quotation_id"] for c in combo)
+        for combo in product(*original)
+        if sum(c["total_price_cents"] for c in combo) <= 360000
+    }
+    groups, support = VendorBundleService.prepare_comparison(
+        original, prepared["data"]["selection_context"])
+    assert support["allowed_choices"] is not None
+    actual = {
+        tuple(group[int(i)]["quotation_id"] for group, i in zip(groups, code))
+        for code in support["allowed_choices"]
+    }
+    assert actual == expected
+    assert support["upgrade_allowance_cents"] == 75000
+    assert support["feasible_combination_count"] == len(expected)
+
+
+def test_globally_impossible_quote_is_hidden_but_above_service_target_quote_survives():
+    agent, _, request = fixture(
+        services=("photography", "catering"), reply=choose_vendors("A", "B"),
+        quote_overrides={"A-photography": 105000})
+    request["supplier_budget_limit_cents"] = 300000
+    result = agent.procure_services(request)
+    assert result["status"] == "success"
+    facts = payload(agent.llm.calls[0])
+    assert [r[2] for r in facts["services"][0]["quotes"]] == [105000, 95000]
+    assert [r[2] for r in facts["services"][1]["quotes"]] == [190000]
+    assert result["data"]["service_results"][1]["data"]["budget_excluded_quotation_ids"]
+    assert facts["upgrade_allowance_cents"] == 15000
+    assert facts["services"][0]["quotes"][0][-2:] == [10000, 0.2]
+
+
+def test_model_can_return_a_choice_code_without_losing_identity_validation():
+    agent, _, request = fixture(services=("photography",), reply='{"choices":"1","reason":"Value choice."}')
+    result = agent.procure_services(request)
+    assert result["status"] == "success" and result["data"]["quotations"][0]["vendor_id"] == "B"
+    agent, _, request = fixture(services=("photography",), reply='{"choices":"９","reason":"Invalid index."}')
+    assert agent.procure_services(request)["status"] == "error"

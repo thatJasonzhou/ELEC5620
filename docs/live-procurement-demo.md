@@ -66,6 +66,38 @@ final output do not guarantee a short reasoning phase. The earlier two-call
 grouped-ranking experiment failed at shortlisting; this trial instead performs
 no model shortlisting and requests only final bundle choices after actual replies.
 
+### Budget arithmetic moved out of the model
+
+The original joint prompt failed with HTTP 502 at 60.66s. A same-input diagnostic
+with max_tokens=1024 returned HTTP success at 10.92s but finish=length: all 1,024
+completion tokens were reasoning and no final answer was available. The complete
+workflow with max_tokens=2048 failed with response_format at 21.62s; that summary
+does not expose enough metadata to prove the exact format failure. Increasing
+token caps is not treated as a demonstrated speed optimization.
+
+Code now computes the cheapest baseline, remaining supplier allowance and each
+quote's extra cost / rating change against that baseline. It excludes an option
+only when its amount plus every other service's minimum already exceeds the
+supplied whole-event/supplier ceiling. This never creates a soft service-price
+cutoff. Code enumerates the at-most-243 combinations and supplies the model with
+all budget-feasible choice codes; no scoring policy or subjective ranking is used
+to remove a feasible combination. If every combination fits (or no ceiling was
+given), the redundant code list is omitted.
+
+The model selects a choice code plus a short preference explanation. Code maps
+each digit back to a stored quote and performs the existing exact final checks.
+Older integer-list model fixtures are still accepted. The concrete priority
+fixture retains 14 of 15 accepted quotes, with baseline AUD8,733, room AUD2,267
+and all 62 feasible combinations. The prompt is 3,171 characters rather than
+2,765: the hypothesis is less model-side budget search, not merely fewer input
+characters. Actual school completion/latency for this revision remains unmeasured.
+
+Same full-event trial, keeping the previously tested token budget:
+
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json --max-output-tokens 2048
+```
+
 ## Earlier policy decision plus code ranking (performance baseline)
 
 Run the complete five-service workflow:

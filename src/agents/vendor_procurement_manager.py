@@ -1098,8 +1098,13 @@ class VendorProcurementManagerAgent(AIAgent):
         batch["budget_summary"] = budget
         if not budget["supplier_bundle_feasible"]:
             return failed("blocked", "Even the cheapest eligible supplier combination exceeds the supplied ceiling; Financial/Planner review required.")
+        groups, support = VendorBundleService.prepare_comparison(groups, context)
+        plans = [(plan[0], group, plan[2]) for plan, group in zip(plans, groups)]
+        batch["comparison_support"] = support
+        for plan, excluded in zip(plans, support["budget_excluded_quotation_ids"]):
+            plan[0]["budget_excluded_quotation_ids"] = excluded
         completion = complete_jobs(
-            self.llm, [("event_bundle", build_bundle_messages(plans, context, budget))],
+            self.llm, [("event_bundle", build_bundle_messages(plans, context, budget, support))],
             max_workers=1, stage="comparison", retry_failed=self._retry_failed_llm,
             progress=self._progress_callback)[0]
         if completion.failed:
