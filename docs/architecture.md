@@ -171,3 +171,19 @@ create Budget records or synthetic quotes. The new supplier ceiling also reserve
 the full fees before Procurement chooses its bundle.
 
 See docs/catalog-budget-estimate.md for the interface, result semantics and limits.
+
+
+## KAN-42 bounded Financial feedback revision (2026-10-27)
+
+ProcurementRevisionService validates existing FIN-01 feedback against stored
+VendorEnquiryService batches and owns the process-local one-attempt/result
+records. VendorProcurementManagerAgent.reselect_after_finance delegates validation
+and state to that Service, then reuses its existing joint quote comparison.
+It imports no Financial Agent and calls no other Agent; workflow orchestration
+remains external. Original enquiry facts/preferences/context are retained.
+
+The supplier allowance uses the shared KAN-41 exact cost policy. Financial
+interfaces, Stage 1 domain entities/relationships and approval/payment/booking
+gates are unchanged. No new Supervisor calculations or automatic bookings are
+introduced. The integration must serialize calls and obtain fresh Financial
+validation after a revised selection. See docs/finance-reselection.md.
