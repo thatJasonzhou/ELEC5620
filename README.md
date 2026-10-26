@@ -631,3 +631,17 @@ are code-checked; full-event affordability remains Financial's responsibility.
 Existing Mock/API defaults are unchanged. For this priority fixture, Jason measured
 four consecutive school successes at 17.59s, 19.55s, 28.78s and 12.19s with the
 4096-token cap, all selecting the same AUD9,310 supplier bundle. See [Live demo guide](docs/live-procurement-demo.md).
+
+### Offline joint Procurement to confirmed bookings (KAN-40)
+
+```powershell
+py -3 -m examples.joint_booking_handoff_example
+```
+
+Replays the three previously observed supplier selections using explicit Mock
+fixtures, then uses the existing Finance, customer quotation, approval, 30%
+simulated deposit and supplier booking services. Temporary SQLite records verify
+restart/retry without duplicate effects. Missing approval, unpaid deposits,
+changed quotes, failed payments and declined bookings are covered by regression
+checks. This verifies module handoff, not fresh Live reasoning or Planner/UI
+integration. Business code and default Mock/Live behavior are unchanged.
