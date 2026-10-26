@@ -825,3 +825,16 @@ feasibility and finance_review_required=true. Pending/missing replies,
 malformed/model errors and over-ceiling choices block complete selection.
 An explicit subsequent comparison makes another fresh call; it does not resend
 terminal supplier enquiries. Default Mock/Agent behavior is unchanged.
+
+Recommended measured Procurement configuration: CampusQwenClient.from_env(
+max_output_tokens=4096), compact_llm=True, joint_selection=True. Code precomputes
+budget-feasible combinations; the LLM still chooses the supplier bundle itself.
+Batch comparison_support exposes the cheapest baseline, upgrade allowance,
+feasible choice codes/count and globally budget-excluded IDs; per-service
+budget_excluded_quotation_ids distinguishes those from unranked eligible options.
+The model may return a per-service index code or the earlier integer-list fixture;
+these are internal protocols, and selected quote handoff shapes stay unchanged.
+The fixed priority fixture succeeded in four consecutive school runs at 17.59s,
+19.55s, 28.78s and 12.19s (one client LLM call each, supplier total AUD9,310).
+This is measured evidence for that fixture, not guaranteed latency/reliability
+for every request. Keep supplier subtotal review separate from Financial approval.

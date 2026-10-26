@@ -4,12 +4,12 @@ The demonstration runs freshly downloaded code and makes actual school LLM
 requests. Supplier quotation replies remain simulated data. No cached model
 rankings or automatic Mock fallback are used.
 
-## One joint supplier decision (current opt-in trial)
+## One joint supplier decision (current demonstrated baseline)
 
 Run a concrete five-service request with photography as the priority:
 
 ```powershell
-py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json
+py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json --max-output-tokens 4096
 ```
 
 The request is simulated structured Planner output, not an implemented Planner.
@@ -61,8 +61,10 @@ combined with policy_ranking or batch_services. Existing Agent and Mock defaults
 are unchanged; --joint-selection without --live is an explicit cheapest-quote
 offline fixture, not evidence of model reasoning.
 
-Actual school latency for this joint mode remains unmeasured. One call and short
-final output do not guarantee a short reasoning phase. The earlier two-call
+Jason has measured four consecutive successful school runs with max-output-tokens
+4096 for this same request; see the results below. These runs do not establish
+reliability for every request. One call and short final output do not guarantee
+a short reasoning phase. The earlier two-call
 grouped-ranking experiment failed at shortlisting; this trial instead performs
 no model shortlisting and requests only final bundle choices after actual replies.
 
@@ -90,13 +92,54 @@ Older integer-list model fixtures are still accepted. The concrete priority
 fixture retains 14 of 15 accepted quotes, with baseline AUD8,733, room AUD2,267
 and all 62 feasible combinations. The prompt is 3,171 characters rather than
 2,765: the hypothesis is less model-side budget search, not merely fewer input
-characters. Actual school completion/latency for this revision remains unmeasured.
+characters. Jason subsequently measured four consecutive school successes with a 4096-token
+cap for this revision. Full results and the recommended command are below.
 
-Same full-event trial, keeping the previously tested token budget:
+Earlier 2048-token comparison (succeeded once at 16.02s, then failed with
+response_format at 21.77s; not the current recommended cap):
 
 ```powershell
 py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json --max-output-tokens 2048
 ```
+
+## Measured school baseline: 4096-token cap
+
+On 26 October 2026, Jason ran the same complete priority fixture with
+max-output-tokens=4096 four consecutive times:
+
+| Run | Elapsed | Complete selection | Client LLM calls | Supplier subtotal |
+|---|---:|---|---:|---:|
+| 1 | 17.59s | true | 1 | AUD9,310 |
+| 2 | 19.55s | true | 1 | AUD9,310 |
+| 3 | 28.78s | true | 1 | AUD9,310 |
+| 4 | 12.19s | true | 1 | AUD9,310 |
+
+All four selected V-PHOTO-004 / V-CAT-003 / V-VENUE-001 / V-SOUND-001 /
+V-DECOR-001. The model prioritised the 4.9-rated photographer at AUD1,470 while
+keeping other services at their cheapest eligible baseline. This exceeds the
+photography's soft AUD1,000 allocation but fits the AUD11,000 supplier ceiling.
+Full event Financial review still remains pending.
+
+Use the command at the top of this guide with --max-output-tokens 4096.
+For module callers, keep the same business responsibilities and configure only
+the Procurement client:
+
+```python
+agent = VendorProcurementManagerAgent(
+    llm=CampusQwenClient.from_env(max_output_tokens=4096),
+    vendor_service=vendor_service,
+    quotation_service=quotation_service,
+    compact_llm=True,
+    joint_selection=True,
+)
+result = agent.procure_services(planner_request)
+```
+
+The cap is an allowance, including model reasoning; it does not force 4096 tokens
+to be generated. Existing client/CLI defaults are unchanged, so supply it explicitly.
+These are four user-observed runs on one fixture, not a broad reliability guarantee.
+Client-call counts do not expose internal HTTP retry counts. Each run uses a fresh
+school response, with no pre-recorded or cached live supplier choice.
 
 ## Earlier policy decision plus code ranking (performance baseline)
 

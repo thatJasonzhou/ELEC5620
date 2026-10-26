@@ -623,10 +623,11 @@ Code prepares diverse top-three enquiries; after simulated replies, one LLM call
 selects the whole supplier bundle against Planner-provided priorities and budgets.
 
 ```powershell
-py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json
+py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json --max-output-tokens 4096
 ```
 
 Single-service targets are soft unless explicitly hard. Exact supplier subtotals
 are code-checked; full-event affordability remains Financial's responsibility.
-Existing Mock/API defaults are unchanged. This is an opt-in trial with school
-latency still to measure. See [Live demo guide](docs/live-procurement-demo.md).
+Existing Mock/API defaults are unchanged. For this priority fixture, Jason measured
+four consecutive school successes at 17.59s, 19.55s, 28.78s and 12.19s with the
+4096-token cap, all selecting the same AUD9,310 supplier bundle. See [Live demo guide](docs/live-procurement-demo.md).
