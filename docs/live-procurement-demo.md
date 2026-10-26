@@ -166,3 +166,34 @@ procurement = VendorProcurementManagerAgent(
 Agent compact_llm defaults to False and Campus token cap defaults to None so
 existing injected clients/prompts stay compatible. The shared-data example
 opts in by default. No public Procurement reply shape or supplier reply seam changes.
+
+## Bounded single-request diagnostics
+
+Do not infer the failure cause from total elapsed time alone. A capped compact
+photography run failed with response_format after 3.3s; a later uncapped run
+failed with HTTP 502 after 60.69s, both before supplier enquiries. Neither run
+establishes that the compact request is faster or identifies the school model.
+The production client may retry internally, so total time can span two HTTP
+attempts. HTTP 502 alone does not establish which upstream component failed.
+
+Run this on the feature branch with the existing runtime environment:
+
+```powershell
+py -3 -m examples.diagnose_procurement_llm
+```
+
+It sends the exact compact photography shortlist prompt once through the existing
+Campus client (at most two HTTP attempts under its normal retry policy). It prints
+attempt durations/status and only allowlisted envelope metadata: finish reason,
+content/reasoning character counts, and token counts when the server supplies
+them. It never prints the response text, API key, endpoint or server error body.
+The default cap is 256. A finish=length with detail=output_limit establishes
+truncation; missing usage/reasoning fields mean unknown, not zero. This diagnostic
+does not disable reasoning or assume the server supports such a parameter.
+
+Optional isolated controls: --baseline sends only Reply with exactly OK;
+--max-output-tokens 0 omits the cap. Each invocation probes one request, not a
+complete event. response_received means transport/content parsing succeeded;
+the ranking and procurement workflow are not validated by this probe. No Live
+supplier quotation or booking is requested. Main/Mock integration is unchanged;
+keep this investigation isolated until actual Live results are reviewed.
