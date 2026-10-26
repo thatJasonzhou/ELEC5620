@@ -4,7 +4,69 @@ The demonstration runs freshly downloaded code and makes actual school LLM
 requests. Supplier quotation replies remain simulated data. No cached model
 rankings or automatic Mock fallback are used.
 
-## One policy decision plus code ranking (opt-in trial)
+## One joint supplier decision (current opt-in trial)
+
+Run a concrete five-service request with photography as the priority:
+
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json
+```
+
+The request is simulated structured Planner output, not an implemented Planner.
+It requests Sydney, 16 December 2026, 50 guests, five services, a flexible AUD1,000
+photography target, an AUD12,000 overall event limit and an explicitly supplied
+AUD11,000 supplier allowance. The allowance is not inferred or automatically
+deducted by Procurement. Edit the JSON to test different structured requirements.
+Other event CLI options apply to the built-in request, not --request-file.
+
+- Code checks service/date/location/capacity/minimum rating and selects up to
+  three distinct offerings per service: cheap, highly rated, then balanced.
+  No catalogue-price budget cutoff is applied: estimates are not confirmed quotes.
+  These are enquiry priorities, not model recommendations.
+- Existing mock suppliers reply through the same enquiry/submission interfaces.
+  Future supplier forms can use submit_quotation_reply without changing selection.
+- After all replies are terminal, one fresh school request receives every eligible
+  accepted quote (at most 15), event priorities, per-service preferences/targets
+  and any supplied supplier ceiling. It chooses one local index per service
+  jointly and gives one brief bundle explanation. It does not select a fixed policy.
+- Exact identities/amounts come from stored supplier replies. Hard service budgets
+  are checked against actual quotes. Soft service targets can be exceeded using
+  savings elsewhere. Code checks the selected subtotal against the smaller of an
+  explicitly supplied supplier allowance and the overall event budget.
+- If no feasible combination exists, no model call is made. Invalid/model failures
+  return no selection. An over-ceiling model choice is blocked, never silently
+  repaired by choosing a different supplier. No automatic re-prompt or Mock fallback.
+- Normal successful full-event execution uses one client LLM call; existing
+  transport retries and explicitly enabled --retry-failed can add attempts.
+  An explicit later comparison makes a fresh decision without re-enquiring.
+  No cross-event result cache is used.
+
+The result preserves top-level quotations / selected_quotations as selected-only
+Financial handoff. service_results[].data.quotation_ranking contains only the
+selected item (ranking_scope="selected_only"); remaining eligible quote IDs are
+unranked_quotation_ids. Alternatives are not falsely presented as LLM-ranked.
+bundle_recommendation_reason is model-authored and not fact-verified.
+budget_summary contains exact supplier subtotals/ceilings and
+finance_review_required=true. Passing this necessary subtotal check does not
+mean contingency, tax/fees or the final customer price passed Financial review.
+Accepted quotation snapshots are not rewritten with the model explanation.
+
+Integration: construct VendorProcurementManagerAgent with the raw CampusQwenClient,
+compact_llm=True, joint_selection=True. Use the same activity-level
+prepare_event_enquiries -> supplier submissions -> compare_event_quotations,
+or procure_services. Store budgets/preferences at preparation; comparison reads the
+stored event context, so later lookup fields cannot silently replace constraints.
+Use the event comparison API even for one service. The optional mode cannot be
+combined with policy_ranking or batch_services. Existing Agent and Mock defaults
+are unchanged; --joint-selection without --live is an explicit cheapest-quote
+offline fixture, not evidence of model reasoning.
+
+Actual school latency for this joint mode remains unmeasured. One call and short
+final output do not guarantee a short reasoning phase. The earlier two-call
+grouped-ranking experiment failed at shortlisting; this trial instead performs
+no model shortlisting and requests only final bundle choices after actual replies.
+
+## Earlier policy decision plus code ranking (performance baseline)
 
 Run the complete five-service workflow:
 
@@ -53,8 +115,8 @@ The initial Mock path is unchanged. Opt-in Mock trial uses an explicit V fixture
 Module construction adds compact_llm=True, policy_ranking=True with the raw
 CampusQwenClient (no concise adapter). policy_ranking and batch_services are
 mutually exclusive. The public staged input/reply flow, maximum-five limit and
-approval/deposit/booking gates stay unchanged. Actual school Live completion and
-elapsed time for this mode remain to be measured.
+approval/deposit/booking gates stay unchanged. Jason measured successful school policy-mode runs at 1.34s and 1.00s. These
+measurements validate the policy baseline, not direct supplier-selection capability.
 
 Evidence motivating the trial: the minimal five-candidate test succeeded in
 13.11s on one HTTP attempt, with 160 prompt tokens and 1,170 completion tokens,

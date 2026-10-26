@@ -40,6 +40,8 @@ from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
 from src.llm.batch import Completion, complete_jobs
 from src.services.vendor_ranking_service import VendorRankingService
+from src.services.vendor_bundle_service import VendorBundleService
+from src.llm.bundle_selection import build_bundle_messages, read_bundle_selection
 from src.llm.service_group import complete_service_group
 from src.services.vendor_procurement_service import VendorProcurementService
 from src.services.vendor_quotation_service import MockVendorQuotationService, NoQuotationScenarioError
@@ -122,6 +124,7 @@ class VendorProcurementManagerAgent(AIAgent):
         compact_llm: bool = False,
         batch_services: bool = False,
         policy_ranking: bool = False,
+        joint_selection: bool = False,
         progress_callback: Callable[[dict], None] | None = None,
     ) -> None:
         super().__init__(llm)
@@ -154,6 +157,11 @@ class VendorProcurementManagerAgent(AIAgent):
             raise TypeError('policy_ranking must be bool')
         if policy_ranking and (not compact_llm or batch_services):
             raise ValueError('policy_ranking requires compact_llm=True and batch_services=False')
+        if type(joint_selection) is not bool:
+            raise TypeError('joint_selection must be bool')
+        if joint_selection and (not compact_llm or batch_services or policy_ranking):
+            raise ValueError('joint_selection requires compact_llm=True and no other ranking mode')
+        self._joint_selection = joint_selection
         self._policy_ranking = policy_ranking
         self._batch_services = batch_services
         self._compact_llm = compact_llm
@@ -781,6 +789,17 @@ class VendorProcurementManagerAgent(AIAgent):
         return results
 
     def _complete_plans(self, plans, stage):
+        if self._joint_selection:
+            if stage != "shortlist":
+                raise ValueError("Joint comparison requires the whole event batch")
+            for context, _, _ in plans:
+                context["shortlist_strategy"] = "price_rating_diversity"
+            results = [Completion(json.dumps(VendorBundleService.shortlist(plan[1])), False, 0)
+                       for plan in plans]
+            if self._progress_callback is not None and plans:
+                self._progress_callback({"stage": stage, "service_type": "all_services",
+                                         "state": "shortlisted_by_code", "elapsed_seconds": 0})
+            return results
         if self._policy_ranking:
             return self._complete_policy_plans(plans, stage)
         complete = complete_service_group if self._batch_services else complete_jobs
@@ -907,6 +926,10 @@ class VendorProcurementManagerAgent(AIAgent):
 
     def compare_quotations(self, request: dict[str, Any]) -> dict[str, Any]:
         """Re-rank received quotes; selection is a proposal, never an approval."""
+        if self._joint_selection:
+            event_id = request.get("event_id") if isinstance(request, dict) else None
+            return self.envelope(event_id, "needs_input",
+                                 "Use compare_event_quotations with the complete batch for joint selection.")
         plan = self._comparison_plan(request)
         if isinstance(plan, dict):
             return plan
@@ -917,6 +940,7 @@ class VendorProcurementManagerAgent(AIAgent):
         event_id = request.get("event_id") if isinstance(request, dict) else None
         try:
             contexts = self._enquiry_service.validate_event_request(request)
+            selection_context = VendorBundleService.event_context(request) if self._joint_selection else None
             for context in contexts:
                 _, _, errors = self._validate_request(context)
                 if errors:
@@ -926,7 +950,7 @@ class VendorProcurementManagerAgent(AIAgent):
         except (ValueError, TypeError, KeyError) as exc:
             return self.envelope(event_id, "needs_input", str(exc))
         prepared = []
-        if self._llm_concurrency == 1 and not self._batch_services and not self._policy_ranking:
+        if self._llm_concurrency == 1 and not self._batch_services and not self._policy_ranking and not self._joint_selection:
             for context in contexts:
                 result = self.prepare_enquiries(context)
                 prepared.append({"service_type": context["service_type"], **result})
@@ -951,7 +975,8 @@ class VendorProcurementManagerAgent(AIAgent):
                                  {"service_results": prepared, "selection_complete": False,
                                   "quotations": [], "selected_quotations": [], "selected_quotation_ids": []})
         batch = self._enquiry_service.create_batch(
-            event_id, request["proposal_id"], [r["data"]["round_id"] for r in prepared])
+            event_id, request["proposal_id"], [r["data"]["round_id"] for r in prepared],
+            selection_context=selection_context)
         return self.envelope(event_id, "success", "Prepared enquiries for all requested services.", batch)
 
     def _event_enquiry_snapshot(self, request: Any) -> dict[str, Any]:
@@ -1013,10 +1038,12 @@ class VendorProcurementManagerAgent(AIAgent):
             return self.envelope(event_id, "needs_input", str(exc))
         if any(r["awaiting_replies"] for r in batch["service_rounds"]):
             return self.envelope(event_id, "blocked", "Waiting for all requested services; no complete selection.", batch)
+        if self._joint_selection:
+            return self._compare_joint_batch(batch)
         lookups = [
             {"event_id": event_id, "proposal_id": batch["proposal_id"], "round_id": r["round_id"]}
             for r in batch["service_rounds"]]
-        if self._llm_concurrency == 1 and not self._batch_services and not self._policy_ranking:
+        if self._llm_concurrency == 1 and not self._batch_services and not self._policy_ranking and not self._joint_selection:
             compared = [self.compare_quotations(lookup) for lookup in lookups]
         else:
             plans = [self._comparison_plan(lookup) for lookup in lookups]
@@ -1036,6 +1063,82 @@ class VendorProcurementManagerAgent(AIAgent):
                      selected_quotation_ids=[q["quotation_id"] for q in selected], selection_complete=True)
         return self.envelope(event_id, "success",
                              "All services compared; selected supplier quotes are ready for Financial review. No bookings made.",
+                             batch)
+
+    def _compare_joint_batch(self, batch):
+        """One model choice for the whole event; totals and identities stay code-owned."""
+        event_id = batch["event_id"]
+        context = batch.get("selection_context")
+        if context is None:
+            return self.envelope(event_id, "blocked", "Prepare a whole-event joint-selection batch first.", batch)
+        plans = [self._comparison_plan({
+            "event_id": event_id, "proposal_id": batch["proposal_id"], "round_id": r["round_id"]})
+            for r in batch["service_rounds"]]
+        batch["candidate_quotations"] = [q for r in batch["service_rounds"] for q in r["quotations"]]
+
+        def failed(status, message, completion=None):
+            results = []
+            for current, plan in zip(batch["service_rounds"], plans):
+                if isinstance(plan, dict):
+                    result = plan
+                else:
+                    data = plan[0]
+                    if completion is not None:
+                        data["llm_error"] = self._completion_error(completion)
+                    result = self.envelope(event_id, status, message, data)
+                results.append({"service_type": current["context"]["service_type"], **result})
+            batch["service_results"] = results
+            return self.envelope(event_id, status, message, batch)
+
+        if any(isinstance(plan, dict) for plan in plans):
+            status = "error" if any(isinstance(p, dict) and p["status"] == "error" for p in plans) else "blocked"
+            return failed(status, "Every required service needs an eligible accepted quote; no LLM call.")
+        groups = [plan[1] for plan in plans]
+        budget = VendorBundleService.budget_summary(groups, context)
+        batch["budget_summary"] = budget
+        if not budget["supplier_bundle_feasible"]:
+            return failed("blocked", "Even the cheapest eligible supplier combination exceeds the supplied ceiling; Financial/Planner review required.")
+        completion = complete_jobs(
+            self.llm, [("event_bundle", build_bundle_messages(plans, context, budget))],
+            max_workers=1, stage="comparison", retry_failed=self._retry_failed_llm,
+            progress=self._progress_callback)[0]
+        if completion.failed:
+            return failed("error", "Joint quotation comparison LLM call failed; no selection.", completion)
+        try:
+            choices, reason = read_bundle_selection(completion.text, groups)
+        except ValueError as exc:
+            failure = replace(completion, text=None, failed=True, error_code="response_format", retryable=False)
+            return failed("error", str(exc), failure)
+        budget = VendorBundleService.budget_summary(groups, context, choices)
+        batch.update(budget_summary=budget, bundle_recommendation_reason=reason,
+                     selection_source="llm_joint")
+        if budget["supplier_total_within_ceiling"] is False:
+            batch["proposed_quotation_ids"] = [group[i]["quotation_id"] for group, i in zip(groups, choices)]
+            return failed("blocked", "LLM proposed a supplier subtotal above the supplied ceiling; no complete selection. Review or explicitly compare again.")
+        selected, results = [], []
+        for (data, candidates, _), index in zip(plans, choices):
+            candidate = candidates[index]
+            quote = next(q for q in data["quotations"] if q["quotation_id"] == candidate["quotation_id"])
+            ranking = [{
+                "rank": 1, "quotation_id": candidate["quotation_id"],
+                "vendor_id": candidate["vendor_id"], "offering_id": candidate["offering_id"],
+                "quoted_total_cents": candidate["total_price_cents"],
+                "catalog_estimate_cents": candidate["catalog_estimate_cents"],
+                "over_target_cents": candidate["over_target_cents"],
+                "basis_codes": [], "recommendation_reason": reason,
+            }]
+            data.update(quotation_ranking=ranking, ranking_scope="selected_only",
+                        unranked_quotation_ids=[c["quotation_id"] for j, c in enumerate(candidates) if j != index],
+                        selected_quotation_ids=[quote["quotation_id"]], selected_quotations=[quote],
+                        selection_source="llm_joint")
+            result = self.envelope(event_id, "success",
+                                   "Chosen as part of the event bundle; remaining alternatives are not ranked.", data)
+            results.append({"service_type": data["context"]["service_type"], **result})
+            selected.append(quote)
+        batch.update(service_results=results, quotations=selected, selected_quotations=selected,
+                     selected_quotation_ids=[q["quotation_id"] for q in selected], selection_complete=True)
+        return self.envelope(event_id, "success",
+                             "LLM proposed one supplier per service; Financial review and normal approval/booking gates remain. AI explanation is not fact-verified.",
                              batch)
 
     def procure_services(self, request: dict[str, Any]) -> dict[str, Any]:

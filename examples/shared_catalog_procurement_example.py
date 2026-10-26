@@ -42,19 +42,33 @@ def mock_service_group_compare(messages):
     return json.dumps({'services': ranked})
 
 
+def mock_bundle_selection(messages):
+    """Explicit offline fixture, not a substitute for a failed school response."""
+    payload = json.loads(messages[-1]["content"].split("\n", 1)[1])
+    return json.dumps({
+        "choices": [min(service["quotes"], key=lambda row: (row[2], -row[3]))[0]
+                    for service in payload["services"]],
+        "reason": "MOCK: choose the cheapest accepted quotation for each service.",
+    })
+
+
 def build_agent(*, live=False, llm_concurrency=1, progress_callback=None,
                 retry_failed_llm=False, compact_llm=True, max_output_tokens=None,
-                enable_thinking=None, batch_services=False, policy_ranking=False):
+                enable_thinking=None, batch_services=False, policy_ranking=False, joint_selection=False):
     if live:
         llm = CampusQwenClient.from_env(max_output_tokens=max_output_tokens, enable_thinking=enable_thinking)
-        if compact_llm and not batch_services and not policy_ranking:
+        if compact_llm and not batch_services and not policy_ranking and not joint_selection:
             llm = ConciseRankingClient(llm)
     else:
-        llm = MockLLMClient((lambda _: 'V') if policy_ranking else (mock_service_group_compare if batch_services else mock_compare))
+        responder = (mock_bundle_selection if joint_selection else
+                     (lambda _: 'V') if policy_ranking else
+                     mock_service_group_compare if batch_services else mock_compare)
+        llm = MockLLMClient(responder)
     return VendorProcurementManagerAgent(
         llm=llm,
         llm_concurrency=llm_concurrency, progress_callback=progress_callback,
-        retry_failed_llm=retry_failed_llm, compact_llm=compact_llm, batch_services=batch_services, policy_ranking=policy_ranking,
+        retry_failed_llm=retry_failed_llm, compact_llm=compact_llm, batch_services=batch_services,
+        policy_ranking=policy_ranking, joint_selection=joint_selection,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),
         quotation_service=MockVendorQuotationService.from_json_file(
             ROOT / "data/mock_vendor_quotations.json"),
@@ -77,6 +91,8 @@ def format_summary(summary):
     strategy = 'services grouped per phase' if summary.get('batch_services') else f"concurrency: {summary['llm_concurrency']}"
     if summary.get('policy_ranking'):
         strategy = 'LLM policy + code ranking'
+    if summary.get('joint_selection'):
+        strategy = 'code shortlist + one LLM bundle selection'
     lines = [
         f"LLM: {summary['llm_mode'].upper()} | suppliers: MOCK | {strategy}",
         f"Status: {summary['status']} | selection_complete: {str(summary['selection_complete']).lower()}",
@@ -91,6 +107,14 @@ def format_summary(summary):
         lines.append(f"{'Service':<18} {'Supplier':<16} Quote (AUD)")
         for quote in summary["quotations"]:
             lines.append(f"{quote['service_type']:<18} {quote['vendor_id']:<16} {quote['quoted_total_cents'] / 100:,.2f}")
+    budget = summary.get("budget_summary") or {}
+    total = budget.get("proposed_supplier_total_cents")
+    if total is not None:
+        ceiling = budget["effective_supplier_ceiling_cents"]
+        limit = "unset" if ceiling is None else f"AUD{ceiling / 100:,.2f}"
+        lines.append(f"Supplier subtotal: AUD{total / 100:,.2f} | ceiling: {limit} | Finance review: pending")
+    if summary.get("bundle_recommendation_reason"):
+        lines.append("LLM bundle reason: " + " ".join(summary["bundle_recommendation_reason"].split())[:240])
     if summary["status"] != "success" or not summary["selection_complete"]:
         lines.append(" ".join(summary["message"].split())[:180])
         for item in summary["service_results"]:
@@ -128,7 +152,21 @@ def main():
                         help='Rank all services in one request per phase (two model calls for a complete event).')
     parser.add_argument('--policy-ranking', action='store_true',
                         help='Use one LLM policy decision; code ranks estimates and supplier quotes.')
+    parser.add_argument('--joint-selection', action='store_true',
+                        help='Code shortlists diverse suppliers; one LLM request selects the whole quote bundle.')
+    parser.add_argument('--request-file', type=Path,
+                        help='Read structured Planner-style JSON instead of built-in demo inputs.')
     args = parser.parse_args()
+    if sum((args.policy_ranking, args.batch_services, args.joint_selection)) > 1:
+        parser.error('Choose only one of --joint-selection, --policy-ranking and --batch-services.')
+    request = event_request(city=args.city, date=args.date, guests=args.guests, services=args.services)
+    if args.request_file is not None:
+        if args.services is not None or args.city != "Sydney" or args.date != "2026-12-16" or args.guests != 50:
+            parser.error('--request-file supplies the event inputs; do not combine it with event overrides.')
+        try:
+            request = json.loads(args.request_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            parser.error('Cannot read --request-file as UTF-8 JSON.')
     if args.policy_ranking and args.batch_services:
         parser.error('--policy-ranking cannot be combined with --batch-services.')
     if args.max_output_tokens < 0:
@@ -164,8 +202,8 @@ def main():
                          progress_callback=report, retry_failed_llm=args.retry_failed,
                          max_output_tokens=args.max_output_tokens or None,
                          enable_thinking=False if args.disable_thinking else None,
-                         batch_services=args.batch_services, policy_ranking=args.policy_ranking).procure_services(
-        event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
+                         batch_services=args.batch_services, policy_ranking=args.policy_ranking,
+                         joint_selection=args.joint_selection).procure_services(request)
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
     summary = {
@@ -174,6 +212,9 @@ def main():
         "compact_llm": True, "max_output_tokens": args.max_output_tokens or None,
         "batch_services": args.batch_services, "llm_calls": llm_call_count,
         "policy_ranking": args.policy_ranking, "ranking_policies": data.get('ranking_policies', {}),
+        "joint_selection": args.joint_selection,
+        "budget_summary": data.get("budget_summary"),
+        "bundle_recommendation_reason": data.get("bundle_recommendation_reason"),
         "enable_thinking_requested": False if args.disable_thinking else None,
         "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],

@@ -799,4 +799,29 @@ Use procure_services/prepare_event_enquiries for one call across up to five serv
 Unsupported preferences return needs_input; invalid/API errors do not silently
 fall back. This mode covers price/rating/capacity policies and cannot be combined
 with batch_services. --policy-ranking selects it in the shared example. Default
-Mock and Agent behavior are unchanged. Actual Live performance remains unverified.
+Mock and Agent behavior are unchanged. Jason measured policy-mode successes at 1.34s and 1.00s;
+this classifies policies rather than directly choosing suppliers.
+
+Joint-selection trial (opt-in): compact_llm=True, joint_selection=True with a raw
+CampusQwenClient. Code shortlists cheap/high-rating/balanced offerings without an
+estimate-price cutoff. After supplier replies, one LLM call chooses one quote
+per service jointly. Use the activity-level APIs; modes cannot be combined.
+Optional event-level budget_limit_cents is the overall budget; optional
+supplier_budget_limit_cents is an explicit supplier allowance from the caller.
+Both are nonnegative integer AUD cents, stored with event customer_preferences
+in batch selection_context. Service items cannot override event-level limits.
+service_budget_cents stays soft unless budget_is_hard_limit=true; accepted quote
+filters enforce explicit hard service limits. Later lookup fields do not replace
+the stored constraints. Procurement checks a necessary supplier-subtotal ceiling
+(minimum of supplied limits), not final Financial affordability.
+
+Selected-only quotations / selected_quotations and quotation IDs retain their
+existing handoff meaning. In this mode, service_results[].data.quotation_ranking
+contains the chosen item only, with ranking_scope="selected_only"; eligible
+unselected IDs appear as unranked_quotation_ids. No complete alternatives ranking
+is claimed. Activity bundle_recommendation_reason is model-authored, not
+fact-verified. budget_summary exposes exact supplier totals, effective ceiling,
+feasibility and finance_review_required=true. Pending/missing replies,
+malformed/model errors and over-ceiling choices block complete selection.
+An explicit subsequent comparison makes another fresh call; it does not resend
+terminal supplier enquiries. Default Mock/Agent behavior is unchanged.

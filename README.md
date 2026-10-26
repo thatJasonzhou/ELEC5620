@@ -582,13 +582,13 @@ See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs an
 
 ## Live Procurement performance (KAN-40)
 
-New opt-in trial: `py -3 -m examples.shared_catalog_procurement_example --live --policy-ranking`.
+Earlier policy baseline: `py -3 -m examples.shared_catalog_procurement_example --live --policy-ranking`.
 The LLM chooses a comparison policy once per activity; code uses fixed, visible
 price/rating/capacity rules to rank estimates and later actual supplier quotes.
 The model does not directly rank suppliers in this mode. Normal five-service
 success uses one client LLM call, 15 enquiries and five selections. The selected
 policy/formula/weights are recorded; unsupported preferences ask for clarification.
-Existing Mock defaults are unchanged. School Live completion/time is still pending.
+Existing Mock defaults are unchanged. Jason measured this policy baseline at 1.34s and 1.00s.
 See the Live demo guide for scoring, limits and module usage.
 
 Earlier direct-ranking comparison (has encountered school HTTP 502 failures):
@@ -616,3 +616,17 @@ The maximum-five rule, top-three enquiries, supplier reply stage, received-price
 comparison and Financial/approval/deposit/booking gates remain. Live uses fresh
 school calls, without cached rankings or automatic Mock fallback. Only LLM jobs
 may overlap; state/storage stay on the caller thread. See [Live demo guide](docs/live-procurement-demo.md).
+
+### Joint supplier selection trial (KAN-40)
+
+Code prepares diverse top-three enquiries; after simulated replies, one LLM call
+selects the whole supplier bundle against Planner-provided priorities and budgets.
+
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --joint-selection --request-file examples/requests/procurement_priority_request.json
+```
+
+Single-service targets are soft unless explicitly hard. Exact supplier subtotals
+are code-checked; full-event affordability remains Financial's responsibility.
+Existing Mock/API defaults are unchanged. This is an opt-in trial with school
+latency still to measure. See [Live demo guide](docs/live-procurement-demo.md).

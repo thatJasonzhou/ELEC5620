@@ -1,0 +1,33 @@
+{
+  "event_id": "EV-PRIORITY-DEMO",
+  "proposal_id": "P-PRIORITY-DEMO",
+  "event_date": "2026-12-16",
+  "location": "Sydney",
+  "guest_count": 50,
+  "budget_limit_cents": 1200000,
+  "supplier_budget_limit_cents": 1100000,
+  "customer_preferences": "Photography is the main priority. Prefer a highly rated photographer, and save on other services where reasonable. Service allocations are flexible; choose the whole supplier bundle within the supplier ceiling.",
+  "services": [
+    {
+      "service_type": "photography",
+      "service_budget_cents": 100000,
+      "customer_preferences": "Photography quality is the main priority. Prefer the highest rated option when affordable within the whole supplier bundle. The photography target is flexible."
+    },
+    {
+      "service_type": "catering",
+      "service_budget_cents": 500000
+    },
+    {
+      "service_type": "venue",
+      "service_budget_cents": 300000
+    },
+    {
+      "service_type": "sound",
+      "service_budget_cents": 100000
+    },
+    {
+      "service_type": "decoration",
+      "service_budget_cents": 100000
+    }
+  ]
+}
