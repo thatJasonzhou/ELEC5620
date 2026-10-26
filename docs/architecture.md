@@ -152,3 +152,22 @@ continues to calculate the whole-event budget; existing approval, deposit and
 booking gates are retained. Team members pull and wire the module locally;
 this change does not edit other Agents, the Supervisor or their UI.
 See docs/shortlisted-quotations.md for contracts and runtime limitations.
+
+
+## KAN-41 catalogue feasibility precheck (2026-10-26)
+
+VendorProcurementService adds an additive read-only estimate_event helper over
+its existing eligibility filter; this implements the user-authorized Planner
+budget precheck without changing Stage 1 Agent inheritance or entity relations.
+Planner's workflow may call the Service before formal procurement. No Agent
+imports another Agent and no Supervisor calculation or separate BudgetService
+is introduced.
+
+The existing exact fee arithmetic is extracted to src/shared/costing.py and is
+shared by Budget.calculate_total and catalogue estimation. This is an internal
+calculation refactor; approved fee rates, selected-quotation validation, Financial
+approval and payment/booking gates remain unchanged. Catalogue estimates do not
+create Budget records or synthetic quotes. The new supplier ceiling also reserves
+the full fees before Procurement chooses its bundle.
+
+See docs/catalog-budget-estimate.md for the interface, result semantics and limits.

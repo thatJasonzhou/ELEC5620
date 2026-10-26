@@ -1,8 +1,8 @@
-"""VendorProcurementService implementation for deterministic vendor filtering.
+"""Read-only vendor filtering (KAN-15) and Planner budget estimates (KAN-41).
 
-Scope (KAN-15): filter the fictional vendor catalog by service type,
-event date, guest count and service location. No LLM, no booking,
-no payment, no other agents.
+Filter the fictional catalogue by service type, event date, guest count and
+location. Estimate whole-event costs before enquiries. No LLM, bookings,
+payments, state writes or other Agent calls.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from src.shared.schemas import (
     Vendor,
     VendorServiceOffering,
     require_int,
+    require_number,
     require_non_empty_str,
     require_valid_date,
 )
@@ -138,4 +139,107 @@ class VendorProcurementService:
             "rating": offering.rating,
             "total_price_cents": offering.total_price_cents,
             "date": date,
+        }
+
+    def estimate_event(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Read-only catalogue budget precheck for Planner (KAN-41).
+
+        Requires event_date, location, guest_count, budget_limit_cents and
+        1-5 unique services objects. Optional per-service/global min_rating
+        is a hard eligibility filter. Preferences and soft allocations are
+        not priced. Invalid requests raise ValueError without side effects.
+
+        The minimum is catalogue evidence only, not a quote, supplier
+        commitment, final selection or Financial approval.
+        """
+        from math import isfinite
+        from src.shared.costing import calculate_event_costs, supplier_budget_ceiling
+
+        if not isinstance(request, dict):
+            raise ValueError("request must be an object")
+        event_date = require_valid_date(request.get("event_date"), "event_date")
+        location = require_non_empty_str(request.get("location"), "location").strip()
+        guests = require_int(request.get("guest_count"), "guest_count", minimum=0)
+        budget = require_int(request.get("budget_limit_cents"), "budget_limit_cents", minimum=0)
+        services = request.get("services")
+        if not isinstance(services, list) or not 1 <= len(services) <= 5:
+            raise ValueError("services must contain 1-5 service objects")
+        preferences = request.get("customer_preferences", "")
+        if not isinstance(preferences, str):
+            raise ValueError("customer_preferences must be text")
+
+        ceiling = supplier_budget_ceiling(budget)
+        if request.get("supplier_budget_limit_cents") is not None:
+            ceiling = min(ceiling, require_int(
+                request["supplier_budget_limit_cents"], "supplier_budget_limit_cents", minimum=0))
+
+        def rating(value):
+            if value is None:
+                return None
+            try:
+                value = require_number(value, "min_rating")
+            except OverflowError as exc:
+                raise ValueError("min_rating must be finite and between 0 and 5") from exc
+            if not isfinite(value) or not 0 <= value <= 5:
+                raise ValueError("min_rating must be finite and between 0 and 5")
+            return value
+
+        global_rating = rating(request.get("min_rating"))
+        normalized, seen = [], set()
+        for item in services:
+            if not isinstance(item, dict):
+                raise ValueError("each services item must be an object")
+            kind = require_non_empty_str(item.get("service_type"), "service_type").strip().lower()
+            if kind in seen:
+                raise ValueError("services must contain unique service types")
+            seen.add(kind)
+            item_rating = rating(item.get("min_rating"))
+            thresholds = [r for r in (global_rating, item_rating) if r is not None]
+            normalized.append((kind, max(thresholds) if thresholds else None))
+
+        estimates, missing = [], []
+        for kind, threshold in normalized:
+            candidates = self.filter_vendors(
+                service_type=kind, date=event_date, guest_count=guests, location=location)
+            if threshold is not None:
+                candidates = [c for c in candidates if c["rating"] >= threshold]
+            prices = [c["total_price_cents"] for c in candidates]
+            estimates.append({
+                "service_type": kind,
+                "candidate_count": len(candidates),
+                "min_rating": threshold,
+                "minimum_catalog_price_cents": min(prices) if prices else None,
+                "maximum_catalog_price_cents": max(prices) if prices else None,
+            })
+            if not candidates:
+                missing.append(kind)
+
+        # A partial catalogue match must never look like a cheap complete event.
+        costs = None if missing else calculate_event_costs(sum(
+            item["minimum_catalog_price_cents"] for item in estimates))
+        customer_shortfall = None if costs is None else max(
+            0, costs["customer_price_cents"] - budget)
+        supplier_shortfall = None if costs is None else max(
+            0, costs["vendor_cost_cents"] - ceiling)
+        if missing:
+            status = "no_candidates"
+        elif customer_shortfall or supplier_shortfall:
+            status = "over_budget_estimate"
+        else:
+            status = "within_budget_estimate"
+        return {
+            "status": status,
+            "estimate_only": True,
+            "finance_review_required": True,
+            "preferences_evaluated": False,
+            "event_date": event_date,
+            "location": location,
+            "guest_count": guests,
+            "budget_limit_cents": budget,
+            "supplier_budget_limit_cents": ceiling,
+            "service_estimates": estimates,
+            "missing_services": missing,
+            "minimum_costs": costs,
+            "budget_shortfall_cents": customer_shortfall,
+            "supplier_budget_shortfall_cents": supplier_shortfall,
         }
