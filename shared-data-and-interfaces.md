@@ -761,11 +761,22 @@ add error_code, http_status, attempt and the retrying state. Diagnostics omit
 raw exception text, URLs, model response bodies and credentials. A second failure
 still prevents complete selection.
 
-Optional compact_llm=False changes only the model-side protocol to an indexed
+Opt-in compact_llm=True changes only the model-side protocol to an indexed
 candidate table and {"ranked":[[index, short_reason],...]} response. Shared-data CLI
 enables it by default; legacy Agent callers opt in. Public JSON shapes stay the
 same, facts come from stored snapshots and compact basis_codes are empty.
 Indices, exact phase coverage and short reasons are validated. CampusQwenClient
-accepts optional max_output_tokens (default None); the shared CLI uses 256 and
-allows --max-output-tokens 0 to omit it. Server finish_reason=length is an error,
+accepts optional max_output_tokens (default None); the shared CLI also defaults
+to server settings (--max-output-tokens 0). Server finish_reason=length is an error,
 never a partial successful selection.
+
+Grouped Procurement optimization (opt-in): `batch_services=True` together with
+`compact_llm=True` combines all service rankings into one LLM request per phase.
+The staged prepare -> supplier reply -> comparison API and output contracts stay
+the same; five-service events normally require two client LLM calls rather than
+ten. One-service events keep their two existing calls. The shared-catalogue CLI
+selects it with `--batch-services`; its default token cap is now server default
+(`--max-output-tokens 0`). The module defaults remain individual-service based.
+Missing/invalid service rankings block a complete selection. Actual school Live
+latency remains to be measured. See docs/live-procurement-demo.md for current run
+commands; historical 256-token and thinking-switch experiments are not demo defaults.

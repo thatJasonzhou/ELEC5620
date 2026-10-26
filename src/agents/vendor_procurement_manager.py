@@ -37,6 +37,7 @@ from typing import Any, Callable
 from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
 from src.llm.batch import complete_jobs
+from src.llm.service_group import complete_service_group
 from src.services.vendor_procurement_service import VendorProcurementService
 from src.services.vendor_quotation_service import MockVendorQuotationService, NoQuotationScenarioError
 from src.services.vendor_booking_service import VendorBookingService
@@ -116,6 +117,7 @@ class VendorProcurementManagerAgent(AIAgent):
         llm_concurrency: int = 1,
         retry_failed_llm: bool = False,
         compact_llm: bool = False,
+        batch_services: bool = False,
         progress_callback: Callable[[dict], None] | None = None,
     ) -> None:
         super().__init__(llm)
@@ -140,6 +142,11 @@ class VendorProcurementManagerAgent(AIAgent):
             raise TypeError("retry_failed_llm must be bool")
         if type(compact_llm) is not bool:
             raise TypeError("compact_llm must be bool")
+        if type(batch_services) is not bool:
+            raise TypeError('batch_services must be bool')
+        if batch_services and not compact_llm:
+            raise ValueError('batch_services requires compact_llm=True')
+        self._batch_services = batch_services
         self._compact_llm = compact_llm
         self._retry_failed_llm = retry_failed_llm
         self._llm_concurrency = llm_concurrency
@@ -716,7 +723,8 @@ class VendorProcurementManagerAgent(AIAgent):
                 "retryable": completion.retryable, "attempts": completion.attempts}
 
     def _complete_plans(self, plans, stage):
-        return complete_jobs(
+        complete = complete_service_group if self._batch_services else complete_jobs
+        return complete(
             self.llm,
             [(plan[0]["context"]["service_type"] if stage == "comparison"
               else plan[0]["service_type"], plan[2]) for plan in plans],
@@ -858,7 +866,7 @@ class VendorProcurementManagerAgent(AIAgent):
         except (ValueError, TypeError, KeyError) as exc:
             return self.envelope(event_id, "needs_input", str(exc))
         prepared = []
-        if self._llm_concurrency == 1:
+        if self._llm_concurrency == 1 and not self._batch_services:
             for context in contexts:
                 result = self.prepare_enquiries(context)
                 prepared.append({"service_type": context["service_type"], **result})
@@ -944,7 +952,7 @@ class VendorProcurementManagerAgent(AIAgent):
         lookups = [
             {"event_id": event_id, "proposal_id": batch["proposal_id"], "round_id": r["round_id"]}
             for r in batch["service_rounds"]]
-        if self._llm_concurrency == 1:
+        if self._llm_concurrency == 1 and not self._batch_services:
             compared = [self.compare_quotations(lookup) for lookup in lookups]
         else:
             plans = [self._comparison_plan(lookup) for lookup in lookups]

@@ -48,3 +48,18 @@ def test_cli_failed_only_recovery_flag_is_explicit_and_keeps_normal_success():
     assert result["status"] == "success" and result["retry_failed_llm"] is True
     assert result["llm_concurrency"] == 2 and result["enquiry_count"] == 15
     assert run.stderr.count(": received") == 10 and ": retrying" not in run.stderr
+
+
+@pytest.mark.parametrize('grouped,expected_calls', [(False, 10), (True, 2)])
+def test_cli_groups_both_phases_and_uses_server_output_default(grouped, expected_calls):
+    command = [sys.executable, '-m', 'examples.shared_catalog_procurement_example', '--verbose']
+    if grouped:
+        command.append('--batch-services')
+    run = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=20)
+    assert run.returncode == 0, run.stderr
+    result = json.loads(run.stdout)
+    assert result['status'] == 'success' and result['selection_complete']
+    assert result['llm_calls'] == expected_calls and result['batch_services'] is grouped
+    assert result['max_output_tokens'] is None and result['enable_thinking_requested'] is None
+    assert result['enquiry_count'] == 15 and len(result['selected_quotation_ids']) == 5
+    assert run.stderr.count(': received') == expected_calls

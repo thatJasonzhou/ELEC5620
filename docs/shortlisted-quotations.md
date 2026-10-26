@@ -173,5 +173,8 @@ The shared CLI also opts into compact_llm=True: a small candidate table and
 index/short-reason response, with full public snapshots backfilled/validated by
 code. Agent default remains False for legacy injected clients. Compact mode
 returns empty basis_codes and still validates identity, coverage and prices.
-Use CampusQwenClient.from_env(max_output_tokens=256) with compact module callers;
-the CLI's --max-output-tokens controls this cap (0 omits it). Truncated output fails.
+Use CampusQwenClient.from_env() with compact module callers. The CLI defaults to
+server output settings; --max-output-tokens optionally sets a cap (0 omits it).
+Truncated output fails. Optional batch_services=True (requires compact_llm=True)
+groups all services into one model call per phase; --batch-services selects this
+in the shared-data CLI. Supplier replies still separate the two phases.

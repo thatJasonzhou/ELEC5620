@@ -1,262 +1,111 @@
-# Fresh-download live Procurement demo (KAN-40)
+# Fresh-download Live Procurement demo (KAN-40)
 
-The demonstration must run submitted code after a fresh download.
-The shared catalogue example makes fresh model calls when `--live` is selected;
-it does not load saved rankings or precomputed model results.
+The school demonstration runs freshly downloaded code and makes actual school
+LLM requests. Supplier quotation replies remain simulated data. No saved model
+rankings or automatic Mock fallback are used.
 
-## Setup on the demonstration computer
+## Run and compare
 
-1. Download the submitted repository, open a terminal in its root, and install requirements:
-   `py -3 -m pip install -r requirements.txt`.
-2. Set `ELEC5620_LLM_BASE_URL` (full chat-completions URL),
-   `ELEC5620_LLM_MODEL` and `ELEC5620_LLM_API_KEY` in that process environment.
-   Use actual school values; no credentials or local OpenCode configuration are bundled.
-3. Ensure that computer can reach the school API (including school network/VPN if required).
-4. Run:
+Install requirements and set the three existing process environment variables:
+ELEC5620_LLM_BASE_URL (full chat-completions URL), ELEC5620_LLM_MODEL and
+ELEC5620_LLM_API_KEY. Keep the key outside the repository. The computer must be
+able to reach the school API. OpenCode configuration is not loaded automatically.
+
+Existing individual-service execution, with at most two requests in parallel:
 
 ```powershell
-py -3 -m examples.shared_catalog_procurement_example --live --concurrency 3
+py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2
 ```
 
-The CLI now defaults to three concurrent calls per stage; `--concurrency 1` is
-serial and `--concurrency 5` permits five. Supplier quotes and final responses
-remain explicit simulated data; the LLM performs live recommendation/comparison.
-Choose 1-5 services with `--services` as before.
+New opt-in grouped execution:
 
-Default progress announces each stage once and then reports each response.
-Verbose mode also reports every submission. Progress goes to stderr, e.g. `[shortlist] photography: submitted`, then
-`received (13.5s)` or `error`; `submitted` includes queued work.
-The comparison stage appears after all shortlists and mock replies are ready.
-`received` only means model text arrived; the usual output validation still follows.
-The default stdout view is a short summary: mode, status, total elapsed time,
-enquiry/selection counts and one row per selected supplier/price. A normal five-service
-run prints nine result lines plus at most twelve progress lines.
-Add `--verbose` only when full diagnostic JSON is needed; it includes `llm_mode`,
-`supplier_source`, `llm_concurrency`, `elapsed_seconds` and full quotation/service snapshots.
-CLI exits nonzero if a complete valid selection was not obtained.
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --batch-services
+```
 
-## Implementation and team integration
+Grouping sends all requested service shortlists in one model request, collects
+supplier replies normally, then compares all requested services in a second
+request. Each service is ranked independently, with up to three enquiries and
+one proposed selection. The event still accepts 1-5 distinct service categories.
+A single service retains its existing two-request protocol. The concurrency flag
+controls individual-service execution; grouped execution has one request per phase.
+
+The CLI's default output cap is now 0, meaning no max_tokens override is sent.
+This restores the original successful transport setting: the later 256-token
+cap was exhausted by reasoning before an answer. An explicit
+--max-output-tokens value is still available, but it limits the complete generated
+output, including reasoning reported by the school service. Do not use
+--disable-thinking for this school endpoint: the gateway rejected its extension.
+The /no_think prompt probe also did not prevent reasoning. Neither control is
+part of this optimization.
+
+Normal output stays short: phase progress, status, total elapsed time, client LLM
+call count, enquiry/selection counts, and five supplier/price rows. Internal HTTP
+transport retries are not included in the client-call count. Add --verbose only
+for full snapshots. A received progress event means text arrived, before ranking
+validation. CLI exits nonzero when no complete valid selection is produced.
+
+Omit --live to run the explicit offline Mock. Without --batch-services the
+existing Mock execution remains individual-service based. The feature branch
+is isolated from teammates' main/Mock integration until Live validation and merge.
+
+## Why group the requests
+
+Jason's successful individual-service Live run took 137.14s. Reconstructing the
+two-worker schedule from its rounded request durations gives:
+
+- Shortlisting: 50.8s.
+- Quotation comparison: 86.4s.
+- Total: 137.2s, close to the observed total within log rounding.
+
+This attributes almost all observed elapsed time to the ten client LLM jobs and
+their scheduling. It does not distinguish server inference, queueing or internal
+transport retries within each job. Increasing concurrency previously produced
+some 61s failures, so raising concurrency alone is not assumed reliable.
+
+On the same offline five-service shared-catalogue fixture:
+
+| Protocol | Model calls | Total input characters |
+|---|---:|---:|
+| Original full prompts | 10 | 30,190 |
+| Compact individual prompts | 10 | 10,670 |
+| Compact grouped prompts | 2 | 6,294 |
+
+These are call and character counts, not measured Live speedups. One grouped
+request can take longer than one individual request. The Live event must succeed
+and its elapsed time must be measured before choosing this mode for demonstration.
+
+## Module integration and validation
+
+Existing constructor defaults preserve individual-service execution. Opt in with:
 
 ```python
-procurement = VendorProcurementManagerAgent(
+agent = VendorProcurementManagerAgent(
     llm=CampusQwenClient.from_env(),
     vendor_service=vendor_service,
     quotation_service=quotation_service,
-    llm_concurrency=3,
-    progress_callback=on_progress,  # optional callable(event)
-)
-result = procurement.procure_services(request)
-```
-
-The Agent defaults to **1** for backward compatibility with sequential/custom clients.
-The demo explicitly selects **3**. Set the keyword in team integration to opt in.
-Only `llm.complete(messages)` enters worker threads. Catalogue/snapshot preparation,
-round creation, reply mutation, SQLite persistence, validation and final aggregation
-stay on the caller thread. Returned services remain in request order even when
-responses complete in a different order.
-
-The existing single-service and staged APIs still work. Parallelization applies
-within the two activity-level stages; it does not run whole Agent/HTTP requests
-concurrently, relax the five-service limit, or bypass financial/approval/booking gates.
-The injected client must support concurrent `complete()` calls (the stateless
-Campus client does); scripted response queues should stay serial or use a
-prompt-based callable fixture. External requests to the same prototype Agent remain serialized.
-
-Progress callbacks run on the caller thread with:
-`stage` (shortlist/comparison), `service_type`, `state` (submitted/received/error),
-and terminal `elapsed_seconds`. They contain no prompt, URL, key or model response.
-Callbacks should return quickly and must not raise. Team frontend/backend code
-can forward these events using its chosen transport; this change adds no SSE/WebSocket/UI endpoint.
-
-A failed model call keeps that service failed and blocks complete financial handoff;
-valid other snapshots remain available. It does not silently use Mock. After comparison
-failure, the caller may explicitly rerun `compare_event_quotations(batch_ref)` on the
-same instance to compare saved replies again; the provider is not re-enquired.
-Initial shortlist failure needs a fresh preparation attempt. There is no cached live result.
-
-## Performance validation
-
-There are still ten normal LLM requests for five services (five per phase).
-Parallelism overlaps independent network waiting; it does not guarantee faster
-server inference or reduce request/token consumption. A queued/rate-limited school
-server can negate the gain. Existing transport retries/timeouts remain unchanged.
-
-On the demonstration network compare `--concurrency 1`, `3` and `5`,
-checking both `elapsed_seconds` and successful complete output. Select the best
-stable limit before presentation. Each run is fresh and may choose different suppliers.
-Offline tests prove overlap with synchronization barriers, enforce a three-worker cap,
-verify caller-thread state/SQLite writes and serial/parallel selection parity.
-They do not claim a measured live school-server speedup.
-
-## Diagnosing intermittent failures under load
-
-A real three-way run completed shortlisting but two comparison calls failed
-after about 61 seconds (90.08 seconds total). This is compatible with timeout,
-network or proxy/server faults, but duration alone does not identify the cause.
-Progress and failed service snapshots now expose a safe error code
-(timeout, network, authentication, rate_limit, http_error, response_format,
-or llm_error), plus an HTTP status where known. Raw exception reasons/URLs,
-response bodies and credentials are not copied into these diagnostics.
-
-Try a lower limit and optionally enable one bounded recovery pass:
-
-```powershell
-py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --retry-failed
-```
-
-The corresponding Agent keyword is `retry_failed_llm=True` (default False).
-Only explicitly transient failed model jobs are retried once, serially, after
-the phase's first pass has fully drained. Successful jobs and supplier enquiries
-are not repeated. Authentication/configuration/unknown failures and invalid
-model rankings are not retried by this recovery feature. The existing Campus
-transport already retries once internally; enabling recovery permits at most
-two client calls (up to four HTTP attempts) per transiently failing job.
-This may improve completion reliability at the cost of extra waiting, not a
-guaranteed latency improvement. A second failure still blocks complete selection.
-Progress may add retrying and terminal events, but never dumps nested snapshots
-unless --verbose is requested. Compare school-server results before choosing a
-presentation setting; neither three-way nor two-way stability is assumed.
-
-## Shorter model requests and answers
-
-The shared-data CLI now defaults to a compact model protocol (independent of
-terminal --verbose). The model sees a small candidate table, shared event context
-and the customer preferences. It returns only
-`{"ranked":[[candidate_index,"short reason"],...]}`.
-Reasons are requested in at most six words and validated to at most 120 characters.
-Code maps indices back to the original immutable supplier/quotation snapshots,
-then reuses identity/fact and phase-count validation. Invalid, repeated, missing,
-boolean or out-of-range indices fail; extra output fields cannot override prices.
-Compact mode emits no model-selected superlative basis codes (the existing
-basis_codes field remains an empty list). Short prose remains AI-generated,
-not fully fact-verified.
-
-Catalogue names, price/rating/capacity and relevant preferences are retained.
-Supplier notes/estimate references remain available at comparison. Internal batch,
-event, proposal and quote IDs are not needed for the ranking task. Supplier/offer
-references are additionally supplied when the preferences mention them.
-
-On the same default photography fixture, shortlist input dropped from 3,337 to
-977 characters; comparison input from 2,749 to 1,173 characters. The offline
-three-item response fixture shrank from 444 to 135 characters. These are
-character measurements, not tokens or measured Live speed gains.
-Jason's separate "reply OK" Live baseline took 0.74s; this shows a fast response
-was possible then, but does not prove other runs never queued.
-
-CLI Live calls set max_tokens=256 by default. Use --max-output-tokens 512 to
-increase the cap or 0 to omit it and use the server default. A server-reported
-finish_reason=length is an explicit response_format failure, even if partial
-text looks like JSON; it is never released as a successful partial ranking.
-No unsupported thinking-mode switch is sent, and the underlying school model
-behind the alias remains unknown.
-
-Module integration opts in explicitly:
-
-```python
-procurement = VendorProcurementManagerAgent(
-    llm=CampusQwenClient.from_env(max_output_tokens=256),
-    vendor_service=vendor_service,
-    quotation_service=quotation_service,
-    llm_concurrency=2,
     compact_llm=True,
-    retry_failed_llm=True,
+    batch_services=True,
 )
 ```
 
-Agent compact_llm defaults to False and Campus token cap defaults to None so
-existing injected clients/prompts stay compatible. The shared-data example
-opts in by default. No public Procurement reply shape or supplier reply seam changes.
+Grouping requires compact_llm=True. Dates, city, guest count, preferences and
+phase instructions are shared only when equal. Candidate indices are local to
+each service. The grouped response must name every requested service exactly
+once; original per-service identity, index, coverage, reason and price validation
+then applies. IDs and amounts come from stored facts. Compact basis_codes remain
+empty; AI reasons are not fully fact-verified.
 
-## Bounded single-request diagnostics
+All enquiry creation, reply submission and SQLite writes stay on the caller
+thread. Second-phase prompts are constructed only after supplier replies arrive.
+Pending replies, invalid/missing rankings and failed model requests block complete
+Financial handoff. Existing approval/deposit/booking gates remain. On comparison
+failure, accepted replies remain available for an explicit comparison retry.
+A grouped failure can affect all services in that phase; there is no automatic
+split into smaller requests or switch to Mock.
 
-Do not infer the failure cause from total elapsed time alone. A capped compact
-photography run failed with response_format after 3.3s; a later uncapped run
-failed with HTTP 502 after 60.69s, both before supplier enquiries. Neither run
-establishes that the compact request is faster or identifies the school model.
-The production client may retry internally, so total time can span two HTTP
-attempts. HTTP 502 alone does not establish which upstream component failed.
-
-Run this on the feature branch with the existing runtime environment:
-
-```powershell
-py -3 -m examples.diagnose_procurement_llm
-```
-
-It sends the exact compact photography shortlist prompt once through the existing
-Campus client (at most two HTTP attempts under its normal retry policy). It prints
-attempt durations/status and only allowlisted envelope metadata: finish reason,
-content/reasoning character counts, and token counts when the server supplies
-them. It never prints the response text, API key, endpoint or server error body.
-The default cap is 256. A finish=length with detail=output_limit establishes
-truncation; missing usage/reasoning fields mean unknown, not zero. This diagnostic
-does not disable reasoning or assume the server supports such a parameter.
-
-Optional isolated controls: --baseline sends only Reply with exactly OK;
---max-output-tokens 0 omits the cap. Each invocation probes one request, not a
-complete event. response_received means transport/content parsing succeeded;
-the ranking and procurement workflow are not validated by this probe. No Live
-supplier quotation or booking is requested. Main/Mock integration is unchanged;
-keep this investigation isolated until actual Live results are reviewed.
-
-## Diagnosed reasoning budget and opt-in non-thinking probe
-
-The single-request Live probe returned HTTP success in 2.98s, with 340 prompt
-tokens, 256 completion tokens, all 256 reported as reasoning_tokens,
-reasoning_chars=748, non-string content and finish=length. This establishes that
-this capped request exhausted its output budget on reasoning before a final
-answer. It does not prove every earlier slow request or HTTP 502 had that cause.
-
-Qwen's official vLLM documentation describes the request extension
-chat_template_kwargs={"enable_thinking": false}:
-https://qwen.readthedocs.io/en/stable/deployment/vllm.html#thinking-non-thinking-modes
-The extension is not standard OpenAI API and the school's backend/version/model
-behind the alias is not established. Backend acceptance/effect needs a Live test.
-
-```powershell
-py -3 -m examples.diagnose_procurement_llm --disable-thinking
-```
-
-This requests non-thinking mode while keeping the same prompt and 256-token cap.
-Check finish=stop, a final content string, and reasoning token/character statistics
-when supplied. Missing statistics mean unknown. HTTP 400/422 or continuing reasoning
-means support/effect needs further investigation. There is no silent retry with
-the option removed, no automatic Mock fallback and no extraction of reasoning
-text as the final ranking. Existing transport retry policy remains unchanged.
-
-Once supported, validate actual ranking and the full five-service workflow with:
-
-```powershell
-py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --disable-thinking
-```
-
-Module callers opt in with CampusQwenClient.from_env(enable_thinking=False).
-The default is None (no extension sent); True explicitly requests thinking.
-The CLI flag is also opt-in. Existing main/Mock integration remains isolated.
-No non-thinking Live speed, output correctness or five-service success is yet
-claimed. The previous statement about no thinking switch describes the earlier
-increment; this increment adds an explicit, documented experimental option.
-
-## School rejects the hard-switch extension: prompt-only probe
-
-The --disable-thinking probe returned HTTP 422 in 0.06s. The request was rejected;
-no successful generation or hard-switch support is established. The exact 422
-validation fields were not returned by the diagnostic, so the specific rejected
-field is inferred from the newly added extension, not yet proven from the body.
-Do not use that flag for the school demo until backend support is clarified.
-
-Qwen also documents the /no_think soft instruction in a user or system message:
-https://qwen.readthedocs.io/en/stable/getting_started/quickstart.html
-A separate explicit diagnostic option appends this instruction to a copied last
-message, without sending chat_template_kwargs or other extra API fields:
-
-```powershell
-py -3 -m examples.diagnose_procurement_llm --no-think-prompt
-```
-
-The output cap stays 256. This probes whether the model follows the instruction;
-it is not a guaranteed server-level disable. Inspect finish, final content and
-reasoning metadata. The diagnostic still does not validate a business ranking.
-The original --disable-thinking option is retained as an explicit hard-switch
-probe, and cannot be combined with --no-think-prompt. There is no automatic
-fallback between the two methods. Production/Mock code is unchanged by this
-increment; prompt-only mode is confined to the diagnostic pending Live evidence.
+Optional --retry-failed retains its existing bounded transient-only recovery:
+once after the phase drains, with successful jobs and supplier enquiries retained.
+Permanent failures and invalid rankings are not retried. The Campus client has
+its own one-HTTP-retry policy; recovery may increase total waiting time.
+External requests to a shared Agent instance must still be serialized.

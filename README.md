@@ -580,27 +580,29 @@ Choose 1-5 catalogue categories using `--services videography lighting entertain
 the activity maximum remains five even though ten categories are available.
 See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs and rejection scenario.
 
-## Live Procurement concurrency (KAN-40)
+## Live Procurement performance (KAN-40)
 
-For a fresh-download live demonstration, run
-`py -3 -m examples.shared_catalog_procurement_example --live --concurrency 3`
-after setting the school environment variables. The CLI shows per-service progress
-and total elapsed time, followed by a short result table. Full raw JSON is opt-in
-with `--verbose`; default concurrency is 3, adjustable from 1 to 5.
-Module callers opt in with `VendorProcurementManagerAgent(..., llm_concurrency=3)`;
-the Agent default remains serial for compatibility. Only LLM requests overlap;
-state, storage and validation remain on the caller thread.
-See [live demo setup](docs/live-procurement-demo.md). No prerecorded model results are used.
+The shared-data CLI uses compact indexed prompts and returns a short summary,
+including elapsed time and client LLM call count. Full JSON requires --verbose.
+Set the existing school environment variables before selecting --live.
 
-If comparison calls fail under load, measure a lower concurrency and enable
-bounded failed-only recovery with `--concurrency 2 --retry-failed`. Progress now
-shows safe timeout/network/HTTP error categories. This retains successful model
-work and mock supplier replies within the run; actual school-server stability
-still needs measurement. See the live demo guide for retry limits.
+- Existing individual-service mode: `py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2`.
+- New opt-in grouped mode: `py -3 -m examples.shared_catalog_procurement_example --live --batch-services`.
 
-The shared CLI now uses shorter indexed candidate prompts and short model reasons,
-with IDs/prices backfilled and validated by code. It caps Live output at 256 tokens;
---max-output-tokens 512 increases the cap and 0 leaves it to the server.
-Module callers opt in with compact_llm=True and
-CampusQwenClient.from_env(max_output_tokens=256). Terminal --verbose only changes
-printed detail, not model prompt length.
+Grouping ranks each service independently but combines all shortlists into one
+model request and all received-quote comparisons into a second. The supplier
+reply stage remains between them. Code validates every requested service and
+maps IDs/prices from stored facts. Existing approval/deposit/booking gates remain.
+Default CLI output budget uses the server setting; no thinking extension is sent.
+The school gateway rejected the attempted hard-switch extension, and the prompt
+soft switch did not prevent reasoning. Neither is used by the grouped mode.
+
+Module callers opt in with `compact_llm=True, batch_services=True`; defaults
+retain individual-service execution. Unbatched concurrency and opt-in bounded
+transient recovery remain available. Enquiry/state/storage work stays on the
+caller thread. Supplier replies remain Mock; --live uses fresh school model
+calls, with no prerecorded rankings or automatic Mock fallback.
+
+The 137.14s successful baseline used ten model calls. Grouped execution uses two
+for a normal complete event, but actual school Live speed/correctness still needs
+measurement. See [live demo setup and comparison](docs/live-procurement-demo.md).

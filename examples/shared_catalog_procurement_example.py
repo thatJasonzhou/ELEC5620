@@ -28,13 +28,26 @@ def catalog_service_types():
     return sorted({o.service_type for vendor in catalog.catalog for o in vendor.service_offerings})
 
 
+def mock_service_group_compare(messages):
+    """Offline grouped fixture; delegates each ranking to the existing Mock."""
+    payload = json.loads(messages[-1]['content'])
+    if 'services' not in payload:
+        return mock_compare(messages)
+    common = {key: value for key, value in payload.items() if key != 'services'}
+    ranked = []
+    for service in payload['services']:
+        reply = json.loads(mock_compare([{'role': 'user', 'content': json.dumps({**common, **service})}]))
+        ranked.append({'service': service['service'], **reply})
+    return json.dumps({'services': ranked})
+
+
 def build_agent(*, live=False, llm_concurrency=1, progress_callback=None,
-                retry_failed_llm=False, compact_llm=True, max_output_tokens=256,
-                enable_thinking=None):
+                retry_failed_llm=False, compact_llm=True, max_output_tokens=None,
+                enable_thinking=None, batch_services=False):
     return VendorProcurementManagerAgent(
-        llm=CampusQwenClient.from_env(max_output_tokens=max_output_tokens, enable_thinking=enable_thinking) if live else MockLLMClient(mock_compare),
+        llm=CampusQwenClient.from_env(max_output_tokens=max_output_tokens, enable_thinking=enable_thinking) if live else MockLLMClient(mock_service_group_compare if batch_services else mock_compare),
         llm_concurrency=llm_concurrency, progress_callback=progress_callback,
-        retry_failed_llm=retry_failed_llm, compact_llm=compact_llm,
+        retry_failed_llm=retry_failed_llm, compact_llm=compact_llm, batch_services=batch_services,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),
         quotation_service=MockVendorQuotationService.from_json_file(
             ROOT / "data/mock_vendor_quotations.json"),
@@ -54,11 +67,14 @@ def event_request(*, city="Sydney", date="2026-12-16", guests=50, services=None)
 
 def format_summary(summary):
     """Keep the normal terminal view short; detailed snapshots are opt-in."""
+    strategy = 'services grouped per phase' if summary.get('batch_services') else f"concurrency: {summary['llm_concurrency']}"
     lines = [
-        f"LLM: {summary['llm_mode'].upper()} | suppliers: MOCK | concurrency: {summary['llm_concurrency']}",
+        f"LLM: {summary['llm_mode'].upper()} | suppliers: MOCK | {strategy}",
         f"Status: {summary['status']} | selection_complete: {str(summary['selection_complete']).lower()}",
         f"Elapsed: {summary['elapsed_seconds']:.2f}s | enquiries: {summary['enquiry_count']} | selected: {len(summary['selected_quotation_ids'])}",
     ]
+    if 'llm_calls' in summary:
+        lines[2] += f" | LLM calls: {summary['llm_calls']}"
     if summary["quotations"]:
         lines.append(f"{'Service':<18} {'Supplier':<16} Quote (AUD)")
         for quote in summary["quotations"]:
@@ -92,18 +108,24 @@ def main():
                         help="Print complete diagnostic JSON snapshots instead of the short summary.")
     parser.add_argument("--retry-failed", action="store_true",
                         help="After a phase drains, retry only transient failed LLM jobs once, serially.")
-    parser.add_argument("--max-output-tokens", type=int, default=256,
-                        help="Maximum generated tokens per Live request (default 256; 0 uses server default).")
+    parser.add_argument("--max-output-tokens", type=int, default=0,
+                        help="Maximum generated tokens per Live request (default 0: server default, including reasoning).")
     parser.add_argument('--disable-thinking', action='store_true',
                         help='Request Qwen non-thinking mode; backend support must be verified.')
+    parser.add_argument('--batch-services', action='store_true',
+                        help='Rank all services in one request per phase (two model calls for a complete event).')
     args = parser.parse_args()
     if args.max_output_tokens < 0:
         parser.error("--max-output-tokens must be nonnegative.")
     if args.services is not None and (len(args.services) > 5 or len(set(args.services)) != len(args.services)):
         parser.error("--services requires 1-5 distinct categories.")
     announced_stages = set()
+    llm_call_count = 0
 
     def report(event):
+        nonlocal llm_call_count
+        if event['state'] in ('submitted', 'retrying'):
+            llm_call_count += 1
         if event["state"] == "submitted" and not args.verbose:
             if event["stage"] in announced_stages:
                 return
@@ -125,7 +147,8 @@ def main():
     result = build_agent(live=args.live, llm_concurrency=args.concurrency,
                          progress_callback=report, retry_failed_llm=args.retry_failed,
                          max_output_tokens=args.max_output_tokens or None,
-                         enable_thinking=False if args.disable_thinking else None).procure_services(
+                         enable_thinking=False if args.disable_thinking else None,
+                         batch_services=args.batch_services).procure_services(
         event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
@@ -133,6 +156,7 @@ def main():
         "llm_mode": "live" if args.live else "mock", "supplier_source": "mock",
         "llm_concurrency": args.concurrency, "retry_failed_llm": args.retry_failed,
         "compact_llm": True, "max_output_tokens": args.max_output_tokens or None,
+        "batch_services": args.batch_services, "llm_calls": llm_call_count,
         "enable_thinking_requested": False if args.disable_thinking else None,
         "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],
