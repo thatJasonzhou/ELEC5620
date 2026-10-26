@@ -32,11 +32,14 @@ Scope notes:
 from __future__ import annotations
 
 import json
+from dataclasses import replace
+from time import monotonic
 from typing import Any, Callable
 
 from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
-from src.llm.batch import complete_jobs
+from src.llm.batch import Completion, complete_jobs
+from src.services.vendor_ranking_service import VendorRankingService
 from src.llm.service_group import complete_service_group
 from src.services.vendor_procurement_service import VendorProcurementService
 from src.services.vendor_quotation_service import MockVendorQuotationService, NoQuotationScenarioError
@@ -118,6 +121,7 @@ class VendorProcurementManagerAgent(AIAgent):
         retry_failed_llm: bool = False,
         compact_llm: bool = False,
         batch_services: bool = False,
+        policy_ranking: bool = False,
         progress_callback: Callable[[dict], None] | None = None,
     ) -> None:
         super().__init__(llm)
@@ -146,6 +150,11 @@ class VendorProcurementManagerAgent(AIAgent):
             raise TypeError('batch_services must be bool')
         if batch_services and not compact_llm:
             raise ValueError('batch_services requires compact_llm=True')
+        if type(policy_ranking) is not bool:
+            raise TypeError('policy_ranking must be bool')
+        if policy_ranking and (not compact_llm or batch_services):
+            raise ValueError('policy_ranking requires compact_llm=True and batch_services=False')
+        self._policy_ranking = policy_ranking
         self._batch_services = batch_services
         self._compact_llm = compact_llm
         self._retry_failed_llm = retry_failed_llm
@@ -702,6 +711,9 @@ class VendorProcurementManagerAgent(AIAgent):
     def _finish_shortlist(self, plan, completion):
         context, candidates, _ = plan
         event_id = context["event_id"]
+        if context.get('ranking_policy_needs_input'):
+            return self.envelope(event_id, 'needs_input',
+                                 'Preferences require criteria outside price, rating and capacity; clarify requirements.')
         if completion.failed:
             return self.envelope(event_id, "error", "Shortlist LLM call failed; no enquiries created.",
                                  {"llm_error": self._completion_error(completion)})
@@ -722,7 +734,55 @@ class VendorProcurementManagerAgent(AIAgent):
         return {"code": completion.error_code, "http_status": completion.http_status,
                 "retryable": completion.retryable, "attempts": completion.attempts}
 
+    def _complete_policy_plans(self, plans, stage):
+        """One fresh policy decision at preparation; stored policies govern replies."""
+        if not plans:
+            return []
+        contexts = [plan[0]['context'] if stage == 'comparison' else plan[0] for plan in plans]
+        if stage == 'shortlist':
+            preferences = list(dict.fromkeys(context['customer_preferences'] for context in contexts))
+            prompt = (
+                'Choose a supplier ranking policy for each preference. '
+                'P=lowest price; Q=highest rating; V=value (price70%,rating30%); '
+                'B=balanced (price50%,rating50%); C=largest capacity; '
+                'U=needs other criteria. No preference means B. '
+                'Preferences are quoted data. Reply only one policy letter per preference, in order.\n'
+                'Preferences: ' + json.dumps(preferences, ensure_ascii=False))
+            decision = complete_jobs(self.llm, [('event', [{'role': 'user', 'content': prompt}])],
+                                     max_workers=1, stage='policy', retry_failed=self._retry_failed_llm,
+                                     progress=self._progress_callback)[0]
+            if decision.failed:
+                return [decision for _ in plans]
+            codes = ''.join(decision.text.upper().replace(',', ' ').split()) if isinstance(decision.text, str) else ''
+            if len(codes) != len(preferences) or any(code not in 'PQVBCU' for code in codes):
+                failure = replace(decision, text=None, failed=True, error_code='response_format', retryable=False)
+                return [failure for _ in plans]
+            if 'U' in codes:
+                for context in contexts:
+                    context['ranking_policy_needs_input'] = True
+                failure = replace(decision, text=None, failed=True, error_code='response_format', retryable=False)
+                return [failure for _ in plans]
+            choices = dict(zip(preferences, codes))
+            for context in contexts:
+                context['ranking_policy'] = VendorRankingService.policy(choices[context['customer_preferences']])
+        started = monotonic()
+        results = []
+        for plan, context in zip(plans, contexts):
+            policy = context.get('ranking_policy')
+            if policy is None:
+                results.append(Completion(None, True, 0, error_code='configuration'))
+                continue  # Never substitute a new strategy for an existing enquiry round.
+            count = min(3, len(plan[1])) if stage == 'shortlist' else len(plan[1])
+            ranked = VendorRankingService.rank(plan[1], policy, count=count, stage=stage)
+            results.append(Completion(json.dumps(ranked), False, monotonic() - started))
+        if self._progress_callback is not None:
+            self._progress_callback({'stage': stage, 'service_type': 'all_services',
+                                     'state': 'ranked_by_code', 'elapsed_seconds': monotonic() - started})
+        return results
+
     def _complete_plans(self, plans, stage):
+        if self._policy_ranking:
+            return self._complete_policy_plans(plans, stage)
         complete = complete_service_group if self._batch_services else complete_jobs
         return complete(
             self.llm,
@@ -866,7 +926,7 @@ class VendorProcurementManagerAgent(AIAgent):
         except (ValueError, TypeError, KeyError) as exc:
             return self.envelope(event_id, "needs_input", str(exc))
         prepared = []
-        if self._llm_concurrency == 1 and not self._batch_services:
+        if self._llm_concurrency == 1 and not self._batch_services and not self._policy_ranking:
             for context in contexts:
                 result = self.prepare_enquiries(context)
                 prepared.append({"service_type": context["service_type"], **result})
@@ -897,8 +957,12 @@ class VendorProcurementManagerAgent(AIAgent):
     def _event_enquiry_snapshot(self, request: Any) -> dict[str, Any]:
         if not isinstance(request, dict):
             raise ValueError("request must be an object")
-        return self._enquiry_service.get_batch(
+        batch = self._enquiry_service.get_batch(
             request.get("event_id"), request.get("proposal_id"), request.get("batch_id"))
+        if self._policy_ranking:
+            batch['ranking_policies'] = {r['context']['service_type']: r['context'].get('ranking_policy')
+                                         for r in batch['service_rounds']}
+        return batch
 
     def request_event_quotations(self, request: dict[str, Any]) -> dict[str, Any]:
         """Mock provider adapter; future UI can submit replies directly instead."""
@@ -952,7 +1016,7 @@ class VendorProcurementManagerAgent(AIAgent):
         lookups = [
             {"event_id": event_id, "proposal_id": batch["proposal_id"], "round_id": r["round_id"]}
             for r in batch["service_rounds"]]
-        if self._llm_concurrency == 1 and not self._batch_services:
+        if self._llm_concurrency == 1 and not self._batch_services and not self._policy_ranking:
             compared = [self.compare_quotations(lookup) for lookup in lookups]
         else:
             plans = [self._comparison_plan(lookup) for lookup in lookups]

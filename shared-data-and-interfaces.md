@@ -788,3 +788,15 @@ Module callers can use the same wrapper with compact_llm=True; no Agent/public
 reply contract changes. Default Mock execution is unchanged. --batch-services
 remains experimental (school run failed with HTTP 502 in 60.59s); current Live
 validation uses --live --concurrency 2 without grouping or thinking controls.
+
+Policy trial: `VendorProcurementManagerAgent(..., compact_llm=True, policy_ranking=True)`
+uses the raw LLM once per whole-activity preparation to select a supported policy.
+VendorRankingService then ranks both estimates and received quote amounts. Context
+ranking_policy and activity ranking_policies expose policy code, fixed weights,
+formula and version. Existing rounds pin the decision; comparison and reply UI
+calls do not reselect it. New activities/preparations make fresh decisions.
+Use procure_services/prepare_event_enquiries for one call across up to five services.
+Unsupported preferences return needs_input; invalid/API errors do not silently
+fall back. This mode covers price/rating/capacity policies and cannot be combined
+with batch_services. --policy-ranking selects it in the shared example. Default
+Mock and Agent behavior are unchanged. Actual Live performance remains unverified.

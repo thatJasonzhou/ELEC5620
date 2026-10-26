@@ -582,6 +582,17 @@ See [supplier demo data](docs/supplier-demo-data.md) for the supported inputs an
 
 ## Live Procurement performance (KAN-40)
 
+New opt-in trial: `py -3 -m examples.shared_catalog_procurement_example --live --policy-ranking`.
+The LLM chooses a comparison policy once per activity; code uses fixed, visible
+price/rating/capacity rules to rank estimates and later actual supplier quotes.
+The model does not directly rank suppliers in this mode. Normal five-service
+success uses one client LLM call, 15 enquiries and five selections. The selected
+policy/formula/weights are recorded; unsupported preferences ask for clarification.
+Existing Mock defaults are unchanged. School Live completion/time is still pending.
+See the Live demo guide for scoring, limits and module usage.
+
+Earlier direct-ranking comparison (has encountered school HTTP 502 failures):
+
 Set the existing school environment variables, then start with:
 `py -3 -m examples.shared_catalog_procurement_example --live --concurrency 2 --services photography`.
 Omit --services photography for the complete five-service run. Default output

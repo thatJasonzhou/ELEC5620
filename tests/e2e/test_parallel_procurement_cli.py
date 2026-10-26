@@ -63,3 +63,13 @@ def test_cli_groups_both_phases_and_uses_server_output_default(grouped, expected
     assert result['max_output_tokens'] is None and result['enable_thinking_requested'] is None
     assert result['enquiry_count'] == 15 and len(result['selected_quotation_ids']) == 5
     assert run.stderr.count(': received') == expected_calls
+
+
+def test_policy_cli_uses_one_model_decision_and_shows_code_ranking():
+    run = subprocess.run([sys.executable, '-m', 'examples.shared_catalog_procurement_example', '--policy-ranking'],
+                         cwd=ROOT, capture_output=True, text=True, timeout=20)
+    assert run.returncode == 0, run.stderr
+    assert 'LLM policy + code ranking' in run.stdout and 'Policies: value' in run.stdout
+    assert 'enquiries: 15' in run.stdout and 'selected: 5' in run.stdout and 'LLM calls: 1' in run.stdout
+    assert len(run.stdout.splitlines()) <= 10
+    assert run.stderr.count(': received') == 1 and run.stderr.count('ranked_by_code') == 2

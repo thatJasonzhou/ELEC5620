@@ -44,17 +44,17 @@ def mock_service_group_compare(messages):
 
 def build_agent(*, live=False, llm_concurrency=1, progress_callback=None,
                 retry_failed_llm=False, compact_llm=True, max_output_tokens=None,
-                enable_thinking=None, batch_services=False):
+                enable_thinking=None, batch_services=False, policy_ranking=False):
     if live:
         llm = CampusQwenClient.from_env(max_output_tokens=max_output_tokens, enable_thinking=enable_thinking)
-        if compact_llm and not batch_services:
+        if compact_llm and not batch_services and not policy_ranking:
             llm = ConciseRankingClient(llm)
     else:
-        llm = MockLLMClient(mock_service_group_compare if batch_services else mock_compare)
+        llm = MockLLMClient((lambda _: 'V') if policy_ranking else (mock_service_group_compare if batch_services else mock_compare))
     return VendorProcurementManagerAgent(
         llm=llm,
         llm_concurrency=llm_concurrency, progress_callback=progress_callback,
-        retry_failed_llm=retry_failed_llm, compact_llm=compact_llm, batch_services=batch_services,
+        retry_failed_llm=retry_failed_llm, compact_llm=compact_llm, batch_services=batch_services, policy_ranking=policy_ranking,
         vendor_service=VendorProcurementService.from_json_file(ROOT / "data/vendor_catalog.json"),
         quotation_service=MockVendorQuotationService.from_json_file(
             ROOT / "data/mock_vendor_quotations.json"),
@@ -75,6 +75,8 @@ def event_request(*, city="Sydney", date="2026-12-16", guests=50, services=None)
 def format_summary(summary):
     """Keep the normal terminal view short; detailed snapshots are opt-in."""
     strategy = 'services grouped per phase' if summary.get('batch_services') else f"concurrency: {summary['llm_concurrency']}"
+    if summary.get('policy_ranking'):
+        strategy = 'LLM policy + code ranking'
     lines = [
         f"LLM: {summary['llm_mode'].upper()} | suppliers: MOCK | {strategy}",
         f"Status: {summary['status']} | selection_complete: {str(summary['selection_complete']).lower()}",
@@ -82,6 +84,9 @@ def format_summary(summary):
     ]
     if 'llm_calls' in summary:
         lines[2] += f" | LLM calls: {summary['llm_calls']}"
+    if summary.get('policy_ranking') and summary.get('ranking_policies'):
+        names = sorted({p['name'] for p in summary['ranking_policies'].values() if p})
+        lines.append('Policies: ' + ', '.join(names))
     if summary["quotations"]:
         lines.append(f"{'Service':<18} {'Supplier':<16} Quote (AUD)")
         for quote in summary["quotations"]:
@@ -121,7 +126,11 @@ def main():
                         help='Request Qwen non-thinking mode; backend support must be verified.')
     parser.add_argument('--batch-services', action='store_true',
                         help='Rank all services in one request per phase (two model calls for a complete event).')
+    parser.add_argument('--policy-ranking', action='store_true',
+                        help='Use one LLM policy decision; code ranks estimates and supplier quotes.')
     args = parser.parse_args()
+    if args.policy_ranking and args.batch_services:
+        parser.error('--policy-ranking cannot be combined with --batch-services.')
     if args.max_output_tokens < 0:
         parser.error("--max-output-tokens must be nonnegative.")
     if args.services is not None and (len(args.services) > 5 or len(set(args.services)) != len(args.services)):
@@ -155,7 +164,7 @@ def main():
                          progress_callback=report, retry_failed_llm=args.retry_failed,
                          max_output_tokens=args.max_output_tokens or None,
                          enable_thinking=False if args.disable_thinking else None,
-                         batch_services=args.batch_services).procure_services(
+                         batch_services=args.batch_services, policy_ranking=args.policy_ranking).procure_services(
         event_request(city=args.city, date=args.date, guests=args.guests, services=args.services))
     data = result.get("data") or {}
     rounds = data.get("service_rounds", [])
@@ -164,6 +173,7 @@ def main():
         "llm_concurrency": args.concurrency, "retry_failed_llm": args.retry_failed,
         "compact_llm": True, "max_output_tokens": args.max_output_tokens or None,
         "batch_services": args.batch_services, "llm_calls": llm_call_count,
+        "policy_ranking": args.policy_ranking, "ranking_policies": data.get('ranking_policies', {}),
         "enable_thinking_requested": False if args.disable_thinking else None,
         "elapsed_seconds": round(monotonic() - started, 2),
         "status": result["status"], "message": result["message"],

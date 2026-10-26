@@ -4,7 +4,67 @@ The demonstration runs freshly downloaded code and makes actual school LLM
 requests. Supplier quotation replies remain simulated data. No cached model
 rankings or automatic Mock fallback are used.
 
-## Current Live comparison
+## One policy decision plus code ranking (opt-in trial)
+
+Run the complete five-service workflow:
+
+```powershell
+py -3 -m examples.shared_catalog_procurement_example --live --policy-ranking
+```
+
+This is the new trial after repeated direct-ranking failures. A single school
+request classifies customer preferences into an explicit comparison policy. Code
+then ranks initial estimates, enquires with the top three, and re-ranks received
+supplier amounts under the same stored policy. Normal successful runs make one
+client LLM call for the entire activity; transport/recovery retries may add attempts.
+The LLM chooses the policy, not individual supplier order or arbitrary weights.
+
+| Code | Policy | Price weight | Rating weight | Capacity weight |
+|---|---|---:|---:|---:|
+| P | Lowest price | 100 | 0 | 0 |
+| Q | Highest rating | 0 | 100 | 0 |
+| V | Value | 70 | 30 | 0 |
+| B | Balanced | 50 | 50 | 0 |
+| C | Largest capacity | 0 | 0 | 100 |
+
+For each service and phase: price utility is min_price/price, rating utility is
+rating/5, capacity utility is capacity/max_capacity. The weighted sum is a score
+out of 100. Zero-price offers get price utility 1; positive-price offers get 0
+if a zero-price offer exists. Equal scores use lower price, higher rating, higher
+capacity and stable supplier/offer IDs as tie-breakers. Score, price source and
+rating appear in the explanation. All weights/formula/version are visible in
+ranking_policies and stored round context.
+
+Hard eligibility and actual-quote budget filters remain in the existing services;
+soft budget targets remain non-blocking. Historical estimates are never used as
+actual second-phase prices. Financial still checks whole-event affordability.
+Different per-service preferences are deduplicated and classified together in the
+same one request. U means unsupported criteria: return needs_input before
+supplier enquiries. Invalid output or API failure blocks; no default policy is
+substituted. Supported policies cover price, rating and capacity only.
+
+Use whole-activity procure_services/prepare_event_enquiries to get one policy
+request across up to five services. Each new preparation gets a fresh decision;
+existing enquiry rounds pin their policy. Pending replies and later comparisons
+reuse it with no additional LLM call. Policies/rounds remain process-local, just
+like the existing enquiry workflow; accepted quotes retain existing persistence.
+The initial Mock path is unchanged. Opt-in Mock trial uses an explicit V fixture.
+
+Module construction adds compact_llm=True, policy_ranking=True with the raw
+CampusQwenClient (no concise adapter). policy_ranking and batch_services are
+mutually exclusive. The public staged input/reply flow, maximum-five limit and
+approval/deposit/booking gates stay unchanged. Actual school Live completion and
+elapsed time for this mode remain to be measured.
+
+Evidence motivating the trial: the minimal five-candidate test succeeded in
+13.11s on one HTTP attempt, with 160 prompt tokens and 1,170 completion tokens,
+1,166 of them reasoning. Earlier timings of 4.64s and 35.53s alone did not reveal
+whether transport retries occurred. Direct concise ranking and grouped ranking
+both failed at shortlisting around 60.6s with HTTP 502. These do not establish
+that concurrency caused the failures, or that merely shortening prompts fixes them.
+
+The individual/grouped modes below remain comparisons, not verified fast demos.
+## Earlier individual Live comparison
 
 Install requirements and set ELEC5620_LLM_BASE_URL (full chat-completions URL),
 ELEC5620_LLM_MODEL and ELEC5620_LLM_API_KEY in the process environment. The key
