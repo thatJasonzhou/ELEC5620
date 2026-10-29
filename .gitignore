@@ -14,4 +14,5 @@ frontend/vite.config.js
 frontend/vite.config.d.ts
 .idea/
 tmp/
+*.log
 

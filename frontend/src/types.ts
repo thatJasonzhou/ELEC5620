@@ -8,7 +8,6 @@ export interface EventRequirements {
   budget_limit_cents?: number | null;
   required_services?: string[];
   services_confirmed?: boolean;
-  vendor_budget_cents?: number | null;
   customer_preferences?: string | null;
 }
 
@@ -22,9 +21,18 @@ export interface EventProposal {
   event_id: string;
   proposal_id: string;
   summary: string;
+  version: number;
   required_services: string[];
-  service_budget_cents: Record<string, number>;
+  service_schedule: ServiceScheduleItem[];
   status: string;
+}
+
+export interface ServiceScheduleItem {
+  service_type: string;
+  arrival_time: string;
+  start_time: string;
+  end_time: string;
+  notes: string;
 }
 
 export interface VendorRecommendation {
@@ -78,16 +86,37 @@ export interface SupplierQuoteRequest {
   event_summary: string;
   event_type: string;
   event_date: string;
-  start_time: string;
-  end_time: string;
+  arrival_time: string;
+  service_start_time: string;
+  service_end_time: string;
   location: string;
   guest_count: number;
-  service_budget_cents: number;
   catalogue_estimate_cents: number;
   status: "pending" | "quoted" | "declined";
   created_at: string;
   responded_at?: string | null;
   response?: SupplierReply | null;
+}
+
+export interface SupplierConfirmationRequest {
+  confirmation_id: string;
+  event_id: string;
+  proposal_id: string;
+  customer_quotation_id: string;
+  quotation_id: string;
+  vendor_id: string;
+  vendor_name: string;
+  offering_id: string;
+  service_type: string;
+  event_date: string;
+  arrival_time: string;
+  service_start_time: string;
+  service_end_time: string;
+  quoted_total_cents: number;
+  status: "pending" | "confirmed" | "declined";
+  created_at: string;
+  responded_at?: string | null;
+  response?: Record<string, unknown> | null;
 }
 
 export interface VendorSummary {
@@ -107,6 +136,7 @@ export interface Budget {
   budget_limit_cents: number;
   within_budget: boolean;
   over_budget_cents: number;
+  supplier_budget_limit_cents: number;
   quotation_fingerprint: string;
   selected_quotation_ids: string[];
   required_services: string[];
@@ -173,19 +203,77 @@ export interface PlannerResponse {
   progress: ProgressState;
   decision_summary: string[];
   proposal: EventProposal | null;
+  plan_confirmed: boolean;
   vendor_recommendations: VendorRecommendation[];
   vendor_quotations: VendorQuotation[];
   supplier_replies: SupplierReply[];
   supplier_requests: SupplierQuoteRequest[];
+  procurement_batch_id?: string | null;
+  quotation_rankings?: Record<string, unknown>[];
+  recommended_quotation_ids: string[];
+  quotation_comparison_complete?: boolean;
   selected_quotation_ids: string[];
   budget: Budget | null;
+  finance_feedback: Record<string, unknown> | null;
   customer_quotation: CustomerQuotation | null;
   approval: Record<string, unknown> | null;
+  supplier_confirmations: SupplierConfirmationRequest[];
   deposit: Deposit | null;
   bookings: VendorBooking[];
   booking_replies: SupplierReply[];
+  operations_plan: OperationsPlan | null;
   agent_trace: AgentTrace[];
   llm_mode: "mock" | "live";
+}
+
+export interface OperationsTask {
+  task_id: string;
+  title: string;
+  service_type: string;
+  scheduled_at: string;
+  planned_start_time: string;
+  planned_end_time: string;
+  booking_id: string;
+  vendor_id: string;
+  status: string;
+  arrival_status?: "PENDING" | "DELAYED" | "ARRIVED";
+  expected_arrival_time?: string;
+  arrived_at?: string | null;
+  actual_start_at?: string | null;
+  actual_end_at?: string | null;
+  mock_automatic?: boolean;
+  delay_reason?: string | null;
+}
+
+export interface OperationsIssue {
+  issue_id: string;
+  task_id: string;
+  kind: string;
+  description: string;
+  status: "OPEN" | "RESOLVED";
+  created_at: string;
+  resolution?: string;
+  resolved_at?: string;
+}
+
+export interface OperationsNotification {
+  notification_id: string;
+  task_id: string;
+  message: string;
+  created_at: string;
+}
+
+export interface OperationsPlan {
+  event_id: string;
+  event_date?: string;
+  proposal_id: string;
+  execution_plan_id: string;
+  status: string;
+  simulated_time?: string | null;
+  finalized?: boolean;
+  tasks: OperationsTask[];
+  issues?: OperationsIssue[];
+  notifications?: OperationsNotification[];
 }
 
 export interface ChatMessage {

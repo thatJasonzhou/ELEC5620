@@ -1,4 +1,4 @@
-import type { PlannerResponse, SupplierQuoteRequest, VendorSummary } from "./types";
+import type { OperationsPlan, PlannerResponse, SupplierConfirmationRequest, SupplierQuoteRequest } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -40,17 +40,27 @@ export async function getEvent(eventId: string): Promise<PlannerResponse> {
   return readJson<PlannerResponse>(response);
 }
 
-export async function getVendors(): Promise<VendorSummary[]> {
-  const response = await fetch(`${API_BASE_URL}/api/vendors`);
-  return (await readJson<{ vendors: VendorSummary[] }>(response)).vendors;
+export async function getVendorQuoteRequests(): Promise<SupplierQuoteRequest[]> {
+  const response = await fetch(`${API_BASE_URL}/api/vendor/rfqs`);
+  return (await readJson<{ requests: SupplierQuoteRequest[] }>(response)).requests;
 }
 
-export async function getVendorQuoteRequests(
-  vendorId: string,
-): Promise<SupplierQuoteRequest[]> {
-  const query = new URLSearchParams({ vendor_id: vendorId });
-  const response = await fetch(`${API_BASE_URL}/api/vendor/rfqs?${query}`);
-  return (await readJson<{ requests: SupplierQuoteRequest[] }>(response)).requests;
+export async function getSupplierConfirmations(): Promise<SupplierConfirmationRequest[]> {
+  const response = await fetch(`${API_BASE_URL}/api/vendor/confirmations`);
+  return (await readJson<{ confirmations: SupplierConfirmationRequest[] }>(response)).confirmations;
+}
+
+export async function getOperationsPlans(): Promise<OperationsPlan[]> {
+  const response = await fetch(`${API_BASE_URL}/api/operations`);
+  return (await readJson<{ plans: OperationsPlan[] }>(response)).plans;
+}
+
+export async function updateOperations(
+  eventId: string,
+  action: string,
+  body: Record<string, unknown>,
+): Promise<PlannerResponse> {
+  return postEventAction(eventId, `operations/${action}`, body);
 }
 
 export async function respondToVendorQuoteRequest(
@@ -76,8 +86,23 @@ export async function resetVendorCases(): Promise<number> {
   return (await readJson<{ cleared_cases: number }>(response)).cleared_cases;
 }
 
+export async function respondToSupplierConfirmation(
+  confirmationId: string,
+  responseBody: { confirmed: boolean; message?: string },
+): Promise<SupplierConfirmationRequest> {
+  const response = await fetch(`${API_BASE_URL}/api/vendor/confirmations/${confirmationId}/response`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(responseBody),
+  });
+  return readJson<SupplierConfirmationRequest>(response);
+}
+
 export const requestVendorQuotations = (eventId: string) =>
   postEventAction(eventId, "quotations");
+
+export const confirmPlan = (eventId: string) =>
+  postEventAction(eventId, "plan-confirmation");
 
 export const confirmQuotationSelection = (
   eventId: string,

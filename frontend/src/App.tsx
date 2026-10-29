@@ -17,11 +17,12 @@ import {
 import {
   approveQuotation,
   confirmBookings,
-  confirmQuotationSelection,
+  confirmPlan,
   getEvent,
   payDeposit,
   requestVendorQuotations,
   sendPlannerMessage,
+  updateOperations,
 } from "./api";
 import type {
   ChatMessage,
@@ -79,11 +80,11 @@ function requirementValue(key: string, requirements: EventRequirements) {
 }
 
 function activeJourneyIndex(stage: string) {
-  if (stage === "proposal") return 1;
+  if (stage === "plan_review" || stage === "proposal" || stage === "planner_adjustment") return 1;
   if (stage.startsWith("quotation_") || stage === "vendor_attention" || stage === "awaiting_vendor_quotes") return 2;
-  if (stage === "quotation") return 3;
+  if (stage === "quotation" || stage === "awaiting_supplier_confirmation") return 3;
   if (stage === "payment" || stage.startsWith("booking")) return 4;
-  if (stage === "operations") return 5;
+  if (stage === "operations" || stage === "operations_complete") return 5;
   return 0;
 }
 
@@ -98,7 +99,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedByService, setSelectedByService] = useState<Record<string, string>>({});
   const messagesRef = useRef<HTMLDivElement>(null);
 
   const requirements = workflow?.requirements || {};
@@ -118,22 +118,26 @@ export default function App() {
   }, [messages, loading]);
 
   useEffect(() => {
-    if (!eventId || stage !== "awaiting_vendor_quotes") return;
+    if (!eventId || !["awaiting_vendor_quotes", "awaiting_supplier_confirmation", "operations", "operations_complete"].includes(stage)) return;
     let cancelled = false;
     const refresh = async () => {
       try {
         const response = await getEvent(eventId);
         if (cancelled) return;
         setWorkflow(response);
-        if (response.stage !== "awaiting_vendor_quotes") {
+        if (response.stage !== stage) {
           setMessages((current) => [
             ...current,
             {
               id: crypto.randomUUID(),
               role: "assistant",
-              text: response.stage === "quotation_review"
-                ? "The supplier replies are complete. Please compare and select one quotation for each service."
-                : "The suppliers have replied, but at least one service still needs attention.",
+              text: response.reply || (
+                response.stage === "quotation"
+                  ? "The recommended supplier bundle and complete customer quotation are ready."
+                  : response.stage === "payment"
+                    ? "All selected suppliers confirmed. The simulated deposit is ready."
+                    : "The workflow status has changed."
+              ),
             },
           ]);
         }
@@ -154,9 +158,6 @@ export default function App() {
   function applyResponse(response: PlannerResponse) {
     setEventId(response.event_id);
     setWorkflow(response);
-    if (response.stage === "proposal" || response.stage === "quotation_attention") {
-      setSelectedByService({});
-    }
     setMessages((current) => [
       ...current,
       {
@@ -206,7 +207,6 @@ export default function App() {
     setMessages([{ id: "welcome", role: "assistant", text: "Hi! Please tell me what kind of event you would like to plan." }]);
     setDetailsOpen(false);
     setError(null);
-    setSelectedByService({});
   }
 
   return (
@@ -222,8 +222,9 @@ export default function App() {
           <ol className="journey-list">
             {journey.map((label, index) => {
               const bookingComplete = stage === "booking_complete" && index === 4;
-              const active = index === activeStep && !bookingComplete;
-              const complete = index < activeStep || bookingComplete;
+              const operationsComplete = stage === "operations_complete" && index === 5;
+              const active = index === activeStep && !bookingComplete && !operationsComplete;
+              const complete = index < activeStep || bookingComplete || operationsComplete;
               return (
                 <li key={label} className={active ? "active" : complete ? "complete" : ""}>
                   <span className="step-number">{complete ? <Check size={14} /> : index + 1}</span>
@@ -266,14 +267,13 @@ export default function App() {
         {showWorkspace && (
           <WorkflowWorkspace
             workflow={workflow}
-            selectedByService={selectedByService}
-            onSelect={(service, quotationId) => setSelectedByService((current) => ({ ...current, [service]: quotationId }))}
             acting={acting}
+            onConfirmPlan={() => eventId && runAction(() => confirmPlan(eventId))}
             onRequestQuotes={() => eventId && runAction(() => requestVendorQuotations(eventId))}
-            onConfirmQuotes={(ids) => eventId && runAction(() => confirmQuotationSelection(eventId, ids))}
             onApprove={() => eventId && runAction(() => approveQuotation(eventId))}
             onPay={() => eventId && runAction(() => payDeposit(eventId))}
             onBook={() => eventId && runAction(() => confirmBookings(eventId))}
+            onOperationAction={(action, body) => eventId && runAction(() => updateOperations(eventId, action, body))}
           />
         )}
 
@@ -357,18 +357,17 @@ function Message({ message }: { message: ChatMessage }) {
 
 interface WorkspaceProps {
   workflow: PlannerResponse | null;
-  selectedByService: Record<string, string>;
-  onSelect: (service: string, quotationId: string) => void;
   acting: boolean;
+  onConfirmPlan: () => void;
   onRequestQuotes: () => void;
-  onConfirmQuotes: (ids: string[]) => void;
   onApprove: () => void;
   onPay: () => void;
   onBook: () => void;
+  onOperationAction: (action: string, body: Record<string, unknown>) => void;
 }
 
 function WorkflowWorkspace(props: WorkspaceProps) {
-  const { workflow, selectedByService, onSelect, acting } = props;
+  const { workflow, acting } = props;
   const grouped = useMemo(() => {
     const result: Record<string, VendorQuotation[]> = {};
     for (const item of workflow?.vendor_quotations || []) {
@@ -380,7 +379,9 @@ function WorkflowWorkspace(props: WorkspaceProps) {
   const vendorNames = Object.fromEntries(
     (workflow?.vendor_recommendations || []).map((item) => [item.offering_id, item.vendor_name]),
   );
-  const readyToPrice = services.length > 0 && services.every((service) => selectedByService[service]);
+  const recommended = new Set(workflow?.selected_quotation_ids || workflow?.recommended_quotation_ids || []);
+  const manualOperationsTasks = workflow?.operations_plan?.tasks.filter((task) => !task.mock_automatic) || [];
+  const automaticOperationsTasks = workflow?.operations_plan?.tasks.filter((task) => task.mock_automatic) || [];
 
   return (
     <section className="workspace" aria-label="Current event workflow">
@@ -399,16 +400,24 @@ function WorkflowWorkspace(props: WorkspaceProps) {
 
         {workflow?.proposal && (
           <section className="work-card">
-            <div className="work-card-heading"><div><small>PLAN</small><h2>Service budget</h2></div><span>{workflow.proposal.status}</span></div>
+            <div className="work-card-heading"><div><small>PLAN · VERSION {workflow.proposal.version}</small><h2>Service schedule</h2></div><span>{workflow.proposal.status}</span></div>
             <div className="plan-list">
-              {services.map((service) => (
-                <div key={service}><strong>{service}</strong><span>{formatMoney(workflow.proposal?.service_budget_cents[service])}</span></div>
+              {workflow.proposal.service_schedule.map((item) => (
+                <div key={item.service_type}>
+                  <strong>{item.service_type.replaceAll("_", " ")}</strong>
+                  <span>Arrive {item.arrival_time} · {item.start_time}–{item.end_time}</span>
+                </div>
               ))}
             </div>
-            <p className="work-note">The Planner allocated the supplier budget across the requested services. Confirmed supplier prices may be different.</p>
+            <p className="work-note">Confirm these times, or describe a change in the Planner chat. No supplier receives the plan before confirmation.</p>
+            {workflow.stage === "plan_review" && (
+              <button className="primary-action" type="button" disabled={acting} onClick={props.onConfirmPlan}>
+                {acting ? "Checking suppliers…" : "Confirm service schedule"}
+              </button>
+            )}
             {workflow.stage === "proposal" && (
               <button className="primary-action" type="button" disabled={acting} onClick={props.onRequestQuotes}>
-                {acting ? "Contacting suppliers…" : "Request supplier quotations"}
+                {acting ? "Contacting suppliers…" : "Send plan to Procurement"}
               </button>
             )}
           </section>
@@ -417,7 +426,7 @@ function WorkflowWorkspace(props: WorkspaceProps) {
         {workflow?.stage === "awaiting_vendor_quotes" && (
           <section className="work-card waiting-card">
             <div className="work-card-heading"><div><small>PROCUREMENT</small><h2>Waiting for supplier replies</h2></div><span>LIVE INBOX</span></div>
-            <p className="work-note">Quote requests have been sent to the shortlisted suppliers. This page checks for new replies automatically.</p>
+            <p className="work-note">Only the three shortlisted venue suppliers require manual replies. All other requested services use explicit automatic Mock replies.</p>
             <div className="reply-progress-list">
               {workflow.supplier_requests.map((request) => (
                 <div key={request.request_id}>
@@ -435,16 +444,16 @@ function WorkflowWorkspace(props: WorkspaceProps) {
             <div className="work-card-heading"><div><small>PROCUREMENT</small><h2>Confirmed quotations</h2></div><span>SUPPLIER PORTAL</span></div>
             {services.map((service) => (
               <div className="quote-group" key={service}>
-                <h3>{service} <small>Budget {formatMoney(workflow.proposal?.service_budget_cents[service])}</small></h3>
+                <h3>{service.replaceAll("_", " ")}</h3>
                 {(grouped[service] || []).length === 0 && <p className="warning-text">No available confirmed quotation.</p>}
                 {(grouped[service] || []).map((quote) => {
-                  const selected = selectedByService[service] === quote.quotation_id;
+                  const selected = recommended.has(quote.quotation_id);
                   return (
-                    <button type="button" className={`quote-card ${selected ? "selected" : ""}`} key={quote.quotation_id} onClick={() => onSelect(service, quote.quotation_id)} aria-pressed={selected}>
+                    <div className={`quote-card ${selected ? "selected" : ""}`} key={quote.quotation_id}>
                       <span><strong>{vendorNames[quote.offering_id] || quote.vendor_id}</strong>{selected && <Check size={16} />}</span>
                       <small>Available · {quote.guest_count} guests · {quote.event_date}</small>
                       <b>{formatMoney(quote.quoted_total_cents)}</b>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -460,9 +469,18 @@ function WorkflowWorkspace(props: WorkspaceProps) {
             {workflow.budget && !workflow.budget.within_budget && (
               <p className="warning-box">This selection is {formatMoney(workflow.budget.over_budget_cents)} over the total budget. Choose different quotations.</p>
             )}
-            <button className="primary-action" type="button" disabled={!readyToPrice || acting} onClick={() => props.onConfirmQuotes(services.map((service) => selectedByService[service]))}>
-              {acting ? "Checking budget…" : "Create customer quotation"}
-            </button>
+            <p className="work-note">Procurement recommends one supplier per service. Finance checks the complete combination automatically.</p>
+          </section>
+        )}
+
+        {workflow?.stage === "planner_adjustment" && workflow.finance_feedback && (
+          <section className="work-card">
+            <div className="work-card-heading"><div><small>FINANCE FEEDBACK</small><h2>Planner adjustment required</h2></div><span>OVER BUDGET</span></div>
+            <p className="warning-box">{String(workflow.finance_feedback.message || "No supplier combination can satisfy the current budget and requirements.")}</p>
+            {Number(workflow.finance_feedback.minimum_budget_shortfall_cents || 0) > 0 && (
+              <p className="work-note">Even the lowest complete combination is {formatMoney(Number(workflow.finance_feedback.minimum_budget_shortfall_cents))} over budget.</p>
+            )}
+            <p className="work-note">Use the Planner chat to adjust the schedule, requirements or total budget. Any customer requirement change creates a new plan version.</p>
           </section>
         )}
 
@@ -481,6 +499,22 @@ function WorkflowWorkspace(props: WorkspaceProps) {
             {workflow.stage === "quotation" && (
               <button className="primary-action" type="button" disabled={acting} onClick={props.onApprove}>{acting ? "Preparing payment…" : "Approve quotation"}</button>
             )}
+          </section>
+        )}
+
+        {workflow?.stage === "awaiting_supplier_confirmation" && (
+          <section className="work-card waiting-card">
+            <div className="work-card-heading"><div><small>PRE-DEPOSIT GATE</small><h2>Venue final confirmation</h2></div><span>WAITING</span></div>
+            <p className="work-note">The customer accepted the quotation. The selected venue supplier must now confirm the exact time and price. Other selected services are Mock-confirmed.</p>
+            <div className="reply-progress-list">
+              {workflow.supplier_confirmations.map((item) => (
+                <div key={item.confirmation_id}>
+                  <span className={`reply-status-dot ${item.status}`} />
+                  <span><strong>{item.service_type.replaceAll("_", " ")}</strong><small>{item.status}</small></span>
+                </div>
+              ))}
+            </div>
+            <a className="open-supplier-button" href="/?view=vendor" target="_blank" rel="noreferrer">Open venue supplier portal</a>
           </section>
         )}
 
@@ -512,6 +546,49 @@ function WorkflowWorkspace(props: WorkspaceProps) {
                 <div key={booking.booking_id}><Check size={16} /><span><strong>{booking.service_type} · {vendorNames[booking.offering_id] || booking.vendor_id}</strong><small>{booking.supplier_confirmation_id}</small></span></div>
               ))}
             </div>
+          </section>
+        )}
+
+        {workflow?.operations_plan && (
+          <section className="work-card">
+            <div className="work-card-heading"><div><small>OPERATIONS</small><h2>Live service status</h2></div><span>{workflow.operations_plan.status.replaceAll("_", " ")}</span></div>
+            <div className="operations-clock">
+              <div><small>SIMULATED EVENT TIME</small><strong>{workflow.operations_plan.simulated_time?.slice(11, 16) || "Not started"}</strong></div>
+              {!workflow.operations_plan.finalized && <div><button type="button" disabled={acting} onClick={() => props.onOperationAction("advance_clock", { minutes: 1 })}>+1 min</button><button type="button" disabled={acting} onClick={() => props.onOperationAction("advance_clock", { minutes: 5 })}>+5 min</button></div>}
+            </div>
+            <div className="booking-list operations-list">
+              {manualOperationsTasks.map((task) => (
+                <div key={task.task_id} className={task.status.toLowerCase()}>
+                  {task.status === "COMPLETED" ? <Check size={16} /> : <Circle size={16} />}
+                  <span>
+                    <strong>{task.title}</strong>
+                    <small>Planned arrival {task.scheduled_at} · Service {task.planned_start_time}–{task.planned_end_time}</small>
+                    <small>{task.arrival_status === "ARRIVED" ? `Arrived ${task.arrived_at?.slice(11, 16)}` : task.arrival_status === "DELAYED" ? `Delayed · expected ${task.expected_arrival_time}` : "Waiting for supplier arrival"} · {task.status.replaceAll("_", " ")}</small>
+                  </span>
+                </div>
+              ))}
+            </div>
+            {!!automaticOperationsTasks.length && (
+              <div className="mock-operations-summary">
+                <Check size={16} />
+                <span><strong>{automaticOperationsTasks.length} simulated service{automaticOperationsTasks.length === 1 ? "" : "s"} completed automatically</strong><small>{automaticOperationsTasks.map((task) => task.service_type.replaceAll("_", " ")).join(", ")} · MOCK</small></span>
+              </div>
+            )}
+            {!!workflow.operations_plan.notifications?.length && (
+              <section className="operations-notifications" aria-label="Operations updates">
+                <div className="operations-notification-heading"><strong>Operations updates</strong><span>{workflow.operations_plan.notifications.length}</span></div>
+                <div className="operations-notification-list">
+                  {workflow.operations_plan.notifications.slice(-4).reverse().map((item) => <div key={item.notification_id}><span className="notification-dot" /><p>{item.message}</p><time>{item.created_at.slice(11, 16)}</time></div>)}
+                </div>
+              </section>
+            )}
+            {!!workflow.operations_plan.issues?.filter((item) => item.status === "OPEN").length && (
+              <div className="operations-warning">An Operations issue is open. The supplier or Operations owner must resolve it before finalization.</div>
+            )}
+            {workflow.operations_plan.status === "READY_TO_FINALIZE" && !workflow.operations_plan.finalized && (
+              <button className="primary-action" type="button" disabled={acting} onClick={() => props.onOperationAction("finalize_execution", { confirm: true })}>{acting ? "Finalizing…" : "Finalize Operations"}</button>
+            )}
+            {workflow.operations_plan.finalized && <div className="success-line"><Check size={16} />Operations finalized. Ready for Finance closure.</div>}
           </section>
         )}
       </div>

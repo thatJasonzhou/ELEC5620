@@ -34,7 +34,12 @@ class FinancialManagerAgent(AIAgent):
                 message = (
                     "The selected supplier quotations are within budget."
                     if budget["within_budget"]
-                    else "The selected supplier quotations are over budget. Please choose different quotations or revise the plan."
+                    else (
+                        "The complete quotation is over budget by "
+                        f"AUD {budget['over_budget_cents'] / 100:,.2f}. "
+                        "Procurement must keep the supplier subtotal at or below "
+                        f"AUD {budget['supplier_budget_limit_cents'] / 100:,.2f}."
+                    )
                 )
                 return self.envelope(event_id, status, message, data)
             if action == "generate_customer_quotation":

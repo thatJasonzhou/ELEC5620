@@ -152,6 +152,47 @@ def test_planner_asks_once_when_services_have_not_been_discussed() -> None:
     assert "Do you need any services" in result["message"]
 
 
+def test_planner_recovers_explicit_services_omitted_by_model() -> None:
+    llm = MockLLMClient(
+        json.dumps(
+            {
+                "reply": "Saved.",
+                "updates": {
+                    "event_type": "Conference",
+                    "event_date": "2026-12-16",
+                    "start_time": "09:00",
+                    "end_time": "17:00",
+                    "location": "Sydney",
+                    "guest_count": 50,
+                    "budget_limit_cents": 10_000_000,
+                    "required_services": None,
+                    "services_confirmed": None,
+                    "customer_preferences": None,
+                },
+                "decision_summary": ["Recorded event details"],
+            }
+        )
+    )
+
+    result = EventPlannerAgent(llm).handle(
+        {
+            "event_id": "EV-SERVICES",
+            "message": "I need lighting and event staff.",
+            "current_date": "2026-10-28",
+            "timezone": "Australia/Sydney",
+            "saved_requirements": {},
+            "history": [],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["data"]["requirements"]["required_services"] == [
+        "venue",
+        "lighting",
+        "event_staff",
+    ]
+
+
 def test_planner_accepts_confirmed_empty_service_preference() -> None:
     llm = MockLLMClient(
         json.dumps(
@@ -198,11 +239,11 @@ def test_planner_accepts_confirmed_empty_service_preference() -> None:
     )
 
     assert result["status"] == "success"
-    assert result["data"]["requirements"]["required_services"] == []
+    assert result["data"]["requirements"]["required_services"] == ["venue"]
     assert result["data"]["requirements"]["services_confirmed"] is True
 
 
-def test_planner_rejects_vendor_budget_above_total_budget() -> None:
+def test_planner_ignores_obsolete_vendor_budget_output() -> None:
     llm = MockLLMClient(
         json.dumps(
             {
@@ -227,8 +268,9 @@ def test_planner_rejects_vendor_budget_above_total_budget() -> None:
         }
     )
 
-    assert result["status"] == "error"
-    assert "must not exceed" in result["message"]
+    assert result["status"] == "needs_input"
+    assert result["data"]["requirements"]["budget_limit_cents"] == 500_000
+    assert "vendor_budget_cents" not in result["data"]["requirements"]
 
 
 def test_planner_corrects_dollars_returned_as_cents_by_model() -> None:
@@ -258,10 +300,10 @@ def test_planner_corrects_dollars_returned_as_cents_by_model() -> None:
 
     requirements = result["data"]["requirements"]
     assert requirements["budget_limit_cents"] == 3_000_000
-    assert requirements["vendor_budget_cents"] == 2_100_000
+    assert "vendor_budget_cents" not in requirements
 
 
-def test_planner_rescales_saved_vendor_budget_when_total_budget_changes() -> None:
+def test_planner_drops_saved_vendor_budget_when_total_budget_changes() -> None:
     llm = MockLLMClient(
         json.dumps(
             {
@@ -291,4 +333,4 @@ def test_planner_rescales_saved_vendor_budget_when_total_budget_changes() -> Non
 
     requirements = result["data"]["requirements"]
     assert requirements["budget_limit_cents"] == 3_000_000
-    assert requirements["vendor_budget_cents"] == 2_100_000
+    assert "vendor_budget_cents" not in requirements

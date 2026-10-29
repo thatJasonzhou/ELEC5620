@@ -417,11 +417,11 @@ class VendorProcurementManagerAgent(AIAgent):
             proposal_id = require_non_empty_str(
                 request.get("proposal_id"), "proposal_id"
             )
-            service_budget_cents = require_int(
-                request.get("service_budget_cents"),
-                "service_budget_cents",
-                minimum=0,
-            )
+            service_budget_cents = request.get("service_budget_cents")
+            if service_budget_cents is not None:
+                service_budget_cents = require_int(
+                    service_budget_cents, "service_budget_cents", minimum=0
+                )
         except ValueError as exc:
             errors.append(("quotation_context", str(exc)))
             proposal_id = None
@@ -514,10 +514,13 @@ class VendorProcurementManagerAgent(AIAgent):
                         "catalogue_estimate_cents": catalogue_estimate_cents,
                         "date": params["event_date"],
                         "within_target_budget": (
-                            quoted_total_cents <= service_budget_cents
+                            service_budget_cents is None
+                            or quoted_total_cents <= service_budget_cents
                         ),
                         "budget_gap_cents": (
-                            quoted_total_cents - service_budget_cents
+                            0
+                            if service_budget_cents is None
+                            else quoted_total_cents - service_budget_cents
                         ),
                     }
                 )
@@ -603,7 +606,8 @@ class VendorProcurementManagerAgent(AIAgent):
                         "recommendation_reason"
                     ],
                     "within_service_budget": (
-                        source["quoted_total_cents"] <= service_budget_cents
+                        service_budget_cents is None
+                        or source["quoted_total_cents"] <= service_budget_cents
                     ),
                     "recommended": recommendation["rank"] == 1,
                 }

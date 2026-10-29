@@ -25,11 +25,11 @@ def request_record(**updates):
         "event_summary": "Birthday in Sydney",
         "event_type": "Birthday",
         "event_date": "2026-12-05",
-        "start_time": "15:00",
-        "end_time": "18:00",
+        "arrival_time": "14:00",
+        "service_start_time": "15:00",
+        "service_end_time": "18:00",
         "location": "Sydney",
         "guest_count": 50,
-        "service_budget_cents": 1_500_000,
         "catalogue_estimate_cents": 980_000,
     }
     item.update(updates)

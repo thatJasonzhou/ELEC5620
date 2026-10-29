@@ -12,6 +12,7 @@ from uuid import uuid4
 from typing import Any
 
 from src.services.vendor_booking_service import quotation_fingerprint
+from src.shared.costing import calculate_event_costs, supplier_budget_ceiling
 from src.shared.schemas import require_int, require_non_empty_str
 
 
@@ -76,9 +77,10 @@ class FinancialWorkflowService:
             require_int(item.get("quoted_total_cents"), "quoted_total_cents", minimum=0)
 
         vendor_total = sum(item["quoted_total_cents"] for item in selected)
-        service_fee = (vendor_total + 5) // 10
-        contingency = (vendor_total + 5) // 10
-        estimated_total = vendor_total + service_fee + contingency
+        costs = calculate_event_costs(vendor_total)
+        service_fee = costs["service_fee_cents"]
+        contingency = costs["contingency_amount_cents"]
+        estimated_total = costs["customer_price_cents"]
         budget_limit = require_int(
             request.get("budget_limit_cents"), "budget_limit_cents", minimum=1
         )
@@ -94,6 +96,7 @@ class FinancialWorkflowService:
             "budget_limit_cents": budget_limit,
             "within_budget": estimated_total <= budget_limit,
             "over_budget_cents": max(0, estimated_total - budget_limit),
+            "supplier_budget_limit_cents": supplier_budget_ceiling(budget_limit),
             "quotation_fingerprint": fingerprint,
             "selected_quotation_ids": list(selected_ids),
             "required_services": list(required_services),

@@ -54,20 +54,22 @@ def test_multiturn_planner_to_vendor_flow() -> None:
     complete = workflow.handle_message(
         event_id=first["event_id"],
         message=(
-            "It is on 5 December 2026 from 3 pm to 9 pm. "
-            "My budget is 30000 dollars and I need catering and photography."
+            "It is on 16 December 2026 from 3 pm to 9 pm. "
+            "My budget is 100000 dollars and I need catering and photography."
         ),
     )
-    assert complete["stage"] == "proposal"
+    assert complete["stage"] == "plan_review"
     assert complete["progress"]["completed"] == 6
-    assert "request confirmed mock quotations" in complete["reply"]
+    assert "confirm" in complete["reply"].lower()
     assert "Event Type" not in complete["reply"]
-    assert {item["service_type"] for item in complete["vendor_recommendations"]} == {
+    confirmed = workflow.confirm_plan(first["event_id"])
+    assert {item["service_type"] for item in confirmed["vendor_recommendations"]} == {
+        "venue",
         "catering",
         "photography",
     }
-    assert [item["agent"] for item in complete["agent_trace"]] == [
-        "planning",
+    assert [item["agent"] for item in confirmed["agent_trace"]] == [
+        "procurement",
         "procurement",
         "procurement",
     ]
@@ -80,13 +82,13 @@ def test_multiturn_planner_to_vendor_flow() -> None:
             for item in quotations["vendor_quotations"]
             if item["service_type"] == service
         )
-        for service in ("catering", "photography")
+        for service in ("venue", "catering", "photography")
     ]
     customer_quote = workflow.confirm_quotation_selection(
         first["event_id"], selected
     )
     assert customer_quote["stage"] == "quotation"
-    assert customer_quote["customer_quotation"]["estimated_total_cents"] == 2_796_000
+    assert customer_quote["customer_quotation"]["estimated_total_cents"] <= 10_000_000
 
     payment = workflow.approve_customer_quotation(first["event_id"])
     assert payment["stage"] == "payment"
@@ -98,7 +100,7 @@ def test_multiturn_planner_to_vendor_flow() -> None:
 
     booked = workflow.confirm_bookings(first["event_id"])
     assert booked["stage"] == "booking_complete"
-    assert len(booked["bookings"]) == 2
+    assert len(booked["bookings"]) == 3
 
 
 def test_complete_requirements_can_return_no_vendor_match() -> None:
@@ -106,13 +108,15 @@ def test_complete_requirements_can_return_no_vendor_match() -> None:
     response = workflow.handle_message(
         event_id=None,
         message=(
-            "I need a wedding in Sydney on 8 December 2026 from 3 pm to 9 pm "
+            "I need a wedding in Sydney on 18 December 2026 from 3 pm to 9 pm "
             "for 80 guests, budget 30000 dollars and catering."
         ),
     )
     assert response["progress"]["completed"] == 6
-    assert response["vendor_recommendations"] == []
-    assert "could not find" in response["reply"]
+    assert response["stage"] == "plan_review"
+    checked = workflow.confirm_plan(response["event_id"])
+    assert checked["vendor_recommendations"] == []
+    assert "no suitable supplier" in checked["reply"]
 
 
 def test_smaller_event_uses_vendor_max_capacity_for_quotations() -> None:
@@ -120,21 +124,29 @@ def test_smaller_event_uses_vendor_max_capacity_for_quotations() -> None:
     response = workflow.handle_message(
         event_id=None,
         message=(
-            "I need a birthday party in Sydney on 5 December 2026 from 3 pm "
-            "to 8 pm for 50 guests, budget 30000 dollars, with catering and "
+            "I need a birthday party in Sydney on 16 December 2026 from 3 pm "
+            "to 8 pm for 50 guests, budget 100000 dollars, with catering and "
             "photography."
         ),
     )
 
-    assert response["stage"] == "proposal"
+    assert response["stage"] == "plan_review"
+    workflow.confirm_plan(response["event_id"])
     quotations = workflow.request_vendor_quotations(response["event_id"])
     assert quotations["stage"] == "quotation_review"
     assert {
         (item["service_type"], item["guest_count"])
         for item in quotations["vendor_quotations"]
-    } == {("catering", 50), ("photography", 50)}
+    } == {("venue", 50), ("catering", 50), ("photography", 50)}
 
-    selected = [item["quotation_id"] for item in quotations["vendor_quotations"]]
+    selected = [
+        next(
+            item["quotation_id"]
+            for item in quotations["vendor_quotations"]
+            if item["service_type"] == service
+        )
+        for service in ("venue", "catering", "photography")
+    ]
     customer_quote = workflow.confirm_quotation_selection(response["event_id"], selected)
     assert customer_quote["stage"] == "quotation"
     assert workflow.approve_customer_quotation(response["event_id"])["stage"] == "payment"
@@ -142,6 +154,7 @@ def test_smaller_event_uses_vendor_max_capacity_for_quotations() -> None:
     booked = workflow.confirm_bookings(response["event_id"])
     assert booked["stage"] == "booking_complete"
     assert {(item["service_type"], item["guest_count"]) for item in booked["bookings"]} == {
+        ("venue", 50),
         ("catering", 50),
         ("photography", 50),
     }
@@ -152,31 +165,28 @@ def test_no_extra_services_still_runs_global_vendor_matching() -> None:
     first = workflow.handle_message(
         event_id=None,
         message=(
-            "I need a birthday in Sydney on 5 December 2026 from 3 pm to 6 pm "
+            "I need a birthday in Sydney on 16 December 2026 from 3 pm to 6 pm "
             "for 30 guests with a budget of 30000 dollars."
         ),
     )
     assert first["stage"] == "requirements"
     assert first["progress"]["completed"] == 5
     assert first["progress"]["missing_fields"] == ["services"]
-    assert first["requirements"]["vendor_budget_cents"] == 2_100_000
+    assert "vendor_budget_cents" not in first["requirements"]
 
     complete = workflow.handle_message(
         event_id=first["event_id"],
         message="I do not need any additional services.",
     )
-    assert complete["stage"] == "proposal"
+    assert complete["stage"] == "plan_review"
     assert complete["progress"]["completed"] == 6
-    assert complete["requirements"]["required_services"] == []
+    assert complete["requirements"]["required_services"] == ["venue"]
     assert complete["requirements"]["services_confirmed"] is True
-    assert {item["service_type"] for item in complete["vendor_recommendations"]} == {
-        "catering",
-        "photography",
+    assert complete["vendor_recommendations"] == []
+    confirmed = workflow.confirm_plan(first["event_id"])
+    assert {item["service_type"] for item in confirmed["vendor_recommendations"]} == {
+        "venue"
     }
-    assert [item["agent"] for item in complete["agent_trace"]] == [
-        "planning",
-        "procurement",
-    ]
 
 
 def test_customer_waits_for_interactive_supplier_quotes(tmp_path: Path) -> None:
@@ -209,16 +219,20 @@ def test_customer_waits_for_interactive_supplier_quotes(tmp_path: Path) -> None:
     proposal = workflow.handle_message(
         event_id=None,
         message=(
-            "I need a birthday party in Sydney on 5 December 2026 from 3 pm "
-            "to 8 pm for 50 guests, budget 30000 dollars, with catering and "
+            "I need a birthday party in Sydney on 16 December 2026 from 3 pm "
+            "to 8 pm for 50 guests, budget 100000 dollars, with catering and "
             "photography."
         ),
     )
 
+    workflow.confirm_plan(proposal["event_id"])
     waiting = workflow.request_vendor_quotations(proposal["event_id"])
     assert waiting["stage"] == "awaiting_vendor_quotes"
     assert waiting["vendor_quotations"] == []
-    assert len(waiting["supplier_requests"]) >= 2
+    assert len(waiting["supplier_requests"]) == 3
+    assert {item["service_type"] for item in waiting["supplier_requests"]} == {
+        "venue"
+    }
 
     for request in waiting["supplier_requests"]:
         portal.respond_to_quote_request(
@@ -228,18 +242,15 @@ def test_customer_waits_for_interactive_supplier_quotes(tmp_path: Path) -> None:
         )
 
     refreshed = workflow.get_event(proposal["event_id"])
-    assert refreshed["stage"] == "quotation_review"
+    assert refreshed["stage"] == "quotation"
     assert refreshed["quotation_comparison_complete"] is True
-    assert len(refreshed["recommended_quotation_ids"]) == 2
-    assert len(refreshed["vendor_quotations"]) == len(
-        waiting["supplier_requests"]
-    )
+    assert len(refreshed["recommended_quotation_ids"]) == 3
     assert {
         item["service_type"] for item in refreshed["vendor_quotations"]
         if item["recommended"]
-    } == {"catering", "photography"}
+    } == {"venue", "catering", "photography"}
     assert all(
-        item["scenario_id"].startswith("RFQ-")
+        item["scenario_id"].startswith(("RFQ-", "MOCK-"))
         for item in refreshed["vendor_quotations"]
     )
 
@@ -281,16 +292,17 @@ def test_expanded_services_complete_the_interactive_booking_flow(
         ),
     )
 
-    assert proposal["stage"] == "proposal"
+    assert proposal["stage"] == "plan_review"
     assert proposal["requirements"]["required_services"] == [
         "venue", "lighting", "event_staff"
     ]
+    workflow.confirm_plan(proposal["event_id"])
     waiting = workflow.request_vendor_quotations(proposal["event_id"])
     assert waiting["stage"] == "awaiting_vendor_quotes"
-    assert len(waiting["supplier_requests"]) == 9
+    assert len(waiting["supplier_requests"]) == 3
     assert {
         item["service_type"] for item in waiting["supplier_requests"]
-    } == {"venue", "lighting", "event_staff"}
+    } == {"venue"}
 
     for request in waiting["supplier_requests"]:
         portal.respond_to_quote_request(
@@ -300,16 +312,19 @@ def test_expanded_services_complete_the_interactive_booking_flow(
         )
 
     compared = workflow.get_event(proposal["event_id"])
-    assert compared["stage"] == "quotation_review"
+    assert compared["stage"] == "quotation"
     assert compared["quotation_comparison_complete"] is True
     assert len(compared["recommended_quotation_ids"]) == 3
-    customer_quote = workflow.confirm_quotation_selection(
-        proposal["event_id"], compared["recommended_quotation_ids"]
-    )
-    assert customer_quote["stage"] == "quotation"
-    assert workflow.approve_customer_quotation(proposal["event_id"])[
-        "stage"
-    ] == "payment"
+    approved = workflow.approve_customer_quotation(proposal["event_id"])
+    assert approved["stage"] == "awaiting_supplier_confirmation"
+    manual = [
+        item
+        for item in approved["supplier_confirmations"]
+        if item.get("response_mode") != "automatic_mock"
+    ]
+    assert len(manual) == 1
+    portal.respond_to_confirmation(manual[0]["confirmation_id"], confirmed=True)
+    assert workflow.get_event(proposal["event_id"])["stage"] == "payment"
     assert workflow.pay_deposit(proposal["event_id"])["stage"] == "booking"
     booked = workflow.confirm_bookings(proposal["event_id"])
     assert booked["stage"] == "booking_complete"

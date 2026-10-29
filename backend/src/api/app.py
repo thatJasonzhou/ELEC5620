@@ -10,12 +10,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.agents import (
+    EventOperationsAgent,
     EventPlannerAgent,
     FinancialManagerAgent,
     VendorProcurementManagerAgent,
 )
 from src.llm import DemoLLMClient, LLMError, OpenAIResponsesClient
 from src.services.event_session_service import EventSessionService
+from src.services.event_operations_service import EventOperationsService
 from src.services.financial_workflow_service import FinancialWorkflowService
 from src.services.planner_workflow_service import PlannerWorkflowService
 from src.services.procurement_record_service import ProcurementRecordService
@@ -50,6 +52,25 @@ class SupplierQuoteResponseRequest(BaseModel):
     message: str | None = Field(default=None, max_length=500)
 
 
+class SupplierConfirmationResponseRequest(BaseModel):
+    confirmed: bool
+    message: str | None = Field(default=None, max_length=500)
+
+
+class OperationsActionRequest(BaseModel):
+    task_id: str | None = None
+    expected_arrival_time: str | None = Field(
+        default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$"
+    )
+    reason: str | None = Field(default=None, max_length=500)
+    minutes: int | None = None
+    issue_id: str | None = None
+    resolution: str | None = Field(default=None, max_length=500)
+    rating: int | None = Field(default=None, ge=1, le=5)
+    comments: str | None = Field(default=None, max_length=1000)
+    confirm: bool | None = None
+
+
 def build_workflow() -> PlannerWorkflowService:
     mode = os.getenv("PLANNER_LLM_MODE", "mock").strip().lower()
     if mode == "live":
@@ -81,6 +102,7 @@ def build_workflow() -> PlannerWorkflowService:
         record_service=records,
     )
     deposit_percent = int(os.getenv("DEPOSIT_PERCENT", "30"))
+    timezone = os.getenv("APP_TIMEZONE", "Australia/Sydney")
     return PlannerWorkflowService(
         EventPlannerAgent(llm),
         procurement,
@@ -88,8 +110,12 @@ def build_workflow() -> PlannerWorkflowService:
             llm, FinancialWorkflowService(deposit_percent=deposit_percent)
         ),
         EventSessionService(),
+        operations=EventOperationsAgent(
+            llm,
+            EventOperationsService(records.database_path, timezone=timezone),
+        ),
         supplier_portal=supplier_portal,
-        timezone=os.getenv("APP_TIMEZONE", "Australia/Sydney"),
+        timezone=timezone,
         llm_mode=mode,
     )
 
@@ -159,6 +185,11 @@ def request_quotations(event_id: str) -> dict:
     return _run_event_action(workflow.request_vendor_quotations, event_id)
 
 
+@app.post("/api/events/{event_id}/plan-confirmation")
+def confirm_plan(event_id: str) -> dict:
+    return _run_event_action(workflow.confirm_plan, event_id)
+
+
 @app.post("/api/events/{event_id}/quotation-selection")
 def confirm_quotation_selection(
     event_id: str, request: QuotationSelectionRequest
@@ -184,6 +215,28 @@ def pay_deposit(event_id: str) -> dict:
 @app.post("/api/events/{event_id}/bookings")
 def confirm_bookings(event_id: str) -> dict:
     return _run_event_action(workflow.confirm_bookings, event_id)
+
+
+@app.get("/api/operations")
+def list_operations() -> dict:
+    try:
+        return {"plans": workflow.list_operations()}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/events/{event_id}/operations/{action}")
+def update_operations(
+    event_id: str, action: str, request: OperationsActionRequest
+) -> dict:
+    try:
+        return workflow.perform_operations_action(
+            event_id, action, request.model_dump(exclude_none=True)
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/api/vendors")
@@ -216,10 +269,39 @@ def respond_to_vendor_quote_request(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.get("/api/vendor/confirmations")
+def list_vendor_confirmations() -> dict:
+    try:
+        return {"confirmations": supplier_portal.list_confirmation_requests()}
+    except (ValueError, SupplierPortalStorageError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/vendor/confirmations/{confirmation_id}/response")
+def respond_to_vendor_confirmation(
+    confirmation_id: str, request: SupplierConfirmationResponseRequest
+) -> dict:
+    try:
+        return supplier_portal.respond_to_confirmation(
+            confirmation_id,
+            confirmed=request.confirmed,
+            message=request.message,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, SupplierPortalStorageError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/api/vendor/reset")
 def reset_vendor_cases() -> dict:
     try:
-        cleared = supplier_portal.clear_all_quote_requests()
-        return {"cleared_cases": cleared}
-    except SupplierPortalStorageError as exc:
+        supplier_cases = supplier_portal.clear_all_quote_requests()
+        operations_cases = workflow.clear_operations()
+        return {
+            "cleared_cases": supplier_cases + operations_cases,
+            "cleared_supplier_cases": supplier_cases,
+            "cleared_operations_cases": operations_cases,
+        }
+    except (SupplierPortalStorageError, ValueError) as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

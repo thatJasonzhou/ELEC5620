@@ -29,8 +29,11 @@ class EventSessionService:
                     "history": [],
                     "stage": "requirements",
                     "proposal": None,
+                    "plan_version": 0,
+                    "plan_confirmed": False,
                     "vendor_recommendations": [],
                     "vendor_quotations": [],
+                    "automatic_quotations": [],
                     "supplier_replies": [],
                     "supplier_requests": [],
                     "procurement_batch_id": None,
@@ -39,12 +42,17 @@ class EventSessionService:
                     "quotation_comparison_complete": False,
                     "quotation_comparison_fingerprint": None,
                     "selected_quotation_ids": [],
+                    "finance_revision_attempts": 0,
+                    "finance_feedback": None,
                     "budget": None,
                     "customer_quotation": None,
                     "approval": None,
+                    "supplier_confirmations": [],
+                    "declined_quotation_ids": [],
                     "deposit": None,
                     "bookings": [],
                     "booking_replies": [],
+                    "operations_plan": None,
                 }
             return deepcopy(self._sessions[identifier])
 
@@ -60,3 +68,7 @@ class EventSessionService:
         with self._lock:
             session = self._sessions.get(event_id)
             return deepcopy(session) if session is not None else None
+
+    def list_all(self) -> list[dict[str, Any]]:
+        with self._lock:
+            return [deepcopy(item) for item in self._sessions.values()]

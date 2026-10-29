@@ -34,6 +34,8 @@ class DemoLLMClient(LLMClient):
         system = messages[0].get("content", "") if messages else ""
         if "Vendor Procurement Manager" in system:
             return json.dumps(self._vendor_response(messages), ensure_ascii=False)
+        if "preparing a service schedule" in system:
+            return json.dumps(self._schedule_response(messages), ensure_ascii=False)
         return json.dumps(self._planner_response(messages), ensure_ascii=False)
 
     @staticmethod
@@ -62,7 +64,6 @@ class DemoLLMClient(LLMClient):
             "budget_limit_cents": None,
             "required_services": None,
             "services_confirmed": None,
-            "vendor_budget_cents": None,
             "customer_preferences": None,
         }
 
@@ -127,15 +128,6 @@ class DemoLLMClient(LLMClient):
                 amount *= 1000
             updates["budget_limit_cents"] = amount * 100
 
-        total_budget = updates["budget_limit_cents"] or (
-            payload.get("saved_requirements", {}).get("budget_limit_cents")
-        )
-        saved_vendor_budget = payload.get("saved_requirements", {}).get(
-            "vendor_budget_cents"
-        )
-        if total_budget and (updates["budget_limit_cents"] is not None or not saved_vendor_budget):
-            updates["vendor_budget_cents"] = max(1, int(total_budget * 0.7))
-
         services = [
             service_type
             for service_type, aliases in _SERVICE_ALIASES.items()
@@ -151,10 +143,10 @@ class DemoLLMClient(LLMClient):
             )
         )
         if no_services:
-            updates["required_services"] = []
+            updates["required_services"] = ["venue"]
             updates["services_confirmed"] = True
         elif services:
-            updates["required_services"] = services
+            updates["required_services"] = list(dict.fromkeys(["venue", *services]))
             updates["services_confirmed"] = True
 
         if any(word in lower for word in ("outdoor", "vegetarian", "modern", "casual")):
@@ -169,6 +161,76 @@ class DemoLLMClient(LLMClient):
                 if value not in (None, [], "")
             ],
         }
+
+    def _schedule_response(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+        payload = self._payload(messages)
+        services = payload.get("required_services") or []
+        event_start = str(payload.get("event_start_time"))
+        event_end = str(payload.get("event_end_time"))
+        current = {
+            item.get("service_type"): dict(item)
+            for item in payload.get("current_schedule", [])
+            if isinstance(item, dict) and isinstance(item.get("service_type"), str)
+        }
+        defaults = {
+            "venue": (120, "Venue access and setup"),
+            "catering": (60, "Food preparation and service setup"),
+            "photography": (30, "Equipment setup before coverage"),
+            "sound": (90, "Audio setup and sound check"),
+            "decoration": (120, "Decoration installation"),
+            "videography": (45, "Camera and audio setup"),
+            "lighting": (90, "Lighting installation and testing"),
+            "entertainment": (45, "Performer setup and sound check"),
+            "transport": (30, "Vehicle arrival before guest movement"),
+            "event_staff": (30, "Staff briefing before the event"),
+        }
+        schedule = []
+        for service in services:
+            if service in current:
+                item = current[service]
+            else:
+                lead, note = defaults.get(service, (30, "Supplier setup"))
+                item = {
+                    "service_type": service,
+                    "arrival_time": self._shift_time(event_start, -lead),
+                    "start_time": event_start,
+                    "end_time": event_end,
+                    "notes": note,
+                }
+            schedule.append(item)
+
+        request = str(payload.get("customer_request", "")).lower()
+        service = next(
+            (
+                name
+                for name, aliases in _SERVICE_ALIASES.items()
+                if any(re.search(rf"\b{re.escape(alias)}\b", request) for alias in aliases)
+            ),
+            None,
+        )
+        time_match = re.search(r"\b(?:at|arrive(?:s|d)?\s+at|from)\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b", request)
+        if service and time_match:
+            new_time = self._normalise_time(
+                time_match.group(1), time_match.group(2), time_match.group(3)
+            )
+            for item in schedule:
+                if item["service_type"] == service:
+                    item["arrival_time"] = new_time
+                    item["start_time"] = max(new_time, event_start)
+                    if item["start_time"] >= item["end_time"]:
+                        item["end_time"] = event_end
+
+        return {
+            "reply": "I prepared the service schedule. Please confirm it or tell me what time you would like to change.",
+            "service_schedule": schedule,
+            "decision_summary": ["Prepared one arrival and service window for each requested service"],
+        }
+
+    @staticmethod
+    def _shift_time(value: str, minutes: int) -> str:
+        moment = datetime.strptime(value, "%H:%M")
+        total_minutes = max(0, moment.hour * 60 + moment.minute + minutes)
+        return f"{total_minutes // 60:02d}:{total_minutes % 60:02d}"
 
     @staticmethod
     def _normalise_time(hour_text: str, minute_text: str | None, suffix: str | None) -> str:
