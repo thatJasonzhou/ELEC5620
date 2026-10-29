@@ -177,6 +177,24 @@ export interface Deposit {
   paid_at?: string;
 }
 
+export interface FinalPayment {
+  final_payment_request_id: string;
+  payment_id: string;
+  event_id: string;
+  proposal_id: string;
+  customer_quotation_id: string;
+  quotation_fingerprint: string;
+  operations_execution_plan_id: string;
+  total_amount_cents: number;
+  deposit_paid_cents: number;
+  amount_cents: number;
+  status: "pending" | "paid" | "failed";
+  mock: true;
+  transaction_reference?: string;
+  created_at: string;
+  paid_at?: string;
+}
+
 export interface VendorBooking {
   booking_id: string;
   quotation_id: string;
@@ -219,6 +237,7 @@ export interface PlannerResponse {
   approval: Record<string, unknown> | null;
   supplier_confirmations: SupplierConfirmationRequest[];
   deposit: Deposit | null;
+  final_payment: FinalPayment | null;
   bookings: VendorBooking[];
   booking_replies: SupplierReply[];
   operations_plan: OperationsPlan | null;

@@ -15,6 +15,7 @@ EventPilot is the ELEC5620 Stage 2 prototype. A customer describes an event in a
 9. If the combination is over budget, Finance returns the exact overage and supplier subtotal ceiling. Procurement performs one bounded reselection before returning the case to Planner.
 10. The customer approves the combined quotation. The selected venue confirms the exact schedule and price in the supplier portal; other services are Mock-confirmed.
 11. The prototype then creates a simulated deposit, confirms bookings and generates an Operations execution plan from the approved service schedule.
+12. After every service is complete and Operations is finalized, Finance prepares the remaining balance. The customer completes a simulated final payment and the event is closed as paid in full.
 
 There is no independent Orchestrator Agent. The planning workflow coordinates calls between the existing business agents.
 
@@ -93,6 +94,7 @@ Melbourne, 16–17 December 2026, and 50 or 80 guests. A reliable demo example i
 - `POST /api/events/{event_id}/quotation-selection`
 - `POST /api/events/{event_id}/quotation-approval`
 - `POST /api/events/{event_id}/deposit-payment`
+- `POST /api/events/{event_id}/final-payment`
 - `POST /api/events/{event_id}/bookings`
 - `GET /api/operations`
 - `POST /api/events/{event_id}/operations/{action}`

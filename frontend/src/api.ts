@@ -115,5 +115,8 @@ export const approveQuotation = (eventId: string) =>
 export const payDeposit = (eventId: string) =>
   postEventAction(eventId, "deposit-payment");
 
+export const payFinalPayment = (eventId: string) =>
+  postEventAction(eventId, "final-payment");
+
 export const confirmBookings = (eventId: string) =>
   postEventAction(eventId, "bookings");

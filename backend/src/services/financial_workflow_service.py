@@ -178,6 +178,78 @@ class FinancialWorkflowService:
         )
         return result
 
+    def prepare_final_payment(
+        self,
+        customer_quotation: dict[str, Any],
+        deposit: dict[str, Any],
+        operations_plan: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create the remaining-balance request after Operations is finalized."""
+        quotation = self._record(customer_quotation, "customer_quotation")
+        deposit_record = self._record(deposit, "deposit")
+        operations = self._record(operations_plan, "operations_plan")
+
+        if operations.get("finalized") is not True or operations.get("status") != "COMPLETED":
+            raise ValueError("Operations must be finalized before the final payment")
+        for field in ("event_id", "proposal_id"):
+            expected = quotation.get(field)
+            if deposit_record.get(field) != expected or operations.get(field) != expected:
+                raise ValueError(f"final payment mismatch: {field}")
+        if deposit_record.get("customer_quotation_id") != quotation.get(
+            "customer_quotation_id"
+        ):
+            raise ValueError("final payment mismatch: customer_quotation_id")
+        if deposit_record.get("mock") is not True or deposit_record.get("status") != "paid":
+            raise ValueError("the simulated deposit must be paid first")
+
+        total = require_int(
+            quotation.get("estimated_total_cents"),
+            "estimated_total_cents",
+            minimum=1,
+        )
+        deposit_paid = require_int(
+            deposit_record.get("amount_cents"), "deposit amount_cents", minimum=0
+        )
+        if deposit_paid > total:
+            raise ValueError("the paid deposit exceeds the final total")
+        remaining = total - deposit_paid
+        now = datetime.now(timezone.utc).isoformat()
+        payment = {
+            "event_id": quotation["event_id"],
+            "proposal_id": quotation["proposal_id"],
+            "customer_quotation_id": quotation["customer_quotation_id"],
+            "quotation_fingerprint": quotation["quotation_fingerprint"],
+            "operations_execution_plan_id": require_non_empty_str(
+                operations.get("execution_plan_id"), "execution_plan_id"
+            ),
+            "final_payment_request_id": "FPR-" + uuid4().hex.upper(),
+            "payment_id": "FP-" + uuid4().hex.upper(),
+            "total_amount_cents": total,
+            "deposit_paid_cents": deposit_paid,
+            "amount_cents": remaining,
+            "status": "pending" if remaining else "paid",
+            "mock": True,
+            "created_at": now,
+        }
+        if remaining == 0:
+            payment.update(
+                transaction_reference="MOCK-NO-BALANCE-DUE",
+                paid_at=now,
+            )
+        return payment
+
+    def simulate_final_payment(self, final_payment: dict[str, Any]) -> dict[str, Any]:
+        result = deepcopy(self._record(final_payment, "final_payment"))
+        if result.get("mock") is not True or result.get("status") != "pending":
+            raise ValueError("a pending simulated final payment is required")
+        require_int(result.get("amount_cents"), "amount_cents", minimum=1)
+        result.update(
+            status="paid",
+            transaction_reference="MOCK-" + result["payment_id"],
+            paid_at=datetime.now(timezone.utc).isoformat(),
+        )
+        return result
+
     @staticmethod
     def _record(value: Any, name: str) -> dict[str, Any]:
         if not isinstance(value, dict):

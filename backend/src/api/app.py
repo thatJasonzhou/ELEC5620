@@ -212,6 +212,11 @@ def pay_deposit(event_id: str) -> dict:
     return _run_event_action(workflow.pay_deposit, event_id)
 
 
+@app.post("/api/events/{event_id}/final-payment")
+def pay_final_payment(event_id: str) -> dict:
+    return _run_event_action(workflow.pay_final_payment, event_id)
+
+
 @app.post("/api/events/{event_id}/bookings")
 def confirm_bookings(event_id: str) -> dict:
     return _run_event_action(workflow.confirm_bookings, event_id)

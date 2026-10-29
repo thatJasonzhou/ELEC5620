@@ -20,6 +20,7 @@ import {
   confirmPlan,
   getEvent,
   payDeposit,
+  payFinalPayment,
   requestVendorQuotations,
   sendPlannerMessage,
   updateOperations,
@@ -38,7 +39,7 @@ const initialProgress: ProgressState = {
   missing_fields: ["event_type", "date_time", "location", "guest_count", "budget", "services"],
 };
 
-const journey = ["Requirements", "Plan", "Supplier quotes", "Quotation", "Payment & booking", "Operations"];
+const journey = ["Requirements", "Plan", "Supplier quotes", "Quotation", "Deposit & booking", "Operations", "Final payment"];
 
 const fieldLabels: Record<string, string> = {
   event_type: "Event type",
@@ -85,6 +86,7 @@ function activeJourneyIndex(stage: string) {
   if (stage === "quotation" || stage === "awaiting_supplier_confirmation") return 3;
   if (stage === "payment" || stage.startsWith("booking")) return 4;
   if (stage === "operations" || stage === "operations_complete") return 5;
+  if (stage === "final_payment" || stage === "completed") return 6;
   return 0;
 }
 
@@ -109,6 +111,7 @@ export default function App() {
     workflow?.proposal
     || workflow?.customer_quotation
     || workflow?.deposit
+    || workflow?.final_payment
     || workflow?.bookings.length,
   );
 
@@ -222,9 +225,10 @@ export default function App() {
           <ol className="journey-list">
             {journey.map((label, index) => {
               const bookingComplete = stage === "booking_complete" && index === 4;
-              const operationsComplete = stage === "operations_complete" && index === 5;
-              const active = index === activeStep && !bookingComplete && !operationsComplete;
-              const complete = index < activeStep || bookingComplete || operationsComplete;
+              const operationsComplete = ["operations_complete", "final_payment", "completed"].includes(stage) && index === 5;
+              const finalPaymentComplete = stage === "completed" && index === 6;
+              const active = index === activeStep && !bookingComplete && !operationsComplete && !finalPaymentComplete;
+              const complete = index < activeStep || bookingComplete || operationsComplete || finalPaymentComplete;
               return (
                 <li key={label} className={active ? "active" : complete ? "complete" : ""}>
                   <span className="step-number">{complete ? <Check size={14} /> : index + 1}</span>
@@ -272,6 +276,7 @@ export default function App() {
             onRequestQuotes={() => eventId && runAction(() => requestVendorQuotations(eventId))}
             onApprove={() => eventId && runAction(() => approveQuotation(eventId))}
             onPay={() => eventId && runAction(() => payDeposit(eventId))}
+            onFinalPay={() => eventId && runAction(() => payFinalPayment(eventId))}
             onBook={() => eventId && runAction(() => confirmBookings(eventId))}
             onOperationAction={(action, body) => eventId && runAction(() => updateOperations(eventId, action, body))}
           />
@@ -362,6 +367,7 @@ interface WorkspaceProps {
   onRequestQuotes: () => void;
   onApprove: () => void;
   onPay: () => void;
+  onFinalPay: () => void;
   onBook: () => void;
   onOperationAction: (action: string, body: Record<string, unknown>) => void;
 }
@@ -588,7 +594,28 @@ function WorkflowWorkspace(props: WorkspaceProps) {
             {workflow.operations_plan.status === "READY_TO_FINALIZE" && !workflow.operations_plan.finalized && (
               <button className="primary-action" type="button" disabled={acting} onClick={() => props.onOperationAction("finalize_execution", { confirm: true })}>{acting ? "Finalizing…" : "Finalize Operations"}</button>
             )}
-            {workflow.operations_plan.finalized && <div className="success-line"><Check size={16} />Operations finalized. Ready for Finance closure.</div>}
+            {workflow.operations_plan.finalized && <div className="success-line"><Check size={16} />Operations finalized. Finance has prepared the remaining balance.</div>}
+          </section>
+        )}
+
+        {workflow?.final_payment && (
+          <section className="work-card payment-card">
+            <div className="work-card-heading">
+              <div><small>SIMULATED FINAL PAYMENT</small><h2>Remaining balance</h2></div>
+              <span className={workflow.final_payment.status === "paid" ? "paid" : ""}>{workflow.final_payment.status}</span>
+            </div>
+            <div className="cost-list final-payment-breakdown">
+              <div><span>Final total</span><strong>{formatMoney(workflow.final_payment.total_amount_cents)}</strong></div>
+              <div><span>Deposit already paid</span><strong>− {formatMoney(workflow.final_payment.deposit_paid_cents)}</strong></div>
+              <div className="cost-total"><span>Remaining balance</span><strong>{formatMoney(workflow.final_payment.amount_cents)}</strong></div>
+            </div>
+            <p>Operations is complete. No real money will be charged.</p>
+            {workflow.final_payment.status === "pending" && (
+              <button className="primary-action" type="button" disabled={acting} onClick={props.onFinalPay}>{acting ? "Processing…" : "Pay remaining balance (Simulation)"}</button>
+            )}
+            {workflow.final_payment.status === "paid" && (
+              <div className="success-line"><Check size={16} />Paid in full · {workflow.final_payment.payment_id}</div>
+            )}
           </section>
         )}
       </div>

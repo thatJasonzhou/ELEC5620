@@ -50,6 +50,7 @@ class EventSessionService:
                     "supplier_confirmations": [],
                     "declined_quotation_ids": [],
                     "deposit": None,
+                    "final_payment": None,
                     "bookings": [],
                     "booking_replies": [],
                     "operations_plan": None,

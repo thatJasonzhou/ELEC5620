@@ -72,6 +72,28 @@ class FinancialManagerAgent(AIAgent):
                     "Simulated deposit payment completed.",
                     {"deposit": deposit},
                 )
+            if action == "prepare_final_payment":
+                final_payment = self._service.prepare_final_payment(
+                    request.get("customer_quotation"),
+                    request.get("deposit"),
+                    request.get("operations_plan"),
+                )
+                return self.envelope(
+                    event_id,
+                    "success",
+                    "Final balance prepared after Operations completion.",
+                    {"final_payment": final_payment},
+                )
+            if action == "simulate_final_payment":
+                final_payment = self._service.simulate_final_payment(
+                    request.get("final_payment")
+                )
+                return self.envelope(
+                    event_id,
+                    "success",
+                    "Simulated final payment completed.",
+                    {"final_payment": final_payment},
+                )
             raise ValueError("unsupported financial action")
         except (KeyError, TypeError, ValueError) as exc:
             return self.envelope(event_id, "blocked", str(exc))

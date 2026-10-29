@@ -353,12 +353,64 @@ class PlannerWorkflowService:
         if result["status"] != "success":
             raise ValueError(result["message"])
         session["operations_plan"] = result["data"]["execution_plan"]
+        trace = [self._trace(result)]
+        reply = "Operations status updated."
         if session["operations_plan"].get("finalized"):
-            session["stage"] = "operations_complete"
+            payment_result = self._finance.handle(
+                {
+                    "event_id": event_id,
+                    "action": "prepare_final_payment",
+                    "customer_quotation": session.get("customer_quotation"),
+                    "deposit": session.get("deposit"),
+                    "operations_plan": session["operations_plan"],
+                }
+            )
+            if payment_result["status"] != "success":
+                raise ValueError(payment_result["message"])
+            session["final_payment"] = payment_result["data"]["final_payment"]
+            session["stage"] = (
+                "completed"
+                if session["final_payment"]["status"] == "paid"
+                else "final_payment"
+            )
+            trace.append(self._trace(payment_result))
+            reply = (
+                "Operations is complete. Finance prepared the remaining balance for simulated payment."
+                if session["stage"] == "final_payment"
+                else "Operations is complete and no remaining balance is due."
+            )
+        self._sessions.save(session)
+        return self._response(session, reply, trace)
+
+    def pay_final_payment(self, event_id: str) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        operations = session.get("operations_plan")
+        if not isinstance(operations, dict) or operations.get("finalized") is not True:
+            raise ValueError("Operations must be finalized before paying the balance")
+        final_payment = session.get("final_payment")
+        if not isinstance(final_payment, dict):
+            raise ValueError("final payment request is not ready")
+        if final_payment.get("status") == "paid":
+            session["stage"] = "completed"
+            self._sessions.save(session)
+            return self._response(
+                session, "The simulated final balance has already been paid.", []
+            )
+        result = self._finance.handle(
+            {
+                "event_id": event_id,
+                "action": "simulate_final_payment",
+                "final_payment": final_payment,
+            }
+        )
+        if result["status"] != "success":
+            raise ValueError(result["message"])
+        session["final_payment"] = result["data"]["final_payment"]
+        session["stage"] = "completed"
         self._sessions.save(session)
         return self._response(
             session,
-            "Operations status updated.",
+            "The remaining balance was paid successfully. The event is now paid in full and closed.",
             [self._trace(result)],
         )
 
@@ -1371,6 +1423,7 @@ class PlannerWorkflowService:
             supplier_confirmations=[],
             declined_quotation_ids=[],
             deposit=None,
+            final_payment=None,
             bookings=[],
             booking_replies=[],
             operations_plan=None,
@@ -1418,6 +1471,7 @@ class PlannerWorkflowService:
             "approval": session.get("approval"),
             "supplier_confirmations": session.get("supplier_confirmations", []),
             "deposit": session.get("deposit"),
+            "final_payment": session.get("final_payment"),
             "bookings": session.get("bookings", []),
             "booking_replies": session.get("booking_replies", []),
             "operations_plan": session.get("operations_plan"),

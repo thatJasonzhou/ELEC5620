@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from src.agents import (
     EventOperationsAgent,
     EventPlannerAgent,
@@ -138,6 +140,39 @@ def test_timed_plan_manual_venue_and_operations_flow(tmp_path: Path) -> None:
     assert completed["stage"] == "operations"
     assert completed["operations_plan"]["status"] == "READY"
     assert len(completed["operations_plan"]["tasks"]) == 3
+
+    with pytest.raises(ValueError, match="Operations must be finalized"):
+        workflow.pay_final_payment(planned["event_id"])
+
+    venue_task = next(
+        item
+        for item in completed["operations_plan"]["tasks"]
+        if item["service_type"] == "venue"
+    )
+    workflow.perform_operations_action(
+        planned["event_id"], "record_arrival", {"task_id": venue_task["task_id"]}
+    )
+    workflow.perform_operations_action(
+        planned["event_id"], "start_service", {"task_id": venue_task["task_id"]}
+    )
+    workflow.perform_operations_action(
+        planned["event_id"], "complete_service", {"task_id": venue_task["task_id"]}
+    )
+    balance = workflow.perform_operations_action(
+        planned["event_id"], "finalize_execution", {"confirm": True}
+    )
+    assert balance["stage"] == "final_payment"
+    assert balance["operations_plan"]["finalized"] is True
+    assert balance["final_payment"]["status"] == "pending"
+    assert balance["final_payment"]["amount_cents"] == (
+        balance["customer_quotation"]["estimated_total_cents"]
+        - balance["deposit"]["amount_cents"]
+    )
+
+    closed = workflow.pay_final_payment(planned["event_id"])
+    assert closed["stage"] == "completed"
+    assert closed["final_payment"]["status"] == "paid"
+    assert closed["final_payment"]["transaction_reference"].startswith("MOCK-FP-")
 
 
 def test_finance_ceiling_triggers_one_procurement_reselection(tmp_path: Path) -> None:
