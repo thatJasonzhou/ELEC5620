@@ -93,6 +93,7 @@ class EventOperationsService:
 
     def _normalise_record(self, record: dict[str, Any]) -> dict[str, Any]:
         """Upgrade earlier demo records and keep non-venue services explicit Mock."""
+        record.setdefault("customer_completion_confirmation", None)
         automatic_task_ids: set[str] = set()
         for task in record.get("tasks", []):
             automatic = task.get("service_type") != "venue"
@@ -217,6 +218,7 @@ class EventOperationsService:
                 "notifications": [],
                 "feedback": [],
                 "finalized": False,
+                "customer_completion_confirmation": None,
                 "updated_at": self._now(),
             }
             self._save(record)
@@ -258,6 +260,28 @@ class EventOperationsService:
                 connection.execute("DELETE FROM operations_records")
             return int(count)
 
+    def snapshot_event(self, event_id: str) -> dict[str, Any] | None:
+        identity = require_non_empty_str(event_id, "event_id")
+        with self._lock:
+            record = self._load(identity)
+            return deepcopy(record) if record is not None else None
+
+    def restore_event(self, event_id: str, snapshot: dict[str, Any] | None) -> None:
+        identity = require_non_empty_str(event_id, "event_id")
+        with self._lock:
+            if snapshot is None:
+                if self._database_path is None:
+                    self._memory.pop(identity, None)
+                else:
+                    with sqlite3.connect(self._database_path) as connection:
+                        connection.execute(
+                            "DELETE FROM operations_records WHERE event_id=?", (identity,)
+                        )
+                return
+            if snapshot.get("event_id") != identity:
+                raise ValueError("Operations checkpoint event_id does not match")
+            self._save(deepcopy(snapshot))
+
     def perform_action(
         self, event_id: str, proposal_id: str, action: str, fields: dict[str, Any]
     ) -> dict[str, Any]:
@@ -272,10 +296,32 @@ class EventOperationsService:
             if record.get("finalized") and command != "record_feedback":
                 raise OperationsBlocked("Finalized Operations is read-only.")
 
-            if command == "record_arrival":
+            if command == "set_event_time":
+                selected_time = require_non_empty_str(
+                    fields.get("event_time"), "event_time"
+                )
+                selected_at = self._event_time(record, selected_time)
+                record["simulated_time"] = selected_at.isoformat(timespec="minutes")
+
+            elif command == "record_arrival":
                 task = self._task(record, fields.get("task_id"))
                 if task["arrival_status"] == "ARRIVED":
                     return deepcopy(record)
+                pending_adjustment = next(
+                    (
+                        issue.get("adjustment")
+                        for issue in record["issues"]
+                        if issue.get("task_id") == task["task_id"]
+                        and issue.get("status") == "OPEN"
+                        and isinstance(issue.get("adjustment"), dict)
+                        and issue["adjustment"].get("status") == "PROPOSED"
+                    ),
+                    None,
+                )
+                if pending_adjustment is not None:
+                    raise OperationsBlocked(
+                        "Wait for the customer to accept the delay adjustment before confirming arrival."
+                    )
                 task["arrival_status"] = "ARRIVED"
                 task["arrived_at"] = record.get("simulated_time") or self._now()
                 if task["status"] == "DELAYED":
@@ -285,7 +331,7 @@ class EventOperationsService:
                         issue.update(
                             status="RESOLVED",
                             resolution="Supplier confirmed arrival.",
-                            resolved_at=self._now(),
+                            resolved_at=record.get("simulated_time") or self._now(),
                         )
                 self._notify(record, task, f"{task['title']} supplier has arrived.")
 
@@ -298,17 +344,43 @@ class EventOperationsService:
                 )
                 self._event_time(record, expected)
                 reason = require_non_empty_str(fields.get("reason"), "reason")
+                adjustment = self._delay_adjustment(record, task, expected)
                 task.update(
                     status="DELAYED",
                     arrival_status="DELAYED",
                     expected_arrival_time=expected,
                     delay_reason=reason,
                 )
-                self._open_issue(record, task, reason)
+                issue = self._open_issue(record, task, reason)
+                issue["adjustment"] = adjustment
                 self._notify(
                     record,
                     task,
                     f"{task['title']} supplier reported a delay and expects to arrive at {expected}.",
+                )
+
+            elif command == "accept_delay_adjustment":
+                issue_id = require_non_empty_str(fields.get("issue_id"), "issue_id")
+                issue = next(
+                    (item for item in record["issues"] if item["issue_id"] == issue_id),
+                    None,
+                )
+                if issue is None or issue.get("status") != "OPEN":
+                    raise OperationsBlocked("The delay issue is no longer awaiting a decision.")
+                adjustment = issue.get("adjustment")
+                if not isinstance(adjustment, dict) or adjustment.get("status") != "PROPOSED":
+                    raise OperationsBlocked("No proposed delay adjustment is awaiting acceptance.")
+                task = self._task(record, issue.get("task_id"))
+                adjustment.update(
+                    status="CUSTOMER_ACCEPTED",
+                    accepted_at=record.get("simulated_time") or self._now(),
+                )
+                task["planned_start_time"] = adjustment["proposed_start_time"]
+                task["planned_end_time"] = adjustment["proposed_end_time"]
+                self._notify(
+                    record,
+                    task,
+                    f"Customer accepted the revised arrival time of {adjustment['expected_arrival_time']}.",
                 )
 
             elif command == "start_service":
@@ -372,10 +444,14 @@ class EventOperationsService:
                 issue.update(
                     status="RESOLVED",
                     resolution=require_non_empty_str(fields.get("resolution"), "resolution"),
-                    resolved_at=self._now(),
+                    resolved_at=record.get("simulated_time") or self._now(),
                 )
 
             elif command == "record_feedback":
+                if not record.get("finalized"):
+                    raise OperationsBlocked("Finalize Operations before recording feedback.")
+                if record["feedback"]:
+                    raise OperationsBlocked("Customer feedback has already been submitted.")
                 rating = fields.get("rating")
                 if type(rating) is not int or not 1 <= rating <= 5:
                     raise ValueError("rating must be an integer from 1 to 5")
@@ -387,13 +463,19 @@ class EventOperationsService:
                     }
                 )
 
-            elif command == "finalize_execution":
+            elif command in {"finalize_execution", "confirm_event_completion"}:
                 if any(task["status"] != "COMPLETED" for task in record["tasks"]):
                     raise OperationsBlocked("Complete every service before finalizing Operations.")
                 if any(issue["status"] == "OPEN" for issue in record["issues"]):
                     raise OperationsBlocked("Resolve open Operations issues before finalizing.")
                 if fields.get("confirm") is not True:
-                    raise OperationsBlocked("Explicit confirmation is required.")
+                    raise OperationsBlocked("Customer completion confirmation is required.")
+                confirmed_at = record.get("simulated_time") or self._now()
+                record["customer_completion_confirmation"] = {
+                    "confirmed": True,
+                    "confirmed_at": confirmed_at,
+                    "source": "customer",
+                }
                 record["finalized"] = True
                 record["status"] = "COMPLETED"
             else:
@@ -412,7 +494,7 @@ class EventOperationsService:
 
     def _open_issue(
         self, record: dict[str, Any], task: dict[str, Any], description: str
-    ) -> None:
+    ) -> dict[str, Any]:
         existing = next(
             (
                 issue
@@ -422,19 +504,55 @@ class EventOperationsService:
             None,
         )
         if existing is None:
-            record["issues"].append(
-                {
-                    "issue_id": "ISS-"
-                    + sha256(
-                        f"{task['task_id']}:{len(record['issues'])}".encode()
-                    ).hexdigest()[:12].upper(),
-                    "task_id": task["task_id"],
-                    "kind": "LATE_ARRIVAL",
-                    "description": description,
-                    "status": "OPEN",
-                    "created_at": self._now(),
-                }
+            existing = {
+                "issue_id": "ISS-"
+                + sha256(
+                    f"{task['task_id']}:{len(record['issues'])}".encode()
+                ).hexdigest()[:12].upper(),
+                "task_id": task["task_id"],
+                "kind": "LATE_ARRIVAL",
+                "description": description,
+                "status": "OPEN",
+                "created_at": self._now(),
+            }
+            record["issues"].append(existing)
+        return existing
+
+    def _delay_adjustment(
+        self, record: dict[str, Any], task: dict[str, Any], expected: str
+    ) -> dict[str, Any]:
+        original = task["scheduled_at"]
+        expected_at = self._event_time(record, expected)
+        planned_start_at = self._event_time(record, task["planned_start_time"])
+        planned_end_at = self._event_time(record, task["planned_end_time"])
+        if expected_at >= planned_end_at:
+            raise OperationsBlocked(
+                "The revised arrival time is after the planned service end and needs a new plan."
             )
+        if expected_at <= planned_start_at:
+            proposed_start = task["planned_start_time"]
+            remaining_setup = int((planned_start_at - expected_at).total_seconds() // 60)
+            recommendation = (
+                f"Accept the revised arrival time of {expected}. "
+                f"There will still be {remaining_setup} minutes for setup, so the service can start at "
+                f"{proposed_start} as planned."
+            )
+        else:
+            proposed_start = expected
+            recommendation = (
+                f"Accept the revised arrival time of {expected} and move the service start to "
+                f"{expected}. Keep the planned end time of {task['planned_end_time']}."
+            )
+        return {
+            "status": "PROPOSED",
+            "original_arrival_time": original,
+            "expected_arrival_time": expected,
+            "proposed_start_time": proposed_start,
+            "proposed_end_time": task["planned_end_time"],
+            "recommendation": recommendation,
+            "created_at": record.get("simulated_time") or self._now(),
+            "accepted_at": None,
+        }
 
     def _notify(
         self, record: dict[str, Any], task: dict[str, Any], message: str
@@ -447,6 +565,6 @@ class EventOperationsService:
                 ).hexdigest()[:12].upper(),
                 "task_id": task["task_id"],
                 "message": message,
-                "created_at": self._now(),
+                "created_at": record.get("simulated_time") or self._now(),
             }
         )

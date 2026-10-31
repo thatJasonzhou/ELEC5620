@@ -8,14 +8,17 @@ EventPilot is the ELEC5620 Stage 2 prototype. A customer describes an event in a
 2. Event Planner Agent extracts event type, exact date/time, location, guests, budget and services.
 3. Missing or ambiguous information is requested one item at a time.
 4. Code validates the model output and applies booking gates.
-5. Planner creates arrival, start and end times for every service. The customer can request revisions until the schedule is confirmed.
+5. Planner creates arrival, start and end times for every service. Before confirmation, the customer can add, remove or replace services and request schedule revisions without losing unaffected details.
 6. Procurement filters verified catalogue facts and shortlists suppliers.
 7. For the classroom demonstration, only three shortlisted venue suppliers receive interactive portal requests. Other service categories return clearly marked Mock replies.
 8. Procurement recommends one quotation per service. Finance adds the 10% service fee and 10% contingency and checks the complete combination against the customer's total budget.
 9. If the combination is over budget, Finance returns the exact overage and supplier subtotal ceiling. Procurement performs one bounded reselection before returning the case to Planner.
 10. The customer approves the combined quotation. The selected venue confirms the exact schedule and price in the supplier portal; other services are Mock-confirmed.
-11. The prototype then creates a simulated deposit, confirms bookings and generates an Operations execution plan from the approved service schedule.
-12. After every service is complete and Operations is finalized, Finance prepares the remaining balance. The customer completes a simulated final payment and the event is closed as paid in full.
+11. The prototype then creates a simulated deposit, confirms bookings and generates an Operations execution plan from the approved service schedule. The focused Operations demonstration is: the venue supplier reports a delay, Operations proposes a revised schedule, the customer accepts it, and only then can the supplier confirm arrival and complete the service. The customer view uses the current Sydney clock rather than demo time controls.
+12. After every service is complete, the customer explicitly confirms that the event has finished. Operations records this acceptance and closes before Finance prepares the remaining balance. The customer then completes a simulated final payment and the event is closed as paid in full.
+13. The customer may then submit one optional rating and comment. Feedback is stored with the Operations record and is not sent to suppliers.
+
+For classroom recovery, the existing customer UI includes a hidden **Demo controls** drawer. It stores complete checkpoints across the customer session, supplier portal and Operations state, allowing the presenter to undo the previous action, restart the current stage, load an earlier stage or reset the demo without manually rebuilding every downstream record.
 
 There is no independent Orchestrator Agent. The planning workflow coordinates calls between the existing business agents.
 
@@ -95,6 +98,7 @@ Melbourne, 16–17 December 2026, and 50 or 80 guests. A reliable demo example i
 - `POST /api/events/{event_id}/quotation-approval`
 - `POST /api/events/{event_id}/deposit-payment`
 - `POST /api/events/{event_id}/final-payment`
+- `POST /api/events/{event_id}/feedback`
 - `POST /api/events/{event_id}/bookings`
 - `GET /api/operations`
 - `POST /api/events/{event_id}/operations/{action}`

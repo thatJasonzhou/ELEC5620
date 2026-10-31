@@ -1,4 +1,4 @@
-import type { OperationsPlan, PlannerResponse, SupplierConfirmationRequest, SupplierQuoteRequest } from "./types";
+import type { DemoCheckpoint, OperationsPlan, PlannerResponse, SupplierConfirmationRequest, SupplierQuoteRequest } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -118,5 +118,25 @@ export const payDeposit = (eventId: string) =>
 export const payFinalPayment = (eventId: string) =>
   postEventAction(eventId, "final-payment");
 
+export const submitFeedback = (eventId: string, rating: number, comments: string) =>
+  postEventAction(eventId, "feedback", { rating, comments });
+
 export const confirmBookings = (eventId: string) =>
   postEventAction(eventId, "bookings");
+
+export async function getDemoCheckpoints(eventId: string): Promise<DemoCheckpoint[]> {
+  const response = await fetch(`${API_BASE_URL}/api/events/${eventId}/demo-checkpoints`);
+  return (await readJson<{ checkpoints: DemoCheckpoint[] }>(response)).checkpoints;
+}
+
+export const restorePreviousDemoCheckpoint = (eventId: string) =>
+  postEventAction(eventId, "demo-checkpoints/restore-previous");
+
+export const restartDemoStage = (eventId: string) =>
+  postEventAction(eventId, "demo-checkpoints/restart-stage");
+
+export const restoreDemoCheckpoint = (eventId: string, checkpointId: string) =>
+  postEventAction(eventId, `demo-checkpoints/${checkpointId}/restore`);
+
+export const resetDemoEvent = (eventId: string) =>
+  postEventAction(eventId, "demo-reset");

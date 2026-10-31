@@ -273,12 +273,28 @@ export interface OperationsIssue {
   created_at: string;
   resolution?: string;
   resolved_at?: string;
+  adjustment?: {
+    status: "PROPOSED" | "CUSTOMER_ACCEPTED";
+    original_arrival_time: string;
+    expected_arrival_time: string;
+    proposed_start_time: string;
+    proposed_end_time: string;
+    recommendation: string;
+    created_at: string;
+    accepted_at?: string | null;
+  };
 }
 
 export interface OperationsNotification {
   notification_id: string;
   task_id: string;
   message: string;
+  created_at: string;
+}
+
+export interface OperationsFeedback {
+  rating: number;
+  comments: string;
   created_at: string;
 }
 
@@ -290,9 +306,22 @@ export interface OperationsPlan {
   status: string;
   simulated_time?: string | null;
   finalized?: boolean;
+  customer_completion_confirmation?: {
+    confirmed: true;
+    confirmed_at: string;
+    source: "customer";
+  } | null;
   tasks: OperationsTask[];
   issues?: OperationsIssue[];
   notifications?: OperationsNotification[];
+  feedback?: OperationsFeedback[];
+}
+
+export interface DemoCheckpoint {
+  checkpoint_id: string;
+  stage: string;
+  label: string;
+  created_at: string;
 }
 
 export interface ChatMessage {

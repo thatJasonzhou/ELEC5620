@@ -4,6 +4,54 @@ from src.agents.event_planner import EventPlannerAgent
 from src.llm import MockLLMClient
 
 
+def test_plan_services_drops_stale_removed_service_from_model_output() -> None:
+    llm = MockLLMClient(
+        json.dumps(
+            {
+                "reply": "Photography has been removed from the plan.",
+                "decision_summary": ["Removed photography"],
+                "service_schedule": [
+                    {
+                        "service_type": "venue",
+                        "arrival_time": "12:00",
+                        "start_time": "15:00",
+                        "end_time": "18:00",
+                        "notes": "Venue setup",
+                    },
+                    {
+                        "service_type": "photography",
+                        "arrival_time": "14:30",
+                        "start_time": "15:00",
+                        "end_time": "18:00",
+                        "notes": "Stale previous-plan entry",
+                    },
+                ],
+            }
+        )
+    )
+    result = EventPlannerAgent(llm).plan_services(
+        {
+            "event_id": "EV-REMOVE-SERVICE",
+            "requirements": {
+                "event_date": "2026-12-05",
+                "start_time": "15:00",
+                "end_time": "18:00",
+                "required_services": ["venue"],
+            },
+            "current_schedule": [
+                {"service_type": "venue"},
+                {"service_type": "photography"},
+            ],
+            "message": "No need for photography.",
+        }
+    )
+
+    assert result["status"] == "success"
+    assert [
+        item["service_type"] for item in result["data"]["service_schedule"]
+    ] == ["venue"]
+
+
 def test_planner_merges_updates_and_asks_for_next_missing_group() -> None:
     llm = MockLLMClient(
         json.dumps(

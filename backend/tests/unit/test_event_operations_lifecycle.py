@@ -67,6 +67,8 @@ def test_operations_late_arrival_to_finalization() -> None:
     )
     assert finalized["status"] == "COMPLETED"
     assert finalized["finalized"] is True
+    assert finalized["customer_completion_confirmation"]["confirmed"] is True
+    assert finalized["customer_completion_confirmation"]["source"] == "customer"
 
 
 def test_operations_requires_arrival_and_persists(tmp_path: Path) -> None:
@@ -83,6 +85,83 @@ def test_operations_requires_arrival_and_persists(tmp_path: Path) -> None:
     reloaded = EventOperationsService(database).monitor_execution(plan["event_id"])
     assert reloaded["execution_plan_id"] == plan["execution_plan_id"]
     assert reloaded["tasks"][0]["status"] == "NOT_STARTED"
+
+
+def test_customer_can_set_demo_event_time() -> None:
+    service = EventOperationsService()
+    plan = service.generate_execution_plan(request())
+    task_id = plan["tasks"][0]["task_id"]
+
+    timed = service.perform_action(
+        plan["event_id"],
+        plan["proposal_id"],
+        "set_event_time",
+        {"event_time": "14:20"},
+    )
+    assert timed["simulated_time"][11:16] == "14:20"
+
+    arrived = service.perform_action(
+        plan["event_id"], plan["proposal_id"], "record_arrival", {"task_id": task_id}
+    )
+    assert arrived["tasks"][0]["arrived_at"][11:16] == "14:20"
+    assert arrived["notifications"][-1]["created_at"][11:16] == "14:20"
+
+
+def test_operations_demo_checkpoint_restores_previous_state() -> None:
+    service = EventOperationsService()
+    plan = service.generate_execution_plan(request())
+    task_id = plan["tasks"][0]["task_id"]
+    checkpoint = service.snapshot_event(plan["event_id"])
+
+    service.perform_action(
+        plan["event_id"], plan["proposal_id"], "record_arrival", {"task_id": task_id}
+    )
+    assert service.monitor_execution(plan["event_id"])["tasks"][0]["arrival_status"] == "ARRIVED"
+
+    service.restore_event(plan["event_id"], checkpoint)
+    restored = service.monitor_execution(plan["event_id"])
+    assert restored["tasks"][0]["arrival_status"] == "PENDING"
+
+
+def test_supplier_delay_requires_customer_adjustment_acceptance() -> None:
+    service = EventOperationsService()
+    plan = service.generate_execution_plan(request())
+    task_id = plan["tasks"][0]["task_id"]
+
+    delayed = service.perform_action(
+        plan["event_id"],
+        plan["proposal_id"],
+        "report_delay",
+        {
+            "task_id": task_id,
+            "expected_arrival_time": "14:30",
+            "reason": "Traffic delay",
+        },
+    )
+    issue = delayed["issues"][0]
+    assert issue["status"] == "OPEN"
+    assert issue["adjustment"]["status"] == "PROPOSED"
+    assert issue["adjustment"]["expected_arrival_time"] == "14:30"
+    assert issue["adjustment"]["proposed_start_time"] == "15:00"
+
+    with pytest.raises(OperationsBlocked, match="customer to accept"):
+        service.perform_action(
+            plan["event_id"], plan["proposal_id"], "record_arrival", {"task_id": task_id}
+        )
+
+    accepted = service.perform_action(
+        plan["event_id"],
+        plan["proposal_id"],
+        "accept_delay_adjustment",
+        {"issue_id": issue["issue_id"]},
+    )
+    assert accepted["issues"][0]["adjustment"]["status"] == "CUSTOMER_ACCEPTED"
+
+    arrived = service.perform_action(
+        plan["event_id"], plan["proposal_id"], "record_arrival", {"task_id": task_id}
+    )
+    assert arrived["tasks"][0]["arrival_status"] == "ARRIVED"
+    assert arrived["issues"][0]["status"] == "RESOLVED"
 
 
 def test_non_venue_service_is_explicit_automatic_mock() -> None:

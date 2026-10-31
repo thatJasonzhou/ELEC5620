@@ -432,6 +432,69 @@ class SupplierPortalService:
             ) from None
         return int(count)
 
+    def snapshot_event(self, event_id: str) -> dict[str, list[dict[str, Any]]]:
+        """Return raw portal rows so Demo controls can restore one event exactly."""
+        identity = require_non_empty_str(event_id, "event_id")
+        try:
+            with closing(self._connect()) as connection:
+                quotes = connection.execute(
+                    "SELECT * FROM supplier_quote_requests WHERE event_id=?",
+                    (identity,),
+                ).fetchall()
+                confirmations = connection.execute(
+                    "SELECT * FROM supplier_final_confirmations WHERE event_id=?",
+                    (identity,),
+                ).fetchall()
+        except sqlite3.Error:
+            raise SupplierPortalStorageError(
+                "Cannot create the supplier demo checkpoint."
+            ) from None
+        return {
+            "quote_requests": [dict(row) for row in quotes],
+            "confirmations": [dict(row) for row in confirmations],
+        }
+
+    def restore_event(
+        self, event_id: str, snapshot: dict[str, list[dict[str, Any]]] | None
+    ) -> None:
+        """Replace one event's portal rows from a trusted in-process checkpoint."""
+        identity = require_non_empty_str(event_id, "event_id")
+        state = snapshot or {"quote_requests": [], "confirmations": []}
+        quote_columns = (
+            "request_id", "event_id", "proposal_id", "vendor_id", "offering_id",
+            "status", "request_payload", "response_payload", "created_at", "responded_at",
+        )
+        confirmation_columns = (
+            "confirmation_id", "event_id", "proposal_id", "vendor_id", "offering_id",
+            "status", "request_payload", "response_payload", "created_at", "responded_at",
+        )
+        try:
+            with closing(self._connect()) as connection, connection:
+                connection.execute(
+                    "DELETE FROM supplier_quote_requests WHERE event_id=?", (identity,)
+                )
+                connection.execute(
+                    "DELETE FROM supplier_final_confirmations WHERE event_id=?", (identity,)
+                )
+                for row in state.get("quote_requests", []):
+                    if row.get("event_id") != identity:
+                        raise ValueError("supplier checkpoint event_id does not match")
+                    connection.execute(
+                        f"INSERT INTO supplier_quote_requests ({','.join(quote_columns)}) VALUES ({','.join('?' for _ in quote_columns)})",
+                        tuple(row.get(column) for column in quote_columns),
+                    )
+                for row in state.get("confirmations", []):
+                    if row.get("event_id") != identity:
+                        raise ValueError("supplier checkpoint event_id does not match")
+                    connection.execute(
+                        f"INSERT INTO supplier_final_confirmations ({','.join(confirmation_columns)}) VALUES ({','.join('?' for _ in confirmation_columns)})",
+                        tuple(row.get(column) for column in confirmation_columns),
+                    )
+        except sqlite3.Error:
+            raise SupplierPortalStorageError(
+                "Cannot restore the supplier demo checkpoint."
+            ) from None
+
     @staticmethod
     def _validate_request(raw: Any) -> dict[str, Any]:
         if not isinstance(raw, dict):

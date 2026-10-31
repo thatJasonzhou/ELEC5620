@@ -18,43 +18,55 @@ class EventSessionService:
         self._sessions: dict[str, dict[str, Any]] = {}
         self._lock = RLock()
 
+    @staticmethod
+    def _empty_session(identifier: str) -> dict[str, Any]:
+        return {
+            "event_id": identifier,
+            "requirements": {},
+            "progress": {"completed": 0, "total": 6, "missing_fields": []},
+            "history": [],
+            "stage": "requirements",
+            "proposal": None,
+            "plan_version": 0,
+            "plan_confirmed": False,
+            "vendor_recommendations": [],
+            "vendor_quotations": [],
+            "automatic_quotations": [],
+            "supplier_replies": [],
+            "supplier_requests": [],
+            "procurement_batch_id": None,
+            "quotation_rankings": [],
+            "recommended_quotation_ids": [],
+            "quotation_comparison_complete": False,
+            "quotation_comparison_fingerprint": None,
+            "selected_quotation_ids": [],
+            "finance_revision_attempts": 0,
+            "finance_feedback": None,
+            "budget": None,
+            "customer_quotation": None,
+            "approval": None,
+            "supplier_confirmations": [],
+            "declined_quotation_ids": [],
+            "deposit": None,
+            "final_payment": None,
+            "bookings": [],
+            "booking_replies": [],
+            "operations_plan": None,
+        }
+
     def get_or_create(self, event_id: str | None = None) -> dict[str, Any]:
         with self._lock:
             identifier = event_id.strip() if isinstance(event_id, str) and event_id.strip() else f"EV-{uuid4().hex[:8].upper()}"
             if identifier not in self._sessions:
-                self._sessions[identifier] = {
-                    "event_id": identifier,
-                    "requirements": {},
-                    "progress": {"completed": 0, "total": 6, "missing_fields": []},
-                    "history": [],
-                    "stage": "requirements",
-                    "proposal": None,
-                    "plan_version": 0,
-                    "plan_confirmed": False,
-                    "vendor_recommendations": [],
-                    "vendor_quotations": [],
-                    "automatic_quotations": [],
-                    "supplier_replies": [],
-                    "supplier_requests": [],
-                    "procurement_batch_id": None,
-                    "quotation_rankings": [],
-                    "recommended_quotation_ids": [],
-                    "quotation_comparison_complete": False,
-                    "quotation_comparison_fingerprint": None,
-                    "selected_quotation_ids": [],
-                    "finance_revision_attempts": 0,
-                    "finance_feedback": None,
-                    "budget": None,
-                    "customer_quotation": None,
-                    "approval": None,
-                    "supplier_confirmations": [],
-                    "declined_quotation_ids": [],
-                    "deposit": None,
-                    "final_payment": None,
-                    "bookings": [],
-                    "booking_replies": [],
-                    "operations_plan": None,
-                }
+                self._sessions[identifier] = self._empty_session(identifier)
+            return deepcopy(self._sessions[identifier])
+
+    def reset(self, event_id: str) -> dict[str, Any]:
+        identifier = event_id.strip() if isinstance(event_id, str) else ""
+        if not identifier:
+            raise ValueError("event_id is required")
+        with self._lock:
+            self._sessions[identifier] = self._empty_session(identifier)
             return deepcopy(self._sessions[identifier])
 
     def save(self, session: dict[str, Any]) -> dict[str, Any]:

@@ -57,8 +57,16 @@ class SupplierConfirmationResponseRequest(BaseModel):
     message: str | None = Field(default=None, max_length=500)
 
 
+class CustomerFeedbackRequest(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    comments: str = Field(min_length=1, max_length=1000)
+
+
 class OperationsActionRequest(BaseModel):
     task_id: str | None = None
+    event_time: str | None = Field(
+        default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$"
+    )
     expected_arrival_time: str | None = Field(
         default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$"
     )
@@ -157,10 +165,15 @@ def health() -> dict[str, str]:
 
 @app.post("/api/planner/message")
 def planner_message(request: PlannerMessageRequest) -> dict:
-    return workflow.handle_message(
+    if request.event_id:
+        workflow.capture_demo_checkpoint(request.event_id)
+    result = workflow.handle_message(
         event_id=request.event_id,
         message=request.message.strip(),
     )
+    if request.event_id is None:
+        workflow.capture_demo_checkpoint(result["event_id"])
+    return result
 
 
 @app.get("/api/events/{event_id}")
@@ -173,6 +186,7 @@ def get_event(event_id: str) -> dict:
 
 def _run_event_action(action, event_id: str) -> dict:
     try:
+        workflow.capture_demo_checkpoint(event_id)
         return action(event_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -195,6 +209,7 @@ def confirm_quotation_selection(
     event_id: str, request: QuotationSelectionRequest
 ) -> dict:
     try:
+        workflow.capture_demo_checkpoint(event_id)
         return workflow.confirm_quotation_selection(event_id, request.quotation_ids)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -217,6 +232,17 @@ def pay_final_payment(event_id: str) -> dict:
     return _run_event_action(workflow.pay_final_payment, event_id)
 
 
+@app.post("/api/events/{event_id}/feedback")
+def submit_feedback(event_id: str, request: CustomerFeedbackRequest) -> dict:
+    try:
+        workflow.capture_demo_checkpoint(event_id)
+        return workflow.submit_feedback(event_id, request.rating, request.comments.strip())
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/api/events/{event_id}/bookings")
 def confirm_bookings(event_id: str) -> dict:
     return _run_event_action(workflow.confirm_bookings, event_id)
@@ -235,6 +261,7 @@ def update_operations(
     event_id: str, action: str, request: OperationsActionRequest
 ) -> dict:
     try:
+        workflow.capture_demo_checkpoint(event_id)
         return workflow.perform_operations_action(
             event_id, action, request.model_dump(exclude_none=True)
         )
@@ -262,6 +289,16 @@ def respond_to_vendor_quote_request(
     request_id: str, request: SupplierQuoteResponseRequest
 ) -> dict:
     try:
+        supplier_request = next(
+            (
+                item
+                for item in supplier_portal.list_quote_requests()
+                if item.get("request_id") == request_id
+            ),
+            None,
+        )
+        if supplier_request is not None:
+            workflow.capture_demo_checkpoint(supplier_request["event_id"])
         return supplier_portal.respond_to_quote_request(
             request_id,
             available=request.available,
@@ -287,6 +324,16 @@ def respond_to_vendor_confirmation(
     confirmation_id: str, request: SupplierConfirmationResponseRequest
 ) -> dict:
     try:
+        confirmation = next(
+            (
+                item
+                for item in supplier_portal.list_confirmation_requests()
+                if item.get("confirmation_id") == confirmation_id
+            ),
+            None,
+        )
+        if confirmation is not None:
+            workflow.capture_demo_checkpoint(confirmation["event_id"])
         return supplier_portal.respond_to_confirmation(
             confirmation_id,
             confirmed=request.confirmed,
@@ -310,3 +357,45 @@ def reset_vendor_cases() -> dict:
         }
     except (SupplierPortalStorageError, ValueError) as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/api/events/{event_id}/demo-checkpoints")
+def list_demo_checkpoints(event_id: str) -> dict:
+    try:
+        return {"checkpoints": workflow.list_demo_checkpoints(event_id)}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/events/{event_id}/demo-checkpoints/restore-previous")
+def restore_previous_demo_checkpoint(event_id: str) -> dict:
+    return _run_demo_action(workflow.restore_previous_demo_checkpoint, event_id)
+
+
+@app.post("/api/events/{event_id}/demo-checkpoints/restart-stage")
+def restart_demo_stage(event_id: str) -> dict:
+    return _run_demo_action(workflow.restart_demo_stage, event_id)
+
+
+@app.post("/api/events/{event_id}/demo-checkpoints/{checkpoint_id}/restore")
+def restore_demo_checkpoint(event_id: str, checkpoint_id: str) -> dict:
+    try:
+        return workflow.restore_demo_checkpoint(event_id, checkpoint_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, SupplierPortalStorageError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/events/{event_id}/demo-reset")
+def reset_demo_event(event_id: str) -> dict:
+    return _run_demo_action(workflow.reset_demo_event, event_id)
+
+
+def _run_demo_action(action, event_id: str) -> dict:
+    try:
+        return action(event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, SupplierPortalStorageError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

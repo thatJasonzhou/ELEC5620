@@ -86,6 +86,9 @@ def test_timed_plan_manual_venue_and_operations_flow(tmp_path: Path) -> None:
 
     waiting = workflow.request_vendor_quotations(planned["event_id"])
     assert waiting["stage"] == "awaiting_vendor_quotes"
+    assert "suitable suppliers" in waiting["reply"]
+    assert "Mock suppliers" not in waiting["reply"]
+    assert "venue requests" not in waiting["reply"]
     assert len(waiting["supplier_requests"]) == 3
     assert {item["service_type"] for item in waiting["supplier_requests"]} == {
         "venue"
@@ -159,20 +162,133 @@ def test_timed_plan_manual_venue_and_operations_flow(tmp_path: Path) -> None:
         planned["event_id"], "complete_service", {"task_id": venue_task["task_id"]}
     )
     balance = workflow.perform_operations_action(
-        planned["event_id"], "finalize_execution", {"confirm": True}
+        planned["event_id"], "confirm_event_completion", {"confirm": True}
     )
     assert balance["stage"] == "final_payment"
     assert balance["operations_plan"]["finalized"] is True
+    assert balance["operations_plan"]["customer_completion_confirmation"][
+        "confirmed"
+    ] is True
     assert balance["final_payment"]["status"] == "pending"
     assert balance["final_payment"]["amount_cents"] == (
         balance["customer_quotation"]["estimated_total_cents"]
         - balance["deposit"]["amount_cents"]
     )
 
+    with pytest.raises(ValueError, match="pay the final balance"):
+        workflow.submit_feedback(planned["event_id"], 5, "Great event")
+
     closed = workflow.pay_final_payment(planned["event_id"])
     assert closed["stage"] == "completed"
     assert closed["final_payment"]["status"] == "paid"
     assert closed["final_payment"]["transaction_reference"].startswith("MOCK-FP-")
+
+    feedback = workflow.submit_feedback(
+        planned["event_id"], 5, "The planning process was easy to follow."
+    )
+    assert feedback["stage"] == "completed"
+    assert feedback["operations_plan"]["feedback"] == [
+        {
+            "rating": 5,
+            "comments": "The planning process was easy to follow.",
+            "created_at": feedback["operations_plan"]["feedback"][0]["created_at"],
+        }
+    ]
+    with pytest.raises(ValueError, match="already been submitted"):
+        workflow.submit_feedback(planned["event_id"], 4, "Second response")
+
+
+def test_plan_review_can_add_remove_and_replace_services(tmp_path: Path) -> None:
+    workflow, _ = make_workflow(tmp_path)
+    original = workflow.handle_message(
+        event_id=None,
+        message=(
+            "I need a conference in Sydney on 16 December 2026 from 9 am "
+            "to 5 pm for 50 guests, budget 100000 dollars, with lighting "
+            "and event staff."
+        ),
+    )
+    assert original["stage"] == "plan_review"
+    original_schedule = {
+        item["service_type"]: item for item in original["proposal"]["service_schedule"]
+    }
+
+    added = workflow.handle_message(
+        event_id=original["event_id"],
+        message="Please add photography. Keep all existing services and details.",
+    )
+    assert added["proposal"]["version"] == 2
+    assert added["proposal"]["required_services"] == [
+        "venue",
+        "lighting",
+        "event_staff",
+        "photography",
+    ]
+    added_schedule = {
+        item["service_type"]: item for item in added["proposal"]["service_schedule"]
+    }
+    assert added_schedule["venue"] == original_schedule["venue"]
+    assert added_schedule["lighting"] == original_schedule["lighting"]
+    assert "photography" in added_schedule
+
+    removed = workflow.handle_message(
+        event_id=original["event_id"], message="Remove lighting from the plan."
+    )
+    assert removed["proposal"]["version"] == 3
+    assert removed["proposal"]["required_services"] == [
+        "venue",
+        "event_staff",
+        "photography",
+    ]
+    assert "lighting" not in {
+        item["service_type"] for item in removed["proposal"]["service_schedule"]
+    }
+
+    replaced = workflow.handle_message(
+        event_id=original["event_id"],
+        message="Replace photography with catering.",
+    )
+    assert replaced["proposal"]["version"] == 4
+    assert replaced["proposal"]["required_services"] == [
+        "venue",
+        "event_staff",
+        "catering",
+    ]
+    assert replaced["stage"] == "plan_review"
+    assert replaced["plan_confirmed"] is False
+
+
+def test_demo_checkpoint_restores_session_and_supplier_portal(tmp_path: Path) -> None:
+    workflow, portal = make_workflow(tmp_path)
+    planned = workflow.handle_message(
+        event_id=None,
+        message=(
+            "I need a conference in Sydney on 16 December 2026 from 9 am "
+            "to 5 pm for 50 guests, budget 100000 dollars, with lighting."
+        ),
+    )
+    event_id = planned["event_id"]
+    workflow.capture_demo_checkpoint(event_id)
+    confirmed = workflow.confirm_plan(event_id)
+    assert confirmed["stage"] == "proposal"
+
+    workflow.capture_demo_checkpoint(event_id)
+    waiting = workflow.request_vendor_quotations(event_id)
+    assert waiting["stage"] == "awaiting_vendor_quotes"
+    assert portal.list_quote_requests(event_id=event_id)
+
+    restored = workflow.restore_previous_demo_checkpoint(event_id)
+    assert restored["stage"] == "proposal"
+    assert restored["supplier_requests"] == []
+    assert portal.list_quote_requests(event_id=event_id) == []
+
+    restarted = workflow.restart_demo_stage(event_id)
+    assert restarted["stage"] == "proposal"
+
+    reset = workflow.reset_demo_event(event_id)
+    assert reset["stage"] == "requirements"
+    assert reset["proposal"] is None
+    assert workflow.list_demo_checkpoints(event_id) == []
 
 
 def test_finance_ceiling_triggers_one_procurement_reselection(tmp_path: Path) -> None:

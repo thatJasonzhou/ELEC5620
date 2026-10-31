@@ -146,7 +146,7 @@ export default function VendorPortal() {
           <div><strong>EventPilot Supplier</strong><small>Quotation and Operations portal</small></div>
         </div>
         <div className="vendor-top-actions">
-          <span className="simulation-pill">SIMULATED SUPPLIER SYSTEM</span>
+          <span className="simulation-pill">DEMO PORTAL</span>
           <a href="/">Customer view</a>
         </div>
       </header>
@@ -240,6 +240,9 @@ function OperationsCard({ plan, task, onUpdated }: { plan: OperationsPlan; task:
   const [reason, setReason] = useState(task.delay_reason || "Traffic delay");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const delayIssue = plan.issues?.find((issue) => issue.task_id === task.task_id && issue.adjustment);
+  const adjustment = delayIssue?.adjustment;
+  const waitingForCustomer = delayIssue?.status === "OPEN" && adjustment?.status === "PROPOSED";
 
   async function run(action: string, body: Record<string, unknown> = {}) {
     if (submitting) return;
@@ -258,7 +261,7 @@ function OperationsCard({ plan, task, onUpdated }: { plan: OperationsPlan; task:
   return (
     <article className={`vendor-request-card operation-task ${task.status.toLowerCase()}`}>
       <div className="request-card-top">
-        <div><span className="service-tag">{task.service_type}</span><h3>{task.title}</h3><small>Event {plan.event_id}</small></div>
+        <div><span className="service-tag">{task.service_type}</span><h3>{task.title}</h3><small>{plan.event_date}</small></div>
         <span className={`request-status ${task.status.toLowerCase()}`}>{task.status.replaceAll("_", " ")}</span>
       </div>
       <div className="request-facts">
@@ -267,17 +270,19 @@ function OperationsCard({ plan, task, onUpdated }: { plan: OperationsPlan; task:
         <span><CheckCircle2 size={16} /><b>{task.arrival_status || "PENDING"}</b></span>
       </div>
       {task.delay_reason && <div className="operation-alert"><AlertTriangle size={16} />{task.delay_reason} · Expected {task.expected_arrival_time}</div>}
+      {waitingForCustomer && <div className="supplier-adjustment-status waiting"><Clock3 size={16} /><span><strong>Waiting for customer approval</strong><small>Operations proposed a revised schedule. Refresh after the customer accepts it.</small></span></div>}
+      {delayIssue?.status === "OPEN" && adjustment?.status === "CUSTOMER_ACCEPTED" && <div className="supplier-adjustment-status accepted"><CheckCircle2 size={16} /><span><strong>Revised schedule accepted</strong><small>The customer accepted arrival at {adjustment.expected_arrival_time}. Confirm arrival when you reach the venue.</small></span></div>}
       {task.status === "COMPLETED" ? (
         <div className="supplier-response-summary quoted"><CheckCircle2 size={18} /><div><strong>Service completed</strong><small>Started {task.actual_start_at} · Finished {task.actual_end_at}</small></div></div>
       ) : task.arrival_status !== "ARRIVED" ? (
         <div className="operation-actions">
-          <button className="send-quote-button" type="button" disabled={submitting} onClick={() => void run("record_arrival")}><CheckCircle2 size={16} /> Confirm arrival</button>
-          <details className="delay-form">
+          <button className="send-quote-button" type="button" disabled={submitting || waitingForCustomer} onClick={() => void run("record_arrival")}><CheckCircle2 size={16} /> Confirm arrival</button>
+          {!task.delay_reason && <details className="delay-form">
             <summary><AlertTriangle size={15} /> Report delay</summary>
             <label><span>Expected arrival</span><input type="time" value={expected} onChange={(event) => setExpected(event.target.value)} /></label>
             <label><span>Reason</span><input value={reason} maxLength={500} onChange={(event) => setReason(event.target.value)} /></label>
             <button type="button" disabled={submitting} onClick={() => void run("report_delay", { expected_arrival_time: expected, reason })}>Send delay update</button>
-          </details>
+          </details>}
         </div>
       ) : task.status === "IN_PROGRESS" ? (
         <button className="send-quote-button operation-primary" type="button" disabled={submitting} onClick={() => void run("complete_service")}><CheckCircle2 size={16} /> Complete service</button>
@@ -321,7 +326,7 @@ function QuoteRequestCard({ request, onAnswered }: { request: SupplierQuoteReque
 
   return (
     <article className={`vendor-request-card ${request.status}`}>
-      <div className="request-card-top"><div><span className="service-tag">{request.service_type}</span><h3>{request.vendor_name}</h3><small>{request.event_summary}</small><br /><small>{request.request_id}</small></div><span className={`request-status ${request.status}`}>{request.status}</span></div>
+      <div className="request-card-top"><div><span className="service-tag">{request.service_type}</span><h3>{request.vendor_name}</h3><small>{request.event_summary}</small></div><span className={`request-status ${request.status}`}>{request.status}</span></div>
       <div className="request-facts"><span><CalendarDays size={16} /><b>{request.event_date}</b></span><span><Clock3 size={16} /><b>Arrive {request.arrival_time} · Service {request.service_start_time}–{request.service_end_time}</b></span><span><MapPin size={16} /><b>{request.location}</b></span><span><Users size={16} /><b>{request.guest_count} guests</b></span></div>
       <div className="request-budget-row"><div><small>Catalogue estimate</small><strong>{money(request.catalogue_estimate_cents)}</strong></div><div><small>Proposal</small><strong>Version confirmed</strong></div></div>
       {request.status === "pending" ? (
@@ -359,7 +364,7 @@ function ConfirmationCard({ request, onAnswered }: { request: SupplierConfirmati
 
   return (
     <article className={`vendor-request-card ${request.status}`}>
-      <div className="request-card-top"><div><span className="service-tag">FINAL VENUE CHECK</span><h3>{request.vendor_name}</h3><small>{request.confirmation_id}</small></div><span className={`request-status ${request.status}`}>{request.status}</span></div>
+      <div className="request-card-top"><div><span className="service-tag">VENUE CONFIRMATION</span><h3>{request.vendor_name}</h3><small>{request.event_date}</small></div><span className={`request-status ${request.status}`}>{request.status}</span></div>
       <div className="request-facts"><span><CalendarDays size={16} /><b>{request.event_date}</b></span><span><Clock3 size={16} /><b>Arrive {request.arrival_time} · {request.service_start_time}–{request.service_end_time}</b></span><span><DollarSign size={16} /><b>{money(request.quoted_total_cents)}</b></span></div>
       {request.status === "pending" ? (
         <div className="quote-response-form"><label><span>Message (optional)</span><input value={message} maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder="Confirm the exact time and quoted price" /></label>{error && <p className="inline-error">{error}</p>}<div className="quote-form-actions"><button className="decline-button" type="button" disabled={submitting} onClick={() => void answer(false)}><XCircle size={16} /> Decline</button><button className="send-quote-button" type="button" disabled={submitting} onClick={() => void answer(true)}><CheckCircle2 size={16} /> {submitting ? "Saving…" : "Confirm booking"}</button></div></div>

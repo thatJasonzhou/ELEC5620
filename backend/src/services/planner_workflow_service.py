@@ -1,6 +1,7 @@
 """Application workflow connecting Planning, Procurement and Financial Agents."""
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from datetime import datetime
@@ -43,10 +44,172 @@ class PlannerWorkflowService:
         self._supplier_portal = supplier_portal
         self._timezone = timezone
         self._llm_mode = llm_mode
+        self._demo_checkpoints: dict[str, list[dict[str, Any]]] = {}
 
     @property
     def supplier_portal(self) -> SupplierPortalService | None:
         return self._supplier_portal
+
+    @staticmethod
+    def _demo_stage_label(stage: str) -> str:
+        return {
+            "requirements": "Requirements",
+            "plan_review": "Plan review",
+            "proposal": "Plan confirmed",
+            "awaiting_vendor_quotes": "Supplier quotations",
+            "quotation_review": "Quotation review",
+            "quotation": "Customer quotation",
+            "awaiting_supplier_confirmation": "Supplier confirmation",
+            "payment": "Deposit payment",
+            "booking": "Booking",
+            "operations": "Operations",
+            "final_payment": "Final payment",
+            "completed": "Completed",
+        }.get(stage, stage.replace("_", " ").title())
+
+    def capture_demo_checkpoint(
+        self, event_id: str, label: str | None = None
+    ) -> dict[str, Any]:
+        """Capture the complete current state used by the classroom demo."""
+        session = self._require_session(event_id)
+        stage = str(session.get("stage", "requirements"))
+        checkpoint = {
+            "checkpoint_id": "DCP-" + uuid4().hex[:12].upper(),
+            "stage": stage,
+            "label": label or self._demo_stage_label(stage),
+            "created_at": datetime.now(ZoneInfo(self._timezone)).isoformat(),
+            "session": deepcopy(session),
+            "supplier_portal": (
+                self._supplier_portal.snapshot_event(event_id)
+                if self._supplier_portal is not None
+                else None
+            ),
+            "operations": (
+                self._operations.snapshot_event(event_id)
+                if self._operations is not None
+                else None
+            ),
+        }
+        checkpoints = self._demo_checkpoints.setdefault(event_id, [])
+        checkpoints.append(checkpoint)
+        if len(checkpoints) > 40:
+            del checkpoints[:-40]
+        return self._checkpoint_metadata(checkpoint)
+
+    @staticmethod
+    def _checkpoint_metadata(checkpoint: dict[str, Any]) -> dict[str, Any]:
+        return {
+            key: checkpoint[key]
+            for key in ("checkpoint_id", "stage", "label", "created_at")
+        }
+
+    def list_demo_checkpoints(self, event_id: str) -> list[dict[str, Any]]:
+        self._require_session(event_id)
+        return [
+            self._checkpoint_metadata(item)
+            for item in self._demo_checkpoints.get(event_id, [])
+        ]
+
+    def _restore_demo_snapshot(
+        self, event_id: str, checkpoint: dict[str, Any], reply: str
+    ) -> dict[str, Any]:
+        if self._supplier_portal is not None:
+            self._supplier_portal.restore_event(
+                event_id, deepcopy(checkpoint.get("supplier_portal"))
+            )
+        if self._operations is not None:
+            self._operations.restore_event(
+                event_id, deepcopy(checkpoint.get("operations"))
+            )
+        session = deepcopy(checkpoint["session"])
+        self._sessions.save(session)
+        return self._response(session, reply, [])
+
+    def restore_previous_demo_checkpoint(self, event_id: str) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        checkpoints = self._demo_checkpoints.get(event_id, [])
+        if not checkpoints:
+            raise ValueError("No previous demo checkpoint is available")
+        supplier_state = (
+            self._supplier_portal.snapshot_event(event_id)
+            if self._supplier_portal is not None
+            else None
+        )
+        operations_state = (
+            self._operations.snapshot_event(event_id)
+            if self._operations is not None
+            else None
+        )
+        checkpoint = next(
+            (
+                item
+                for item in reversed(checkpoints)
+                if item.get("session") != session
+                or item.get("supplier_portal") != supplier_state
+                or item.get("operations") != operations_state
+            ),
+            None,
+        )
+        if checkpoint is None:
+            raise ValueError("The demo is already at its earliest checkpoint")
+        return self._restore_demo_snapshot(
+            event_id,
+            checkpoint,
+            f"Demo restored to {checkpoint['label']}.",
+        )
+
+    def restart_demo_stage(self, event_id: str) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        current_stage = session.get("stage", "requirements")
+        checkpoint = next(
+            (
+                item
+                for item in self._demo_checkpoints.get(event_id, [])
+                if item.get("stage") == current_stage
+            ),
+            None,
+        )
+        if checkpoint is None:
+            raise ValueError("No checkpoint is available for the current stage")
+        return self._restore_demo_snapshot(
+            event_id,
+            checkpoint,
+            f"The {self._demo_stage_label(str(current_stage))} stage was restarted.",
+        )
+
+    def restore_demo_checkpoint(
+        self, event_id: str, checkpoint_id: str
+    ) -> dict[str, Any]:
+        identity = checkpoint_id.strip() if isinstance(checkpoint_id, str) else ""
+        checkpoint = next(
+            (
+                item
+                for item in self._demo_checkpoints.get(event_id, [])
+                if item.get("checkpoint_id") == identity
+            ),
+            None,
+        )
+        if checkpoint is None:
+            raise ValueError("Demo checkpoint was not found")
+        return self._restore_demo_snapshot(
+            event_id,
+            checkpoint,
+            f"Demo loaded at {checkpoint['label']}.",
+        )
+
+    def reset_demo_event(self, event_id: str) -> dict[str, Any]:
+        self._require_session(event_id)
+        if self._supplier_portal is not None:
+            self._supplier_portal.restore_event(event_id, None)
+        if self._operations is not None:
+            self._operations.restore_event(event_id, None)
+        session = self._sessions.reset(event_id)
+        self._demo_checkpoints[event_id] = []
+        return self._response(
+            session,
+            "The demo was reset. Tell me what kind of event you would like to plan.",
+            [],
+        )
 
     def handle_message(self, *, event_id: str | None, message: str) -> dict[str, Any]:
         session = self._sessions.get_or_create(event_id)
@@ -64,6 +227,30 @@ class PlannerWorkflowService:
         if session.get("stage") == "plan_review" and isinstance(
             session.get("proposal"), dict
         ):
+            now = datetime.now(ZoneInfo(self._timezone))
+            requirements_result = self._planner.handle(
+                {
+                    "event_id": session["event_id"],
+                    "message": message,
+                    "current_date": now.date().isoformat(),
+                    "timezone": self._timezone,
+                    "saved_requirements": session["requirements"],
+                    "history": session["history"],
+                }
+            )
+            trace = [self._trace(requirements_result)]
+            if requirements_result["status"] == "error":
+                return self._response(session, requirements_result["message"], trace)
+            requirement_data = requirements_result["data"]
+            if not requirement_data.get("ready_for_vendor_matching"):
+                return self._response(
+                    session,
+                    requirements_result["message"],
+                    trace,
+                    decision_summary=requirement_data.get("decision_summary", []),
+                )
+            session["requirements"] = requirement_data["requirements"]
+            session["progress"] = requirement_data["progress"]
             schedule_result = self._planner.plan_services(
                 {
                     "event_id": session["event_id"],
@@ -74,7 +261,7 @@ class PlannerWorkflowService:
                     "message": message,
                 }
             )
-            trace = [self._trace(schedule_result)]
+            trace.append(self._trace(schedule_result))
             if schedule_result["status"] == "success":
                 session["plan_version"] = int(session.get("plan_version", 0)) + 1
                 session["proposal"] = self._build_proposal(
@@ -355,7 +542,7 @@ class PlannerWorkflowService:
         session["operations_plan"] = result["data"]["execution_plan"]
         trace = [self._trace(result)]
         reply = "Operations status updated."
-        if session["operations_plan"].get("finalized"):
+        if action in {"finalize_execution", "confirm_event_completion"} and session["operations_plan"].get("finalized"):
             payment_result = self._finance.handle(
                 {
                     "event_id": event_id,
@@ -375,9 +562,9 @@ class PlannerWorkflowService:
             )
             trace.append(self._trace(payment_result))
             reply = (
-                "Operations is complete. Finance prepared the remaining balance for simulated payment."
+                "You confirmed that the event is complete. Operations is now closed, and Finance prepared the remaining balance for simulated payment."
                 if session["stage"] == "final_payment"
-                else "Operations is complete and no remaining balance is due."
+                else "You confirmed that the event is complete. Operations is closed and no remaining balance is due."
             )
         self._sessions.save(session)
         return self._response(session, reply, trace)
@@ -411,6 +598,35 @@ class PlannerWorkflowService:
         return self._response(
             session,
             "The remaining balance was paid successfully. The event is now paid in full and closed.",
+            [self._trace(result)],
+        )
+
+    def submit_feedback(
+        self, event_id: str, rating: int, comments: str
+    ) -> dict[str, Any]:
+        session = self._require_session(event_id)
+        final_payment = session.get("final_payment")
+        if not isinstance(final_payment, dict) or final_payment.get("status") != "paid":
+            raise ValueError("pay the final balance before submitting feedback")
+        if self._operations is None or not session.get("operations_plan"):
+            raise ValueError("Operations is not ready for this event")
+        result = self._operations.handle(
+            {
+                "action": "record_feedback",
+                "event_id": event_id,
+                "proposal_id": session["proposal"]["proposal_id"],
+                "rating": rating,
+                "comments": comments,
+            }
+        )
+        if result["status"] != "success":
+            raise ValueError(result["message"])
+        session["operations_plan"] = result["data"]["execution_plan"]
+        session["stage"] = "completed"
+        self._sessions.save(session)
+        return self._response(
+            session,
+            "Thank you for your feedback. We’ve recorded your suggestions and will use them to improve our service.",
             [self._trace(result)],
         )
 
@@ -495,7 +711,7 @@ class PlannerWorkflowService:
         else:
             session["stage"] = "quotation_review"
             reply = (
-                f"I received {len(quotations)} confirmed mock quotation"
+                f"I received {len(quotations)} confirmed supplier quotation"
                 f"{'s' if len(quotations) != 1 else ''}. "
                 "Select one quotation for each service."
             )
@@ -997,9 +1213,8 @@ class PlannerWorkflowService:
         self._sessions.save(session)
         return self._response(
             session,
-            f"I sent {len(created)} venue requests to the interactive supplier portal. "
-            f"The other {max(0, len(services) - 1)} service categor"
-            f"{'ies were' if len(services) - 1 != 1 else 'y was'} answered by explicit Mock suppliers.",
+            "Your confirmed plan has been sent to suitable suppliers. "
+            "I’ll let you know when their quotations are ready.",
             [
                 {
                     "agent": "procurement",

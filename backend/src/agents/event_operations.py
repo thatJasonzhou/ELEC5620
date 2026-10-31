@@ -18,6 +18,12 @@ class EventOperationsAgent(AIAgent):
             raise TypeError("service must be an EventOperationsService")
         self._service = service
 
+    def snapshot_event(self, event_id: str) -> dict[str, Any] | None:
+        return self._service.snapshot_event(event_id)
+
+    def restore_event(self, event_id: str, snapshot: dict[str, Any] | None) -> None:
+        self._service.restore_event(event_id, snapshot)
+
     def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(request, dict):
             return self.envelope(None, "error", "request must be an object")

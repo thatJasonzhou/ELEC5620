@@ -70,6 +70,7 @@ Responsibilities:
 - Return null for an unchanged or unknown field.
 - Dates use YYYY-MM-DD, times use HH:MM, and budgets use integer AUD cents. For example, AUD 30,000, $30000 and 30000 dollars must all be returned as 3000000 cents, never 30000.
 - A venue is required for every event. required_services must include venue once the customer confirms their service choices. If the customer explicitly says no extra services are needed, return ["venue"] and set services_confirmed to true. If services have not been discussed, return null for both fields.
+- When saved services already exist, understand requests to add, remove or replace a service. Return the complete updated required_services list and preserve every unaffected service. Never remove venue.
 - Supported vendor service values are catering, photography, venue, sound, decoration, videography, lighting, entertainment, transport and event_staff. Normalise ordinary phrases such as "event staff" to event_staff and return these exact lowercase values. An activity may use at most five distinct service categories.
 - Ask one concise follow-up question for the most important missing or ambiguous item.
 - Exact event date, start time and end time are required before vendor matching.
@@ -189,7 +190,7 @@ class EventPlannerAgent(AIAgent):
             )
             result = self._validate_model_result(raw)
             self._normalise_explicit_budget(message, saved, result["updates"])
-            self._normalise_explicit_services(message, result["updates"])
+            self._normalise_explicit_services(message, saved, result["updates"])
             requirements = self._merge_requirements(saved, result["updates"])
         except (LLMError, ValueError, TypeError) as exc:
             return self.envelope(
@@ -250,6 +251,14 @@ class EventPlannerAgent(AIAgent):
             current = request.get("current_schedule") or []
             if not isinstance(current, list):
                 raise ValueError("current_schedule must be a list")
+            # A plan revision may remove a service. Do not send stale schedule
+            # entries for that removed service back to the model.
+            current = [
+                item
+                for item in current
+                if not isinstance(item, dict)
+                or item.get("service_type") in services
+            ]
             message = request.get("message") or "Create the initial service schedule."
             message = require_non_empty_str(message, "message")
         except ValueError as exc:
@@ -278,8 +287,20 @@ class EventPlannerAgent(AIAgent):
                 isinstance(item, str) and item.strip() for item in summaries
             ):
                 raise ValueError("decision_summary must contain non-empty strings")
+            candidate_schedule = raw.get("service_schedule")
+            if isinstance(candidate_schedule, list):
+                # Structured model output can repeat an entry from the previous
+                # plan after the customer removes that service. Drop only those
+                # verified stale extras; all required entries are still checked
+                # strictly by _validate_schedule below.
+                candidate_schedule = [
+                    item
+                    for item in candidate_schedule
+                    if not isinstance(item, dict)
+                    or item.get("service_type") in services
+                ]
             schedule = self._validate_schedule(
-                raw.get("service_schedule"), services, event_start, event_end
+                candidate_schedule, services, event_start, event_end
             )
         except (LLMError, ValueError, TypeError) as exc:
             return self.envelope(
@@ -342,31 +363,85 @@ class EventPlannerAgent(AIAgent):
 
         updates["budget_limit_cents"] = explicit_total
 
-    @staticmethod
+    @classmethod
     def _normalise_explicit_services(
-        message: str, updates: dict[str, Any]
+        cls, message: str, saved: dict[str, Any], updates: dict[str, Any]
     ) -> None:
-        """Recover clearly named services when the model omits the list."""
-        if updates.get("required_services") is not None:
-            return
+        """Apply explicit add/remove/replace intent without losing saved services."""
         lower = message.lower()
-        if re.search(
-            r"\b(?:remove|cancel|without|do not need|don't need|no)\b", lower
-        ):
+        detected = cls._detect_services(lower)
+        saved_services = list(saved.get("required_services") or [])
+        services_confirmed = saved.get("services_confirmed") is True
+        no_extras = bool(
+            re.search(
+                r"\b(?:no|without|do not need|don't need)\s+(?:any\s+)?(?:extra\s+|additional\s+)?services?\b",
+                lower,
+            )
+        )
+
+        if not services_confirmed:
+            if no_extras:
+                updates["required_services"] = ["venue"]
+                updates["services_confirmed"] = True
+            elif detected and updates.get("required_services") is None:
+                updates["required_services"] = list(
+                    dict.fromkeys(["venue", *detected])
+                )
+                updates["services_confirmed"] = True
             return
-        detected = [
+
+        current = list(dict.fromkeys(["venue", *saved_services]))
+        replacement = re.search(r"\breplace\s+(.+?)\s+with\s+(.+)", lower)
+        remove_intent = bool(
+            re.search(
+                r"\b(?:remove|delete|drop|cancel|without|do not need|don't need)\b",
+                lower,
+            )
+        )
+        add_intent = bool(
+            re.search(
+                r"\b(?:add|include|also|too|as well|need|want|would like|have|new service|additional service)\b",
+                lower,
+            )
+        )
+        only_intent = bool(re.search(r"\b(?:only need|only want|keep only)\b", lower))
+
+        if no_extras:
+            updated = ["venue"]
+        elif replacement:
+            removed = cls._detect_services(replacement.group(1))
+            added = cls._detect_services(replacement.group(2))
+            if "venue" in removed:
+                raise ValueError("venue is required and cannot be removed")
+            updated = [item for item in current if item not in removed or item == "venue"]
+            updated = list(dict.fromkeys([*updated, *added]))
+        elif remove_intent and detected:
+            if "venue" in detected:
+                raise ValueError("venue is required and cannot be removed")
+            updated = [item for item in current if item not in detected or item == "venue"]
+        elif only_intent:
+            updated = list(dict.fromkeys(["venue", *detected]))
+        elif add_intent and detected:
+            updated = list(dict.fromkeys([*current, *detected]))
+        else:
+            # Mentioning an existing service to change its time is not a request
+            # to replace the complete saved service list.
+            updates["required_services"] = None
+            return
+
+        updates["required_services"] = list(dict.fromkeys(["venue", *updated]))
+        updates["services_confirmed"] = True
+
+    @staticmethod
+    def _detect_services(text: str) -> list[str]:
+        return [
             service_type
             for service_type, aliases in _SERVICE_ALIASES.items()
             if any(
-                re.search(rf"\b{re.escape(alias)}\b", lower)
+                re.search(rf"\b{re.escape(alias)}\b", text)
                 for alias in aliases
             )
         ]
-        if detected:
-            updates["required_services"] = list(
-                dict.fromkeys(["venue", *detected])
-            )
-            updates["services_confirmed"] = True
 
     @staticmethod
     def _merge_requirements(saved: dict[str, Any], updates: dict[str, Any]) -> dict[str, Any]:

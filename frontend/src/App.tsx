@@ -9,24 +9,35 @@ import {
   LoaderCircle,
   MapPin,
   Plus,
+  RotateCcw,
   Send,
+  Settings,
   Sparkles,
   Star,
+  Undo2,
   Users,
+  X,
 } from "lucide-react";
 import {
   approveQuotation,
   confirmBookings,
   confirmPlan,
+  getDemoCheckpoints,
   getEvent,
   payDeposit,
   payFinalPayment,
   requestVendorQuotations,
+  resetDemoEvent,
+  restartDemoStage,
+  restoreDemoCheckpoint,
+  restorePreviousDemoCheckpoint,
   sendPlannerMessage,
+  submitFeedback,
   updateOperations,
 } from "./api";
 import type {
   ChatMessage,
+  DemoCheckpoint,
   EventRequirements,
   PlannerResponse,
   ProgressState,
@@ -101,6 +112,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+  const [demoCheckpoints, setDemoCheckpoints] = useState<DemoCheckpoint[]>([]);
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState("");
   const messagesRef = useRef<HTMLDivElement>(null);
 
   const requirements = workflow?.requirements || {};
@@ -203,12 +219,56 @@ export default function App() {
     }
   }
 
+  async function openDemoControls() {
+    if (!eventId) return;
+    setDemoOpen(true);
+    setDemoLoading(true);
+    setDemoError(null);
+    try {
+      const checkpoints = await getDemoCheckpoints(eventId);
+      setDemoCheckpoints(checkpoints);
+      setSelectedCheckpoint(checkpoints[checkpoints.length - 1]?.checkpoint_id || "");
+    } catch (requestError) {
+      setDemoError(requestError instanceof Error ? requestError.message : "Unable to load demo checkpoints.");
+    } finally {
+      setDemoLoading(false);
+    }
+  }
+
+  async function runDemoAction(action: () => Promise<PlannerResponse>) {
+    if (!eventId || demoLoading) return;
+    setDemoLoading(true);
+    setDemoError(null);
+    try {
+      const response = await action();
+      setWorkflow(response);
+      setEventId(response.event_id);
+      setMessages([
+        { id: "welcome", role: "assistant", text: "Hi! Please tell me what kind of event you would like to plan." },
+        { id: crypto.randomUUID(), role: "assistant", text: response.reply },
+      ]);
+      const checkpoints = await getDemoCheckpoints(response.event_id);
+      setDemoCheckpoints(checkpoints);
+      setSelectedCheckpoint(checkpoints[checkpoints.length - 1]?.checkpoint_id || "");
+      setError(null);
+      setDetailsOpen(false);
+      setDemoOpen(false);
+    } catch (requestError) {
+      setDemoError(requestError instanceof Error ? requestError.message : "The demo state could not be restored.");
+    } finally {
+      setDemoLoading(false);
+    }
+  }
+
   function startNewEvent() {
     setEventId(null);
     setWorkflow(null);
     setInput("");
     setMessages([{ id: "welcome", role: "assistant", text: "Hi! Please tell me what kind of event you would like to plan." }]);
     setDetailsOpen(false);
+    setDemoOpen(false);
+    setDemoCheckpoints([]);
+    setSelectedCheckpoint("");
     setError(null);
   }
 
@@ -277,6 +337,7 @@ export default function App() {
             onApprove={() => eventId && runAction(() => approveQuotation(eventId))}
             onPay={() => eventId && runAction(() => payDeposit(eventId))}
             onFinalPay={() => eventId && runAction(() => payFinalPayment(eventId))}
+            onFeedback={(rating, comments) => eventId && runAction(() => submitFeedback(eventId, rating, comments))}
             onBook={() => eventId && runAction(() => confirmBookings(eventId))}
             onOperationAction={(action, body) => eventId && runAction(() => updateOperations(eventId, action, body))}
           />
@@ -289,6 +350,7 @@ export default function App() {
             <div className="header-actions">
               <a className="supplier-portal-link" href="/?view=vendor" target="_blank" rel="noreferrer">Supplier portal</a>
               {workflow && <span className="mode-label">{workflow.llm_mode === "live" ? "LIVE AI" : "DEMO"}</span>}
+              {workflow && <button className="demo-control-button" type="button" onClick={() => void openDemoControls()} disabled={loading || acting || demoLoading} title="Demo controls"><Settings size={14} /><span>Demo</span></button>}
               <button className="new-event-button" type="button" aria-label="Start a new event" title="New Event" onClick={startNewEvent} disabled={loading || acting}>
                 <Plus size={14} /><span>New Event</span>
               </button>
@@ -327,6 +389,38 @@ export default function App() {
           </form>
         </section>
       </section>
+      {demoOpen && (
+        <>
+          <button className="demo-drawer-backdrop" type="button" aria-label="Close demo controls" onClick={() => setDemoOpen(false)} />
+          <aside className="demo-drawer" aria-label="Demo controls">
+            <header>
+              <div><small>CLASSROOM TOOLS</small><h2>Demo controls</h2></div>
+              <button type="button" onClick={() => setDemoOpen(false)} aria-label="Close demo controls"><X size={17} /></button>
+            </header>
+            <p>Recover the demonstration without rebuilding the event from the beginning.</p>
+            <div className="demo-current-stage"><small>CURRENT STAGE</small><strong>{stage.replaceAll("_", " ")}</strong></div>
+            <button className="demo-action" type="button" disabled={demoLoading || demoCheckpoints.length === 0} onClick={() => eventId && void runDemoAction(() => restorePreviousDemoCheckpoint(eventId))}>
+              <Undo2 size={16} /><span><strong>Restore previous step</strong><small>Undo the last demonstrated action.</small></span>
+            </button>
+            <button className="demo-action" type="button" disabled={demoLoading || !demoCheckpoints.some((item) => item.stage === stage)} onClick={() => eventId && void runDemoAction(() => restartDemoStage(eventId))}>
+              <RotateCcw size={16} /><span><strong>Restart current stage</strong><small>Return to the start of this stage.</small></span>
+            </button>
+            <label className="demo-checkpoint-select">
+              <span>Load saved checkpoint</span>
+              <select value={selectedCheckpoint} disabled={demoLoading || demoCheckpoints.length === 0} onChange={(event) => setSelectedCheckpoint(event.target.value)}>
+                {demoCheckpoints.length === 0 && <option value="">No checkpoints yet</option>}
+                {[...demoCheckpoints].reverse().map((item) => <option value={item.checkpoint_id} key={item.checkpoint_id}>{item.label}</option>)}
+              </select>
+            </label>
+            <button className="demo-load-button" type="button" disabled={demoLoading || !selectedCheckpoint} onClick={() => eventId && void runDemoAction(() => restoreDemoCheckpoint(eventId, selectedCheckpoint))}>{demoLoading ? "Restoring…" : "Load checkpoint"}</button>
+            <div className="demo-divider" />
+            <button className="demo-reset-button" type="button" disabled={demoLoading} onClick={() => {
+              if (eventId && window.confirm("Reset this entire demo event?")) void runDemoAction(() => resetDemoEvent(eventId));
+            }}>Reset full demo</button>
+            {demoError && <div className="demo-error" role="alert">{demoError}</div>}
+          </aside>
+        </>
+      )}
     </main>
   );
 }
@@ -368,12 +462,26 @@ interface WorkspaceProps {
   onApprove: () => void;
   onPay: () => void;
   onFinalPay: () => void;
+  onFeedback: (rating: number, comments: string) => void;
   onBook: () => void;
   onOperationAction: (action: string, body: Record<string, unknown>) => void;
 }
 
 function WorkflowWorkspace(props: WorkspaceProps) {
   const { workflow, acting } = props;
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComments, setFeedbackComments] = useState("");
+  const [operationTime, setOperationTime] = useState("");
+  const operationPlanId = workflow?.operations_plan?.execution_plan_id;
+  useEffect(() => {
+    const plan = workflow?.operations_plan;
+    if (!plan) {
+      setOperationTime("");
+      return;
+    }
+    const firstManualTask = plan.tasks.find((task) => !task.mock_automatic);
+    setOperationTime(plan.simulated_time?.slice(11, 16) || firstManualTask?.scheduled_at || "12:00");
+  }, [operationPlanId]);
   const grouped = useMemo(() => {
     const result: Record<string, VendorQuotation[]> = {};
     for (const item of workflow?.vendor_quotations || []) {
@@ -388,6 +496,8 @@ function WorkflowWorkspace(props: WorkspaceProps) {
   const recommended = new Set(workflow?.selected_quotation_ids || workflow?.recommended_quotation_ids || []);
   const manualOperationsTasks = workflow?.operations_plan?.tasks.filter((task) => !task.mock_automatic) || [];
   const automaticOperationsTasks = workflow?.operations_plan?.tasks.filter((task) => task.mock_automatic) || [];
+  const delayAdjustments = workflow?.operations_plan?.issues?.filter((issue) => issue.adjustment) || [];
+  const otherOpenIssues = workflow?.operations_plan?.issues?.filter((issue) => issue.status === "OPEN" && !issue.adjustment) || [];
 
   return (
     <section className="workspace" aria-label="Current event workflow">
@@ -432,7 +542,7 @@ function WorkflowWorkspace(props: WorkspaceProps) {
         {workflow?.stage === "awaiting_vendor_quotes" && (
           <section className="work-card waiting-card">
             <div className="work-card-heading"><div><small>PROCUREMENT</small><h2>Waiting for supplier replies</h2></div><span>LIVE INBOX</span></div>
-            <p className="work-note">Only the three shortlisted venue suppliers require manual replies. All other requested services use explicit automatic Mock replies.</p>
+            <p className="work-note">We are contacting suitable suppliers. This page will update as their quotations arrive.</p>
             <div className="reply-progress-list">
               {workflow.supplier_requests.map((request) => (
                 <div key={request.request_id}>
@@ -510,8 +620,8 @@ function WorkflowWorkspace(props: WorkspaceProps) {
 
         {workflow?.stage === "awaiting_supplier_confirmation" && (
           <section className="work-card waiting-card">
-            <div className="work-card-heading"><div><small>PRE-DEPOSIT GATE</small><h2>Venue final confirmation</h2></div><span>WAITING</span></div>
-            <p className="work-note">The customer accepted the quotation. The selected venue supplier must now confirm the exact time and price. Other selected services are Mock-confirmed.</p>
+            <div className="work-card-heading"><div><small>BOOKING CHECK</small><h2>Venue confirmation</h2></div><span>WAITING</span></div>
+            <p className="work-note">Waiting for the venue supplier to confirm the time and price. Other bookings are ready.</p>
             <div className="reply-progress-list">
               {workflow.supplier_confirmations.map((item) => (
                 <div key={item.confirmation_id}>
@@ -526,13 +636,13 @@ function WorkflowWorkspace(props: WorkspaceProps) {
 
         {workflow?.deposit && (
           <section className="work-card payment-card">
-            <div className="work-card-heading"><div><small>SIMULATED PAYMENT</small><h2>Deposit payment</h2></div><span className={workflow.deposit.status === "paid" ? "paid" : ""}>{workflow.deposit.status}</span></div>
+            <div className="work-card-heading"><div><small>PAYMENT</small><h2>Deposit</h2></div><span className={workflow.deposit.status === "paid" ? "paid" : ""}>{workflow.deposit.status}</span></div>
             <div className="payment-amount">{formatMoney(workflow.deposit.amount_cents)}</div>
-            <p>{workflow.deposit.deposit_percent}% deposit · No real money will be charged.</p>
+            <p>{workflow.deposit.deposit_percent}% deposit · Demo only — no real charge.</p>
             {workflow.deposit.status === "pending" && (
-              <button className="primary-action" type="button" disabled={acting} onClick={props.onPay}>{acting ? "Processing…" : "Pay deposit (Simulation)"}</button>
+              <button className="primary-action" type="button" disabled={acting} onClick={props.onPay}>{acting ? "Processing…" : "Pay deposit"}</button>
             )}
-            {workflow.deposit.status === "paid" && <div className="success-line"><Check size={16} />Payment recorded · {workflow.deposit.payment_id}</div>}
+            {workflow.deposit.status === "paid" && <div className="success-line"><Check size={16} />Deposit paid</div>}
           </section>
         )}
 
@@ -549,7 +659,7 @@ function WorkflowWorkspace(props: WorkspaceProps) {
             <div className="work-card-heading"><div><small>BOOKINGS</small><h2>Confirmed suppliers</h2></div><span className="paid">Complete</span></div>
             <div className="booking-list">
               {workflow.bookings.map((booking) => (
-                <div key={booking.booking_id}><Check size={16} /><span><strong>{booking.service_type} · {vendorNames[booking.offering_id] || booking.vendor_id}</strong><small>{booking.supplier_confirmation_id}</small></span></div>
+                <div key={booking.booking_id}><Check size={16} /><span><strong>{booking.service_type} · {vendorNames[booking.offering_id] || booking.vendor_id}</strong><small>Booking confirmed</small></span></div>
               ))}
             </div>
           </section>
@@ -559,8 +669,14 @@ function WorkflowWorkspace(props: WorkspaceProps) {
           <section className="work-card">
             <div className="work-card-heading"><div><small>OPERATIONS</small><h2>Live service status</h2></div><span>{workflow.operations_plan.status.replaceAll("_", " ")}</span></div>
             <div className="operations-clock">
-              <div><small>SIMULATED EVENT TIME</small><strong>{workflow.operations_plan.simulated_time?.slice(11, 16) || "Not started"}</strong></div>
-              {!workflow.operations_plan.finalized && <div><button type="button" disabled={acting} onClick={() => props.onOperationAction("advance_clock", { minutes: 1 })}>+1 min</button><button type="button" disabled={acting} onClick={() => props.onOperationAction("advance_clock", { minutes: 5 })}>+5 min</button></div>}
+              <label>
+                <small>DEMO EVENT TIME</small>
+                <input type="time" value={operationTime} disabled={workflow.operations_plan.finalized} onChange={(event) => setOperationTime(event.target.value)} />
+              </label>
+              <div>
+                <span>Choose the time used for Operations records.</span>
+                {!workflow.operations_plan.finalized && <button type="button" disabled={acting || !operationTime} onClick={() => props.onOperationAction("set_event_time", { event_time: operationTime })}>{acting ? "Saving…" : "Set time"}</button>}
+              </div>
             </div>
             <div className="booking-list operations-list">
               {manualOperationsTasks.map((task) => (
@@ -577,8 +693,38 @@ function WorkflowWorkspace(props: WorkspaceProps) {
             {!!automaticOperationsTasks.length && (
               <div className="mock-operations-summary">
                 <Check size={16} />
-                <span><strong>{automaticOperationsTasks.length} simulated service{automaticOperationsTasks.length === 1 ? "" : "s"} completed automatically</strong><small>{automaticOperationsTasks.map((task) => task.service_type.replaceAll("_", " ")).join(", ")} · MOCK</small></span>
+                <span><strong>{automaticOperationsTasks.length} other service{automaticOperationsTasks.length === 1 ? " is" : "s are"} complete</strong><small>{automaticOperationsTasks.map((task) => task.service_type.replaceAll("_", " ")).join(", ")}</small></span>
               </div>
+            )}
+            {!!delayAdjustments.length && (
+              <section className="delay-adjustment-list" aria-label="Delay adjustments">
+                {delayAdjustments.map((issue) => {
+                  const adjustment = issue.adjustment!;
+                  const task = workflow.operations_plan?.tasks.find((item) => item.task_id === issue.task_id);
+                  return (
+                    <article className={`delay-adjustment-card ${adjustment.status.toLowerCase()}`} key={issue.issue_id}>
+                      <div className="delay-adjustment-heading">
+                        <div><small>OPERATIONS ADJUSTMENT</small><strong>{task?.title || "Supplier delay"}</strong></div>
+                        <span>{adjustment.status === "PROPOSED" ? "Needs your decision" : issue.status === "RESOLVED" ? "Resolved" : "Accepted"}</span>
+                      </div>
+                      <p className="delay-reason"><strong>Supplier update:</strong> {issue.description}</p>
+                      <p>{adjustment.recommendation}</p>
+                      <div className="delay-adjustment-times">
+                        <span><small>Original arrival</small><b>{adjustment.original_arrival_time}</b></span>
+                        <span><small>New arrival</small><b>{adjustment.expected_arrival_time}</b></span>
+                        <span><small>Service</small><b>{adjustment.proposed_start_time}–{adjustment.proposed_end_time}</b></span>
+                      </div>
+                      {adjustment.status === "PROPOSED" && (
+                        <button className="primary-action" type="button" disabled={acting} onClick={() => props.onOperationAction("accept_delay_adjustment", { issue_id: issue.issue_id })}>
+                          {acting ? "Accepting…" : "Accept revised schedule"}
+                        </button>
+                      )}
+                      {adjustment.status === "CUSTOMER_ACCEPTED" && issue.status === "OPEN" && <div className="adjustment-accepted"><Check size={15} />Accepted. Waiting for the supplier to arrive.</div>}
+                      {issue.status === "RESOLVED" && <div className="adjustment-accepted"><Check size={15} />Supplier arrived. The delay issue is resolved.</div>}
+                    </article>
+                  );
+                })}
+              </section>
             )}
             {!!workflow.operations_plan.notifications?.length && (
               <section className="operations-notifications" aria-label="Operations updates">
@@ -588,20 +734,23 @@ function WorkflowWorkspace(props: WorkspaceProps) {
                 </div>
               </section>
             )}
-            {!!workflow.operations_plan.issues?.filter((item) => item.status === "OPEN").length && (
+            {!!otherOpenIssues.length && (
               <div className="operations-warning">An Operations issue is open. The supplier or Operations owner must resolve it before finalization.</div>
             )}
             {workflow.operations_plan.status === "READY_TO_FINALIZE" && !workflow.operations_plan.finalized && (
-              <button className="primary-action" type="button" disabled={acting} onClick={() => props.onOperationAction("finalize_execution", { confirm: true })}>{acting ? "Finalizing…" : "Finalize Operations"}</button>
+              <div className="completion-confirmation">
+                <p>All services are complete. Please confirm that the event has finished before Finance prepares the remaining balance.</p>
+                <button className="primary-action" type="button" disabled={acting} onClick={() => props.onOperationAction("confirm_event_completion", { confirm: true })}>{acting ? "Confirming…" : "Confirm event completion"}</button>
+              </div>
             )}
-            {workflow.operations_plan.finalized && <div className="success-line"><Check size={16} />Operations finalized. Finance has prepared the remaining balance.</div>}
+            {workflow.operations_plan.customer_completion_confirmation?.confirmed && <div className="success-line"><Check size={16} />Event completion confirmed · {workflow.operations_plan.customer_completion_confirmation.confirmed_at.slice(11, 16)}. Finance has prepared the remaining balance.</div>}
           </section>
         )}
 
         {workflow?.final_payment && (
           <section className="work-card payment-card">
             <div className="work-card-heading">
-              <div><small>SIMULATED FINAL PAYMENT</small><h2>Remaining balance</h2></div>
+              <div><small>PAYMENT</small><h2>Remaining balance</h2></div>
               <span className={workflow.final_payment.status === "paid" ? "paid" : ""}>{workflow.final_payment.status}</span>
             </div>
             <div className="cost-list final-payment-breakdown">
@@ -609,12 +758,34 @@ function WorkflowWorkspace(props: WorkspaceProps) {
               <div><span>Deposit already paid</span><strong>− {formatMoney(workflow.final_payment.deposit_paid_cents)}</strong></div>
               <div className="cost-total"><span>Remaining balance</span><strong>{formatMoney(workflow.final_payment.amount_cents)}</strong></div>
             </div>
-            <p>Operations is complete. No real money will be charged.</p>
+            <p>Event completed · Demo only — no real charge.</p>
             {workflow.final_payment.status === "pending" && (
-              <button className="primary-action" type="button" disabled={acting} onClick={props.onFinalPay}>{acting ? "Processing…" : "Pay remaining balance (Simulation)"}</button>
+              <button className="primary-action" type="button" disabled={acting} onClick={props.onFinalPay}>{acting ? "Processing…" : "Pay remaining balance"}</button>
             )}
             {workflow.final_payment.status === "paid" && (
-              <div className="success-line"><Check size={16} />Paid in full · {workflow.final_payment.payment_id}</div>
+              <div className="success-line"><Check size={16} />Paid in full</div>
+            )}
+          </section>
+        )}
+
+        {workflow?.final_payment?.status === "paid" && workflow.operations_plan && (
+          <section className="work-card feedback-card">
+            <div className="work-card-heading"><div><small>OPTIONAL</small><h2>Customer feedback</h2></div><span>EVENT COMPLETE</span></div>
+            {workflow.operations_plan.feedback?.length ? (
+              <div className="feedback-thanks"><Check size={17} /><span><strong>Thank you for your feedback.</strong><small>We’ve recorded your suggestions and will use them to improve our service.</small></span></div>
+            ) : (
+              <>
+                <p className="work-note">How was your experience? Your feedback is optional and will not be sent to suppliers.</p>
+                <div className="feedback-stars" aria-label="Feedback rating">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button type="button" key={rating} className={rating <= feedbackRating ? "selected" : ""} aria-label={`${rating} star${rating === 1 ? "" : "s"}`} onClick={() => setFeedbackRating(rating)}>
+                      <Star size={18} fill={rating <= feedbackRating ? "currentColor" : "none"} />
+                    </button>
+                  ))}
+                </div>
+                <textarea value={feedbackComments} onChange={(event) => setFeedbackComments(event.target.value)} placeholder="Share a suggestion..." rows={3} maxLength={1000} />
+                <button className="primary-action" type="button" disabled={acting || feedbackRating === 0 || !feedbackComments.trim()} onClick={() => props.onFeedback(feedbackRating, feedbackComments.trim())}>{acting ? "Submitting…" : "Submit feedback"}</button>
+              </>
             )}
           </section>
         )}
