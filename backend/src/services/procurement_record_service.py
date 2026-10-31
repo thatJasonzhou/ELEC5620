@@ -165,6 +165,43 @@ class ProcurementRecordService:
         """Internal refresh for BookingService's existing all-records accessor."""
         return self._read("procurement_bookings", None)
 
+    def snapshot_event(self, event_id: str) -> dict[str, list[dict[str, Any]]]:
+        """Capture this event's local simulated records for classroom recovery."""
+        identity = require_non_empty_str(event_id, "event_id")
+        return {
+            "quotations": [q for q in self._read("procurement_quotations", None)
+                           if q["event_id"] == identity],
+            "bookings": [b for b in self.all_bookings() if b["event_id"] == identity],
+        }
+
+    def restore_event(self, event_id: str, snapshot: dict[str, Any] | None) -> None:
+        """Restore one event from a trusted demo snapshot; normal saves stay immutable."""
+        identity = require_non_empty_str(event_id, "event_id")
+        snapshot = snapshot or {"quotations": [], "bookings": []}
+        quotes = [self._quote(q) for q in snapshot["quotations"]]
+        bookings = [self._booking(b) for b in snapshot["bookings"]]
+        if any(row["event_id"] != identity for row in [*quotes, *bookings]):
+            raise ValueError("Procurement checkpoint event_id does not match")
+        try:
+            with closing(self._connect()) as connection, connection:
+                for table in ("procurement_bookings", "procurement_quotations"):
+                    connection.execute(f"DELETE FROM {table} WHERE event_id=?", (identity,))
+                for row in quotes:
+                    connection.execute(
+                        "INSERT INTO procurement_quotations VALUES (?, ?, ?, ?)",
+                        (identity, row["proposal_id"], row["quotation_id"], self._json(row)),
+                    )
+                for row in bookings:
+                    connection.execute(
+                        "INSERT INTO procurement_bookings "
+                        "(event_id, proposal_id, quotation_id, booking_id, supplier_confirmation_id, payload) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (identity, row["proposal_id"], row["quotation_id"], row["booking_id"],
+                         row["supplier_confirmation_id"], self._json(row)),
+                    )
+        except sqlite3.Error:
+            raise ProcurementStorageError("Cannot restore Procurement demo records.") from None
+
     def _read(self, table, identity):
         try:
             with closing(self._connect()) as connection:

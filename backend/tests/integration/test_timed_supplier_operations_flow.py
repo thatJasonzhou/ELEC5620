@@ -258,6 +258,36 @@ def test_plan_review_can_add_remove_and_replace_services(tmp_path: Path) -> None
     assert replaced["plan_confirmed"] is False
 
 
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Please add photography from 9 am to 5 pm. Keep everything else unchanged.",
+        "Please add photography from 09:00 to 17:00. Keep everything else unchanged.",
+    ],
+)
+def test_add_timed_service_does_not_change_budget(tmp_path: Path, message: str) -> None:
+    workflow, _ = make_workflow(tmp_path)
+    planned = workflow.handle_message(
+        event_id=None,
+        message=(
+            "I need a conference in Sydney on 16 December 2026 from 9 am "
+            "to 5 pm for 50 guests, budget 10000 dollars, with lighting "
+            "and event staff."
+        ),
+    )
+
+    revised = workflow.handle_message(event_id=planned["event_id"], message=message)
+
+    assert revised["stage"] == "plan_review"
+    assert revised["proposal"]["version"] == 2
+    assert revised["requirements"]["budget_limit_cents"] == 1_000_000
+    assert revised["requirements"]["guest_count"] == 50
+    assert revised["proposal"]["required_services"] == [
+        "venue", "lighting", "event_staff", "photography"
+    ]
+    assert len(revised["proposal"]["service_schedule"]) == 4
+
+
 def test_demo_checkpoint_restores_session_and_supplier_portal(tmp_path: Path) -> None:
     workflow, portal = make_workflow(tmp_path)
     planned = workflow.handle_message(

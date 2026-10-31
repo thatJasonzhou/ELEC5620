@@ -79,6 +79,7 @@ class PlannerWorkflowService:
             "label": label or self._demo_stage_label(stage),
             "created_at": datetime.now(ZoneInfo(self._timezone)).isoformat(),
             "session": deepcopy(session),
+            "procurement": self._procurement.snapshot_event(event_id),
             "supplier_portal": (
                 self._supplier_portal.snapshot_event(event_id)
                 if self._supplier_portal is not None
@@ -113,6 +114,7 @@ class PlannerWorkflowService:
     def _restore_demo_snapshot(
         self, event_id: str, checkpoint: dict[str, Any], reply: str
     ) -> dict[str, Any]:
+        self._procurement.restore_event(event_id, deepcopy(checkpoint.get("procurement")))
         if self._supplier_portal is not None:
             self._supplier_portal.restore_event(
                 event_id, deepcopy(checkpoint.get("supplier_portal"))
@@ -123,7 +125,15 @@ class PlannerWorkflowService:
             )
         session = deepcopy(checkpoint["session"])
         self._sessions.save(session)
-        return self._response(session, reply, [])
+        # Returning to an earlier point creates a new demo branch. Discard the
+        # abandoned future so repeated Undo cannot jump forwards into it.
+        checkpoints = self._demo_checkpoints.get(event_id, [])
+        index = next(i for i, item in enumerate(checkpoints)
+                     if item["checkpoint_id"] == checkpoint["checkpoint_id"])
+        self._demo_checkpoints[event_id] = checkpoints[:index + 1]
+        response = self._response(session, reply, [])
+        response["conversation_history"] = deepcopy(session.get("history", []))
+        return response
 
     def restore_previous_demo_checkpoint(self, event_id: str) -> dict[str, Any]:
         session = self._require_session(event_id)
@@ -140,6 +150,7 @@ class PlannerWorkflowService:
             if self._operations is not None
             else None
         )
+        procurement_state = self._procurement.snapshot_event(event_id)
         checkpoint = next(
             (
                 item
@@ -147,6 +158,7 @@ class PlannerWorkflowService:
                 if item.get("session") != session
                 or item.get("supplier_portal") != supplier_state
                 or item.get("operations") != operations_state
+                or item.get("procurement") != procurement_state
             ),
             None,
         )
@@ -199,6 +211,7 @@ class PlannerWorkflowService:
 
     def reset_demo_event(self, event_id: str) -> dict[str, Any]:
         self._require_session(event_id)
+        self._procurement.restore_event(event_id, None)
         if self._supplier_portal is not None:
             self._supplier_portal.restore_event(event_id, None)
         if self._operations is not None:
@@ -362,9 +375,31 @@ class PlannerWorkflowService:
         lower = message.lower()
         budget_words = r"budget|cost|price|spend|预算|成本|费用|花费"
         increase_words = r"increase|raise|add|more|higher|增加|提高|追加|多加|加"
-        if re.search(budget_words, lower) is None and re.search(increase_words, lower) is None:
+        # Adding a service, guests or a time is not a financial instruction.
+        # Require a budget term or an explicit currency amount before taking
+        # this shortcut around the Planner's normal requirement analysis.
+        budget_context = re.search(budget_words, lower)
+        amount_pattern = r"(?P<amount>\d[\d,]*(?:\.\d{1,2})?)\s*(?P<unit>k|万)?"
+        number = re.search(
+            r"(?:\baud\s*|a?\$\s*)" + amount_pattern,
+            lower,
+        ) or re.search(
+            amount_pattern + r"\s*(?:\baud\b|\bdollars?\b|澳元|元|预算|成本|费用|花费)",
+            lower,
+        )
+        if budget_context is None and number is None:
             return None
-        number = re.search(r"(?P<amount>\d[\d,]*(?:\.\d{1,2})?)\s*(?P<unit>k|万)?", lower)
+        if number is None and budget_context is not None:
+            # Bind a bare amount to the financial clause, rather than taking
+            # the first number in a message (which may be a time or headcount).
+            number = re.match(
+                r"[^\d.!?;\n]{0,24}" + amount_pattern,
+                lower[budget_context.end():],
+            )
+            if number is not None:
+                suffix = lower[budget_context.end() + number.end():]
+                if re.match(r"\s*(?::|am\b|pm\b|guests?\b|people\b|staff\b|hours?\b)", suffix):
+                    return None
         if number is None:
             consent = re.search(
                 r"can increase|okay with|accept|agree|可以增加|接受|同意",
@@ -386,7 +421,7 @@ class PlannerWorkflowService:
             return None
         relative = re.search(increase_words, lower) is not None
         explicit_total = re.search(
-            r"increase\s+(?:it\s+)?to|raise\s+(?:it\s+)?to|new\s+budget|total\s+budget|预算.{0,6}(?:改为|提高到|增加到)|总预算",
+            r"(?:increase|raise)\s+(?:(?:my|the|total)\s+)*(?:budget\s+|it\s+)?to|new\s+budget|total\s+budget|预算.{0,6}(?:改为|提高到|增加到)|总预算",
             lower,
         ) is not None
         if relative and not explicit_total and current_budget_cents:
@@ -1025,6 +1060,7 @@ class PlannerWorkflowService:
         session["customer_quotation"] = None
         session["stage"] = "planner_adjustment"
         session["finance_feedback"] = {
+            "reason_code": "no_available_suppliers",
             "message": "The venue declined and no remaining quoted venue can satisfy the approved proposal. Planner review is required."
         }
 
@@ -1411,6 +1447,7 @@ class PlannerWorkflowService:
                         "customer_preferences", ""
                     ),
                     "service_budget_cents": None,
+                    "selection_priority": requirements.get("service_priorities", {}).get(service_type, "balanced"),
                     "quotations": service_quotes,
                 }
             )
@@ -1471,6 +1508,7 @@ class PlannerWorkflowService:
                     session["vendor_quotations"],
                     session["proposal"]["required_services"],
                     budget.get("supplier_budget_limit_cents"),
+                    session["requirements"].get("service_priorities", {}),
                 )
                 if replacement:
                     selected_ids = [item["quotation_id"] for item in replacement]
@@ -1547,6 +1585,7 @@ class PlannerWorkflowService:
         quotations: list[dict[str, Any]],
         services: list[str],
         supplier_ceiling_cents: int | None,
+        priorities: dict[str, str] | None = None,
     ) -> list[dict[str, Any]] | None:
         if type(supplier_ceiling_cents) is not int:
             return None
@@ -1564,9 +1603,13 @@ class PlannerWorkflowService:
         ]
         if not feasible:
             return None
+        priorities = priorities or {}
         return min(
             feasible,
             key=lambda choice: (
+                tuple(-float(item.get("rating", 0)) if priorities[item["service_type"]] == "highest_rating"
+                      else item["quoted_total_cents"]
+                      for item in choice if item["service_type"] in priorities),
                 sum(int(item.get("rank", 99)) for item in choice),
                 sum(item["quoted_total_cents"] for item in choice),
                 tuple(item["quotation_id"] for item in choice),
@@ -1607,6 +1650,7 @@ class PlannerWorkflowService:
                 "customer_preferences": requirements.get(
                     "customer_preferences", ""
                 ),
+                "selection_priority": requirements.get("service_priorities", {}).get(service_type, "balanced"),
             }
             result = self._procurement.handle(request)
             if result.get("status") == "error" and self._supplier_portal is not None:
@@ -1650,6 +1694,28 @@ class PlannerWorkflowService:
             raise KeyError("event not found")
         return session
 
+    def _selection_notes(self, session: dict[str, Any]) -> list[str]:
+        notes = []
+        priorities = session.get("requirements", {}).get("service_priorities", {})
+        selected = set(session.get("selected_quotation_ids", []))
+        declined = set(session.get("declined_quotation_ids", []))
+        quotes = [q for q in session.get("vendor_quotations", [])
+                  if q["quotation_id"] not in declined]
+        for service, priority in priorities.items():
+            if priority == "highest_rating":
+                notes.append(f"{service.replace('_', ' ').title()} quality is measured by catalogue rating.")
+                choices = [q for q in quotes if q["service_type"] == service]
+                chosen = next((q for q in choices if q["quotation_id"] in selected), None)
+                if chosen and chosen.get("rating", 0) < max(q.get("rating", 0) for q in choices):
+                    notes.append(
+                        f"Budget trade-off: the selected {service} has a {chosen.get('rating')}/5 "
+                        "rating. A higher-rated received quote was not selected for this budget. "
+                        "Review this trade-off before approving."
+                    )
+        if (session.get("finance_feedback") or {}).get("attempt"):
+            notes.append("Finance required a budget adjustment. Code selected an affordable combination using your explicit priorities, then supplier ranks and price.")
+        return notes
+
     def _response(
         self,
         session: dict[str, Any],
@@ -1660,6 +1726,7 @@ class PlannerWorkflowService:
     ) -> dict[str, Any]:
         return {
             "event_id": session["event_id"],
+            "selection_notes": self._selection_notes(session),
             "reply": reply,
             "stage": session.get("stage", "requirements"),
             "requirements": session.get("requirements", {}),

@@ -20,7 +20,24 @@ EventPilot is the ELEC5620 Stage 2 prototype. A customer describes an event in a
 
 For classroom recovery, the existing customer UI includes a hidden **Demo controls** drawer. It stores complete checkpoints across the customer session, supplier portal and Operations state, allowing the presenter to undo the previous action, restart the current stage, load an earlier stage or reset the demo without manually rebuilding every downstream record.
 
+Demo recovery also restores local Procurement quotations, booking records and
+booking caches for the same event. Returning to a checkpoint discards the later
+timeline, so the presenter can replay that action with a different supplier
+response without creating a new event. Chat messages are restored from the saved
+conversation. These controls restore only the prototype's simulated local state;
+they do not undo OpenAI API usage. Keep the backend running: checkpoints are held
+in memory, with at most 40 checkpoints per event.
+
 There is no independent Orchestrator Agent. The planning workflow coordinates calls between the existing business agents.
+
+An explicit request for the best/highest-rated venue is stored as a catalogue
+rating priority; a request for the cheapest venue is stored as a price priority.
+The shortlist retains the priority leader and a low-price alternative. LLM
+rankings are validated against these priorities, including rule-based recovery
+and the complete-budget reselection. The quotation screen explains each choice
+and identifies AI recommendations versus preference rules or fallback rules.
+If the best received venue quote cannot fit the complete budget, the customer
+sees the rating trade-off before approving an affordable alternative.
 
 ## Repository structure
 

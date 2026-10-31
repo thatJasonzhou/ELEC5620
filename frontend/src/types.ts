@@ -9,6 +9,7 @@ export interface EventRequirements {
   required_services?: string[];
   services_confirmed?: boolean;
   customer_preferences?: string | null;
+  service_priorities?: Record<string, "highest_rating" | "lowest_price">;
 }
 
 export interface ProgressState {
@@ -51,6 +52,9 @@ export interface VendorRecommendation {
 }
 
 export interface VendorQuotation {
+  vendor_name?: string;
+  rating?: number;
+  selection_source?: "ai" | "preference_rule" | "fallback_rule";
   event_id: string;
   proposal_id: string;
   quotation_id: string;
@@ -214,6 +218,8 @@ export interface AgentTrace {
 }
 
 export interface PlannerResponse {
+  selection_notes?: string[];
+  conversation_history?: { role: "user" | "assistant"; content: string }[];
   event_id: string;
   reply: string;
   stage: string;

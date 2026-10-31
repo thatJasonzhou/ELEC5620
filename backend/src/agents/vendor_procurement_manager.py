@@ -36,6 +36,7 @@ from typing import Any
 
 from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
+from src.shared.selection_preferences import priority_key, priority_reason
 from src.services.procurement_record_service import (
     ProcurementRecordService,
     ProcurementStorageError,
@@ -221,6 +222,14 @@ class VendorProcurementManagerAgent(AIAgent):
             )
 
         top = recommendations[0]
+        priority = params["selection_priority"]
+        if priority != "balanced":
+            best = min(candidates, key=lambda item: priority_key(item, priority))
+            cheapest = min(candidates, key=lambda item: priority_key(item, "lowest_price"))
+            pairs = {(item["vendor_id"], item["offering_id"]) for item in recommendations}
+            if ((top["vendor_id"], top["offering_id"]) != (best["vendor_id"], best["offering_id"])
+                    or (cheapest["vendor_id"], cheapest["offering_id"]) not in pairs):
+                return self.deterministic_fallback(request)
         message = (
             f"Returned {len(recommendations)} of {len(candidates)} "
             f"candidate(s) for {top['service_type']} in "
@@ -275,8 +284,17 @@ class VendorProcurementManagerAgent(AIAgent):
         min_price = min(item["total_price_cents"] for item in candidates)
         max_rating = max(item["rating"] for item in candidates)
         max_capacity = max(item["guest_capacity"] for item in candidates)
+        priority = params["selection_priority"]
+        if priority != "balanced":
+            candidates = sorted(candidates, key=lambda item: priority_key(item, priority))
+        shortlist = candidates[:MAX_RECOMMENDATIONS]
+        if priority == "highest_rating":
+            # Keep a cheaper alternative for the later complete-budget check.
+            cheapest = min(candidates, key=lambda item: priority_key(item, "lowest_price"))
+            if cheapest not in shortlist:
+                shortlist[-1] = cheapest
         recommendations = []
-        for rank, candidate in enumerate(candidates[:MAX_RECOMMENDATIONS], start=1):
+        for rank, candidate in enumerate(shortlist, start=1):
             basis_codes = []
             if candidate["total_price_cents"] == min_price:
                 basis_codes.append("lowest_price")
@@ -299,17 +317,19 @@ class VendorProcurementManagerAgent(AIAgent):
                     "event_date": candidate["date"],
                     "basis_codes": basis_codes,
                     "recommendation_reason": (
+                        priority_reason(candidate, priority) if priority != "balanced" else
                         "Verified catalogue match, ordered by estimated price "
                         "with rating and capacity used as tie-breakers."
                     ),
+                    "selection_source": "fallback_rule",
                     "rank": rank,
                 }
             )
         return self.envelope(
             event_id,
             "success",
-            "The AI comparison was unavailable, so verified catalogue "
-            "candidates were ranked using deterministic business rules.",
+            "Verified catalogue candidates were ranked using business rules "
+            "to preserve the explicit priority or recover from an unavailable AI comparison.",
             {"recommendations": recommendations, "fallback_used": True},
         )
 
@@ -590,8 +610,14 @@ class VendorProcurementManagerAgent(AIAgent):
                     }
                 )
 
+        priority = params["selection_priority"]
+        priority_adjusted = False
+        if priority != "balanced":
+            ordered_recommendations = sorted(recommendations, key=lambda item: priority_key(item, priority))
+            priority_adjusted = ordered_recommendations != recommendations
+            recommendations = ordered_recommendations
         ranking = []
-        for recommendation in recommendations:
+        for position, recommendation in enumerate(recommendations, start=1):
             pair = (
                 recommendation["vendor_id"],
                 recommendation["offering_id"],
@@ -600,16 +626,18 @@ class VendorProcurementManagerAgent(AIAgent):
             ranking.append(
                 {
                     **source,
-                    "rank": recommendation["rank"],
+                    "rank": position,
+                    "selection_source": ("fallback_rule" if fallback_used else
+                                         "preference_rule" if priority_adjusted else "ai"),
                     "basis_codes": recommendation["basis_codes"],
-                    "recommendation_reason": recommendation[
-                        "recommendation_reason"
-                    ],
+                    "recommendation_reason": (priority_reason(source, priority)
+                        if priority != "balanced" and (fallback_used or priority_adjusted)
+                        else recommendation["recommendation_reason"]),
                     "within_service_budget": (
                         service_budget_cents is None
                         or source["quoted_total_cents"] <= service_budget_cents
                     ),
-                    "recommended": recommendation["rank"] == 1,
+                    "recommended": position == 1,
                 }
             )
         ranking.sort(key=lambda item: item["rank"])
@@ -658,6 +686,22 @@ class VendorProcurementManagerAgent(AIAgent):
                 "quoted_total_cents": cents, "reason": reason}
 
 
+    def snapshot_event(self, event_id: str) -> dict[str, Any]:
+        """Capture local simulated Procurement state, including booking caches."""
+        return {
+            "records": self._record_service.snapshot_event(event_id)
+            if self._record_service is not None else None,
+            "booking_service": self._booking_service.snapshot_event(event_id)
+            if self._booking_service is not None else None,
+        }
+
+    def restore_event(self, event_id: str, snapshot: dict[str, Any] | None) -> None:
+        snapshot = snapshot or {}
+        if self._record_service is not None:
+            self._record_service.restore_event(event_id, snapshot.get("records"))
+        if self._booking_service is not None:
+            self._booking_service.restore_event(event_id, snapshot.get("booking_service"))
+
     def confirm_bookings(self, request: dict[str, Any]) -> dict[str, Any]:
         """Delegate booking gates and domain records to the booking Service."""
         if not isinstance(request, dict):
@@ -701,6 +745,11 @@ class VendorProcurementManagerAgent(AIAgent):
             lambda v, n: require_int(v, n, minimum=0),
         )
         params["location"] = check("location", request.get("location"), non_empty)
+        priority = request.get("selection_priority", "balanced")
+        if priority not in ("balanced", "highest_rating", "lowest_price"):
+            errors.append(("selection_priority", "unsupported selection priority"))
+            priority = "balanced"
+        params["selection_priority"] = priority
 
         # Optional soft-preference text (default "").
         if "customer_preferences" in request:
@@ -814,6 +863,15 @@ class VendorProcurementManagerAgent(AIAgent):
             max_count=MAX_RECOMMENDATIONS,
             basis_codes=", ".join(ALLOWED_BASIS_CODES),
         )
+        priority = params.get("selection_priority", "balanced")
+        if priority != "balanced":
+            user_prompt += (
+                f"\nExplicit selection priority: {priority}. Order by this priority first, "
+                "then use price/rating to break ties. Highest rating means the catalogue "
+                "rating, not an unsupported claim about real-world quality. Include "
+                "the lowest-price alternative when shortlisting so Finance can check "
+                "the complete budget. Code will enforce this explicit priority."
+            )
         return [
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},

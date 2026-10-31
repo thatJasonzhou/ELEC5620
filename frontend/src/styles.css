@@ -419,3 +419,11 @@ button { cursor: pointer; }
   .delay-adjustment-times { grid-template-columns: 1fr; }
 }
 
+.selection-reasons { margin-top: 18px; border-top: 1px solid #e6e9f2; padding-top: 14px; }
+.selection-reasons summary { cursor: pointer; color: #5540e8; font-weight: 600; }
+.selection-reason { padding: 14px 0; border-bottom: 1px solid #eef0f6; }
+.selection-reason > div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.selection-reason strong { text-transform: capitalize; font-size: 13px; }
+.selection-reason span, .selection-reason small { color: #64748b; font-size: 11px; }
+.selection-reason p, .selection-note { font-size: 12px; line-height: 1.6; }
+.selection-note { padding: 10px; background: #fff8e6; border-radius: 8px; }

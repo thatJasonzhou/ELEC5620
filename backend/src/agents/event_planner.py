@@ -7,6 +7,7 @@ from typing import Any
 
 from src.agents.base import AIAgent
 from src.llm import LLMClient, LLMError
+from src.shared.selection_preferences import explicit_service_priorities
 from src.shared.schemas import require_int, require_non_empty_str, require_valid_date
 
 
@@ -192,6 +193,10 @@ class EventPlannerAgent(AIAgent):
             self._normalise_explicit_budget(message, saved, result["updates"])
             self._normalise_explicit_services(message, saved, result["updates"])
             requirements = self._merge_requirements(saved, result["updates"])
+            priorities = {**saved.get("service_priorities", {}),
+                          **explicit_service_priorities(message)}
+            if priorities:
+                requirements["service_priorities"] = priorities
         except (LLMError, ValueError, TypeError) as exc:
             return self.envelope(
                 event_id,

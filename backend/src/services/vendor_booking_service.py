@@ -137,6 +137,29 @@ class VendorBookingService:
         self._record_service = record_service
         self._bookings: dict[tuple[str, str, str], VendorBooking] = {}
 
+    def snapshot_event(self, event_id: str) -> dict[str, Any]:
+        """Include retained confirmations and optional SQLite state in demo recovery."""
+        _text(event_id, "event_id")
+        self._refresh_bookings()
+        return {
+            "bookings": [asdict(b) for b in self._bookings.values() if b.event_id == event_id],
+            "records": self._record_service.snapshot_event(event_id)
+            if self._record_service is not None else None,
+        }
+
+    def restore_event(self, event_id: str, snapshot: dict[str, Any] | None) -> None:
+        _text(event_id, "event_id")
+        snapshot = snapshot or {"bookings": [], "records": None}
+        bookings = [VendorBooking(**raw) for raw in snapshot["bookings"]]
+        if any(b.event_id != event_id for b in bookings):
+            raise ValueError("Booking checkpoint event_id does not match")
+        if self._record_service is not None:
+            self._record_service.restore_event(event_id, snapshot.get("records"))
+        self._bookings = {key: value for key, value in self._bookings.items()
+                          if key[0] != event_id}
+        for booking in bookings:
+            self._bookings[(event_id, booking.proposal_id, booking.quotation_id)] = booking
+
     def _refresh_bookings(self):
         if self._record_service is not None:
             for raw in self._record_service.all_bookings():

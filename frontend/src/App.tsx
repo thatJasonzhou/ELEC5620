@@ -137,7 +137,7 @@ export default function App() {
   }, [messages, loading]);
 
   useEffect(() => {
-    if (!eventId || !["awaiting_vendor_quotes", "awaiting_supplier_confirmation", "operations", "operations_complete"].includes(stage)) return;
+    if (demoLoading || loading || acting || !eventId || !["awaiting_vendor_quotes", "awaiting_supplier_confirmation", "operations", "operations_complete"].includes(stage)) return;
     let cancelled = false;
     const refresh = async () => {
       try {
@@ -172,7 +172,7 @@ export default function App() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [eventId, stage]);
+  }, [eventId, stage, demoLoading, loading, acting]);
 
   function applyResponse(response: PlannerResponse) {
     setEventId(response.event_id);
@@ -245,6 +245,9 @@ export default function App() {
       setEventId(response.event_id);
       setMessages([
         { id: "welcome", role: "assistant", text: "Hi! Please tell me what kind of event you would like to plan." },
+        ...(response.conversation_history || []).map((item) => ({
+          id: crypto.randomUUID(), role: item.role, text: item.content,
+        })),
         { id: crypto.randomUUID(), role: "assistant", text: response.reply },
       ]);
       const checkpoints = await getDemoCheckpoints(response.event_id);
@@ -591,7 +594,7 @@ function WorkflowWorkspace(props: WorkspaceProps) {
 
         {workflow?.stage === "planner_adjustment" && workflow.finance_feedback && (
           <section className="work-card">
-            <div className="work-card-heading"><div><small>FINANCE FEEDBACK</small><h2>Planner adjustment required</h2></div><span>OVER BUDGET</span></div>
+            <div className="work-card-heading"><div><small>{workflow.finance_feedback.reason_code === "no_available_suppliers" ? "PROCUREMENT FEEDBACK" : "FINANCE FEEDBACK"}</small><h2>Planner adjustment required</h2></div><span>{workflow.finance_feedback.reason_code === "no_available_suppliers" ? "NO AVAILABLE SUPPLIERS" : "OVER BUDGET"}</span></div>
             <p className="warning-box">{String(workflow.finance_feedback.message || "No supplier combination can satisfy the current budget and requirements.")}</p>
             {Number(workflow.finance_feedback.minimum_budget_shortfall_cents || 0) > 0 && (
               <p className="work-note">Even the lowest complete combination is {formatMoney(Number(workflow.finance_feedback.minimum_budget_shortfall_cents))} over budget.</p>
@@ -612,9 +615,24 @@ function WorkflowWorkspace(props: WorkspaceProps) {
               <div className="cost-total"><span>Estimated total</span><strong>{formatMoney(workflow.customer_quotation.estimated_total_cents)}</strong></div>
               <div><span>Your budget</span><strong>{formatMoney(workflow.requirements.budget_limit_cents)}</strong></div>
             </div>
+            {(workflow.selection_notes || []).map((note, index) => (
+              <p className="selection-note" key={index}>{note}</p>
+            ))}
             {workflow.stage === "quotation" && (
               <button className="primary-action" type="button" disabled={acting} onClick={props.onApprove}>{acting ? "Preparing payment…" : "Approve quotation"}</button>
             )}
+            <details className="selection-reasons">
+              <summary>Why these suppliers?</summary>
+              {workflow.customer_quotation.vendor_cost_breakdown.map((item) => (
+                <article className="selection-reason" key={item.quotation_id}>
+                  <div><strong>{item.service_type.replaceAll("_", " ")} · {item.vendor_name || vendorNames[item.offering_id] || item.vendor_id}</strong>
+                    <span>{item.selection_source === "ai" ? "AI recommendation" : item.selection_source === "preference_rule" ? "Preference rule" : item.selection_source === "fallback_rule" ? "Rule fallback" : "Recorded selection"}</span>
+                  </div>
+                  <p>{item.recommendation_reason || "Selected from the verified supplier quotations."}</p>
+                  <small>{typeof item.rating === "number" ? `Catalogue rating ${item.rating}/5 · ` : ""}Supplier quote {formatMoney(item.quoted_total_cents)}</small>
+                </article>
+              ))}
+            </details>
           </section>
         )}
 
